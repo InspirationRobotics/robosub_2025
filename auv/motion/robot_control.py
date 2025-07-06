@@ -12,6 +12,7 @@ import mavros_msgs.msg
 import mavros_msgs.srv
 import rospy
 from std_msgs.msg import Float64, Float32MultiArray, String
+from std_srvs.srv import Trigger
 import geometry_msgs.msg
 
 # Import the PID controller
@@ -294,6 +295,28 @@ class RobotControl:
             return self.fog
         else:
             print("[WARN] Unknown sensor specified")
+    
+    def move_servo(self, service: str):
+        """Operate a servo via the maestro_server file
+        Args:
+            - service (str): The servo to operate. Accepted values:
+                - /auv/device/dropper
+                - /auv/device/torpedo
+                - /auv/device/gripper
+        """
+        if service in ["/auv/device/dropper", "/auv/device/torpedo", "/auv/device/gripper"]:
+            self.service = service
+        else:
+            raise ValueError("Unknown servo service called")
+        
+        rospy.wait_for_service(self.service)
+
+        try:
+            servo_client = rospy.ServiceProxy(self.service, Trigger)
+            resp1 = servo_client()
+            return resp1.sum
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
 
     def setHeadingOld(self, target: int):
         """
