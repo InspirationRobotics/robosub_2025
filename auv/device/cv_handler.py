@@ -284,8 +284,7 @@ class _ScriptHandler:
             try:
                 ret = self.cv_object.run(frame, self.target, self.oakd_data)
             except Exception as e:
-                print(f"[ERROR] [cv_handler] Error while running CV {self.file_name} {e}")
-                print(e)
+                traceback.print_exception(type(e), e, e.__traceback__)
                 continue
             
             # If ret is a tuple of length 2, this that the result contains both the result, which is a dictionary of motion commands, and the visualization.

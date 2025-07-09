@@ -165,6 +165,10 @@ class CV:
                 print("[INFO] Pole Slalom Mission complete")           
             
             return forward, lateral, yaw, vertical
+        
+        # Fallback return statement (in case the one above fails)
+        print(f"[WARN] [movement_calculation] Unexpected logic fallthrough, returning zeros.")
+        return forward, lateral, yaw, vertical
 
 
 
