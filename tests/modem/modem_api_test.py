@@ -6,7 +6,7 @@ Handles serial messaging, message parsing, acknowledgment, and threading.
 import time
 import serial
 import threading
-from ...utils.deviceHelper import dataFromConfig, variables
+from auv.utils.deviceHelper import dataFromConfig, variables
 
 # ----------------------------
 # Config: Get serial port from sub's config
