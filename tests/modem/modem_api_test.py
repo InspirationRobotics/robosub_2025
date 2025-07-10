@@ -11,7 +11,7 @@ from auv.utils.deviceHelper import dataFromConfig, variables
 # ----------------------------
 # Config: Get serial port from sub's config
 # ----------------------------
-port = dataFromConfig("modem_port")
+port = dataFromConfig("modem")
 
 # ----------------------------
 # (Optional) LED Class for Feedback - Commented Out
