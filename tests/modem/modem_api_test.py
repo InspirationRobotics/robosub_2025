@@ -29,7 +29,14 @@ class Modem:
     Manages serial modem connection, message queuing, sending/receiving, and acknowledgments.
     """
     def __init__(self, auto_start=True):
-        self.ser = serial.Serial(port, 9600, serial.PARITY_NONE, serial.STOPBITS_ONE, serial.EIGHTBITS)
+        self.ser = serial.Serial(
+        port=port,
+        baudrate=9600,
+        bytesize=serial.EIGHTBITS,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE
+        )
+
         self.recv_callbacks = [self.on_receive_msg_logging, self.on_receive_ack]
         self.send_callbacks = [self.on_send_msg_logging]
         self.data_buffer = ""
