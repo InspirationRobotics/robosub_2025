@@ -39,7 +39,7 @@ if __name__ == "__main__":
     maestro = MiniMaestro(port="/dev/ttyUSB2")
 
     # Move servos to new positions
-    maestro.set_pwm(0, 1500)  # Move servo on channel 0
+    maestro.set_pwm(0, 1200)  # Move servo on channel 0
     time.sleep(2)
 
     print("[INFO] triggered")
