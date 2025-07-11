@@ -11,8 +11,8 @@ import rospy
 
 class modem:
     def __init__(self):
-        self.port   = None # TODO use deviceHelper to get port
-        self.sub    = None # TODO use deviceHelper to get what sub is this
+        self.port   = deviceHelper.dataFromConfig("modem") # DONE use deviceHelper to get port
+        self.sub    = deviceHelper.variables.get("sub") # TODO use deviceHelper to get what sub is this
         self.ser    = serial.Serial(port=self.port,
                            baudrate=9600,
                            parity=serial.PARITY_NONE,
