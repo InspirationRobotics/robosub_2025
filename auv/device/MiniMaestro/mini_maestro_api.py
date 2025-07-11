@@ -39,12 +39,14 @@ if __name__ == "__main__":
     maestro = MiniMaestro(port="/dev/ttyACM0")
 
     # Move servos to new positions
-    maestro.set_pwm(0, 1450)  # Move servo on channel 0
+    maestro.set_pwm(0, 1500)  # Move servo on channel 0
     time.sleep(2)
 
-    print("[INFO] dropped")
-    maestro.set_pwm(0, 1800)  # Move servo on channel 0   
+    print("[INFO] triggered")
+    maestro.set_pwm(0, 1700)  # Move servo on channel 0   
     time.sleep(2)
+    
+    maestro.set_pwm(0, 1500)  # Move servo on channel 0
 
     # Close connection when done
     maestro.close()
