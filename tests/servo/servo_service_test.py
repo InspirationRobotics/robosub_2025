@@ -15,5 +15,3 @@ def test_servo(service_name):
 if __name__ == "__main__":
     rospy.init_node("test_servo_functions")
     test_servo("/auv/device/gripper")
-    rospy.sleep(2)
-    test_servo("/auv/device/dropper")
