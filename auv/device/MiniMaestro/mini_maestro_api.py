@@ -36,7 +36,7 @@ if __name__ == "__main__":
     # Change port based on your system (e.g., "COM3" on Windows, "/dev/ttyUSB0" on Linux/Mac)
     # maestro = MiniMaestro(port="/dev/ttyUSB0")
     # TODO use devicehelper for dynamic port loading
-    maestro = MiniMaestro(port="/dev/ttyACM0")
+    maestro = MiniMaestro(port="/dev/ttyUSB2")
 
     # Move servos to new positions
     maestro.set_pwm(0, 1500)  # Move servo on channel 0
