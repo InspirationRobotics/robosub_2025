@@ -27,34 +27,33 @@ class modem:
         # tell modem "I am node xxx"
         addr_cmd = f"$A{self.sub_id:03d}"
         rospy.loginfo(f"[MODEM] Setting node address → {addr_cmd}")
-        self.ser.write(addr_cmd.encode())                           # convert to bytes before sending
+        self.ser.write(addr_cmd.encode())                                                   # convert to bytes before sending
                
         # 2)Ros Setup
-        rospy.init_node('modemNode', anonymous=True)
-        self.rate = rospy.Rate(10) # TODO find a good frequency for the background thread
-        self.pub_rx = rospy.Publisher("/auv/devices/modem/receive", String, queue_size=10)
-        self.sub_tx = rospy.Subscriber("/auv/devices/modem/send", String, self.on_send)
+        rospy.init_node('modem_Node', anonymous=True)                                       # register modem_node w/ ROS & if there is another node with the same name, it will be renamed
+        self.pub_rx = rospy.Publisher("/auv/devices/modem/receive", String, queue_size=10)  # publish a object to ROS / queue_size is the max number of messages to buffer before dropping old ones
+        self.sub_tx = rospy.Subscriber("/auv/devices/modem/send", String, self.on_send)     # subscribe to a topic, when some node publishes to this topic, it will call the on_send function with the message                              
 
         #Link to RobotControl
         self.rc = RobotControl()
 
         # Start background I/O thread
-        t = threading.Thread(target=self.io_loop, daemon=True)
+        t = threading.Thread(target=self.io_loop, daemon=True)                              # daemon=True means it will exit when the main thread exits
         t.start()
-        rospy.spin()
+        rospy.spin()                                                                        # keep the node running until it is shut down
 
 
     def on_send(self, msg: String):
-        """ Called when some node publishes 'DEST|PAYLOAD' to /auv/devices/modem/send """
+        """ Called when some node publishes 'DEST|PAYLOAD' ex "111|ROLL" to /auv/devices/modem/send """
         try:
-            dest_str, payload = msg.data.split("|",1)
-            dest = int(dest_str)
+            dest_str, payload = msg.data.split("|",1)   # split the message into destination and payload        
+            dest = int(dest_str)                            # convert destination to integer  
         except ValueError:
             rospy.logwarn("Bad format on /modem/send. Expected 'DEST|MSG'")
             return
-
-        nn  = f"{len(payload):02d}"
-        cmd = f"$M{dest:03d}{nn}{payload}"
+        # 3) Send the payload to the modem
+        nn  = f"{len(payload):02d}"         # number of characters in the payload, zero-padded to 2 digits
+        cmd = f"$M{dest:03d}{nn}{payload}"  # command to send to the modem "$M<DEST><LEN><DATA>"
         rospy.loginfo(f"[MODEM →] {cmd}")
         self.ser.write(cmd.encode())
 
