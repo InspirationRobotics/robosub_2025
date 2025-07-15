@@ -13,6 +13,8 @@ import mavros_msgs.srv
 import rospy
 from std_msgs.msg import Float64, Float32MultiArray, String
 import geometry_msgs.msg
+from geometry_msgs.msg import PointStamped, TwistStamped, Vector3Stamped, PoseStamped 
+
 
 # Import the PID controller
 from simple_pid import PID
@@ -50,6 +52,9 @@ class RobotControl:
         self.vectornav_roll = None
         self.vectornav_yaw = None
 
+        self.position = {'x':0,'y':0,'z':0}
+        self.orientation = {'x':0,'y':0,'z':0,'w':0}
+
         # dvl sensor setup (both subs)
         if enable_dvl:
             self.dvl = dvl.DVL()
@@ -66,6 +71,7 @@ class RobotControl:
         self.vectornav = rospy.Subscriber("/auv/devices/vectornav", geometry_msgs.msg.Vector3, self.callback_vectornav)
         self.sub_fog = rospy.Subscriber("/auv/devices/fog", Float64, self.get_callback_fog)
         self.sub_depth = rospy.Subscriber("/auv/devices/baro", Float32MultiArray, self.callback_depth)
+        self.sub_pose = rospy.Subscriber("/auv/state/position", PoseStamped, self.callback_pose)
         self.pub_thrusters = rospy.Publisher("auv/devices/thrusters", mavros_msgs.msg.OverrideRCIn, queue_size=10)
         self.pub_depth = rospy.Publisher("auv/devices/setDepth", Float64, queue_size=10)
         self.pub_rel_depth = rospy.Publisher("auv/devices/setRelativeDepth", Float64, queue_size=10)
@@ -172,7 +178,26 @@ class RobotControl:
         press = mavros_msgs.msg.ManualControl()
         press.buttons = button
         self.pub_button.publish(press)
-    
+
+    def callback_pose(self, msg):
+        # Extract position
+        x = msg.pose.position.x
+        y = msg.pose.position.y
+        z = msg.pose.position.z
+
+        # Extract orientation (quaternion)
+        qx = msg.pose.orientation.x
+        qy = msg.pose.orientation.y
+        qz = msg.pose.orientation.z
+        qw = msg.pose.orientation.w
+        self.position['x'] = x
+        self.position['y'] = y
+        self.position['z'] = z
+
+        self.orientation['x'] = qx
+        self.orientation['y'] = qy
+        self.orientation['z'] = qz
+        self.orientation['w'] = qw
 
     def movement(
         self,
@@ -334,92 +359,99 @@ class RobotControl:
                 pwm.channels[3] = 1500 + (dir * speed)
                 self.pub_thrusters.publish(pwm)  # Publishing pwms to continue yawing
 
-    def navigate_dvl(self, x, y, z, end_heading=None, relative_coord=True, relative_heading=True, update_freq=10):
+    def navigate_dvl(
+        self, 
+        x, 
+        y, 
+        z, 
+        end_heading=None, 
+        relative_coord=True, 
+        relative_heading=True, 
+        update_freq=10, 
+        heading_sensor="vectornav_imu"
+        ):
         """
-        To navigate using the DVL to a specific point. This includes 3-D mobility (forward, lateral, depth), not just 1-D (forward or backward). Since this method is complex 
-        and requires the compass to work perfectly, if we want to move forward and only move forward or backward, use forward_dvl instead. The compass
-        should be calibrated in order to run.
-
-        This is a blocking function
+        Navigate using DVL to a 3D point (x, y, z). This is a blocking function using a compass and DVL feedback.
 
         Args:
-            x (float): distance in meters to move laterally
-            y (float): distance in meters to move forward by
-            z (depth): depth to move to
-
-            **x and y are by default relative to the current position and heading; z on the other hand is absolute
-
-            end_heading (optional, int): the heading to reach at the end of the navigation. It defaults to the heading necessary to reach the target point 
-            from the starting point in a straight line
-
-            relative_coord (bool): flag indicating whether the coordinates are relative or not
-            relative_heading (bool): flag indicating whether the coordinates should be rotated by the relative heading
-            update_freq (int): the frequency at which the PID controllers are updated (in Hz)
+            x (float): lateral distance to move (in meters).
+            y (float): forward distance to move (in meters).
+            z (float): target absolute depth (in meters).
+            end_heading (float, optional): target heading in degrees. Defaults to heading toward target.
+            relative_coord (bool): whether x, y are relative to current position.
+            relative_heading (bool): whether x, y should be rotated by current heading.
+            update_freq (int): control update frequency in Hz.
+            heading_sensor (str): which sensor to use for heading. Options: "vectornav_imu", "pix_compass", "fog".
         """
 
         if self.dvl is None:
             print("[ERROR] DVL not available, cannot navigate")
             return
 
-        # Reset the PID integrals (this resets Proportional, Integral, and Derivative controllers)
+        def get_heading_value():
+            """Return current heading based on selected heading sensor."""
+            if heading_sensor == "vectornav_imu":
+                return self.vectornav_yaw
+            elif heading_sensor == "pix_compass":
+                return self.compass
+            elif heading_sensor == "fog":
+                return self.fog
+            else:
+                raise ValueError(f"[ERROR] Unknown heading sensor '{heading_sensor}'")
+
+        # Reset all PID controllers
         for pid in self.PIDs.values():
             pid.reset()
 
         if not relative_coord:
-            # Heading 0 is north, so the positive side of the y-axis is going towards the north
-            # Change position of target coordinates to coordinates relative to the current position of the sub
             x -= self.dvl.position[0]
             y -= self.dvl.position[1]
 
         if relative_heading:
-            # Rotate the vector [x, y] by the current heading (to make the heading relative)
-            x, y = rotate_vector(x, y, self.vectornav_yaw if self.vectornav_yaw is not None else self.compass)
+            current_heading = get_heading_value()
+            x, y = rotate_vector(x, y, current_heading)
 
-        # Get the setpoint (target) heading from the relative coordinates
         target_heading = get_heading_from_coords(x, y)
-        print(f"[INFO] Navigating to {x}, {y}, {z}, {target_heading}deg current {self.compass}")
+        current_heading = get_heading_value()
+        print(f"[INFO] Navigating to {x:.2f}, {y:.2f}, {z:.2f}, target_heading={target_heading:.2f}°, current_heading={current_heading:.2f}°")
 
-        # Rotate to the heading and set the depth of the sub
         self.set_heading(target_heading)
         self.set_depth(z)
 
-        # Enter a local scope to handle the coordinates cleanly
         with self.dvl:
-            # Set the depth independently
             self.set_depth(z)
 
-            # Navigate to the target point 
             while not rospy.is_shutdown():
                 if not self.dvl.is_valid:
                     print("[WARN] DVL data not valid, skipping")
                     time.sleep(0.5)
                     continue
 
-                # Ensure the position data is avaliable
                 if not self.dvl.data_available:
                     continue
                 self.dvl.data_available = False
 
-                # Get the x and y error by rotating the vector by finding the difference between the x and y coordinates of the current position and the target position
-                # Does this by rotating the vector [x_error, y_error] by the current heading (the function inv_rotate_vector() is in utils.py)
+                current_heading = get_heading_value()
                 err_x, err_y = inv_rotate_vector(
                     x - self.dvl.position[0],
                     y - self.dvl.position[1],
-                    self.compass,
+                    current_heading
                 )
 
-                # Check if the target coordinates have been reached
+                # Position tolerance threshold
                 x_err_th = 0.1 + self.dvl.error[0]
                 y_err_th = 0.1 + self.dvl.error[1]
+
                 if abs(err_x) <= x_err_th and abs(err_y) <= y_err_th:
                     print("[INFO] Target reached")
                     break
 
-                # Calculate PID outputs
                 output_x = self.PIDs["lateral"](-err_x)
                 output_y = self.PIDs["forward"](-err_y)
-                print(f"[DEBUG] err_x={err_x}, err_y={err_y}, output_x={output_x}, output_y={output_y}")
+                print(f"[DEBUG] err_x={err_x:.3f}, err_y={err_y:.3f}, output_x={output_x:.3f}, output_y={output_y:.3f}")
+
                 self.movement(lateral=output_x, forward=output_y)
+
 
     def forward_dvl(self, distance, pid=True, throttle=None):
         """
@@ -731,3 +763,18 @@ class RobotControl:
         roll_cmd.angular.x = roll_vel
         self.pub_ang_vel.publish(roll_cmd)
 
+    def waypointNav(self,x:float,y:float, error:float=1.0):
+        err_x = x - self.position['x']
+        err_y = y - self.position['y']
+        #err_z = z - self.position['z']
+
+        # 1 m of error
+        while(err_x > error or err_y > error):
+            forwardPWM = self.PIDs['forward'](-err_y)
+            lateralPWM = self.PIDs['lateral'](-err_x)
+            #self.set_depth(z)
+            self.movement(forward=forwardPWM, lateral=lateralPWM)
+
+            time.sleep(0.1) # 10 Hz
+
+        

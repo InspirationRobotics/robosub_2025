@@ -50,10 +50,9 @@ def get_distance(v1, v2):
     dist = math.sqrt((v1[0] - v2[0])**2 + (v1[1] - v2[1])**2)
     return dist
 
-
 def rotate_vector(x, y, heading):
     """
-    Rotate a vector by a given heading
+    Rotate a vector by a given heading in degrees (counter-clockwise).
 
     Args:
         x (float): X-component of the vector
@@ -63,27 +62,28 @@ def rotate_vector(x, y, heading):
     Returns:
         tuple: Rotated vector components (x_rot, y_rot)
     """
-    x_rot = x * math.cos(math.radians(heading)) + y * math.sin(math.radians(heading))
-    y_rot = y * math.cos(math.radians(heading)) - x * math.sin(math.radians(heading))
+    theta = math.radians(heading)
+    x_rot = x * math.cos(theta) - y * math.sin(theta)
+    y_rot = x * math.sin(theta) + y * math.cos(theta)
     return x_rot, y_rot
-
 
 def inv_rotate_vector(x, y, heading):
     """
-    Rotate a vector by given heading, but the opposite direction from rotate_vector()
+    Rotate a vector by the *negative* of the given heading (i.e., inverse rotation)
+    in the clockwise direction.
 
     Args:
         x (float): X-component of the vector
         y (float): Y-component of the vector
-        heading (float): Angle in degrees to rotate the vector by
+        heading (float): Angle in degrees to inverse-rotate the vector by
     
     Returns:
         tuple: Rotated vector components (x_rot, y_rot)
     """
-    x_rot = x * math.cos(math.radians(heading)) - y * math.sin(math.radians(heading))
-    y_rot = y * math.cos(math.radians(heading)) + x * math.sin(math.radians(heading))
+    theta = math.radians(heading)
+    x_rot = x * math.cos(theta) + y * math.sin(theta)
+    y_rot = -x * math.sin(theta) + y * math.cos(theta)
     return x_rot, y_rot
-
 
 def get_heading_from_coords(x, y):
     """

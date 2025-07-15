@@ -1,6 +1,7 @@
 # Documentation for Teledyne available at https://drive.google.com/file/d/1xniDtjYIJhaFOhWaSj4tj6RxBdN5inx2/view
 # See page 93 for specs
 
+import rospy
 import math
 import signal
 import threading
@@ -13,22 +14,33 @@ import csv
 from datetime import datetime
 
 import serial
+from geometry_msgs.msg import Vector3Stamped, PointStamped
 
-from . import dvl_tcp_parser
+from auv.device.dvl import dvl_tcp_parser
 from auv.utils import deviceHelper
 
 
 class DVL:
     """DVL class to enable position estimation"""
-
+    
     def __init__(self, autostart=True, compass=False, test=False):
+        rospy.init_node("dvl", anonymous=True)
+        self.rate = rospy.Rate(10)  # 10 Hz
+        
+        self.vel_pub = rospy.Publisher('/auv/devices/dvl/velocity', Vector3Stamped, queue_size=10)
+
+
+        # TODO: Review if we need a position publisher
+
+        self.pos_pub = rospy.Publisher('/auv/devices/dvl/position', PointStamped, queue_size=10)
+        
         self.test = test
         if not self.test:
             self.dvlPort = deviceHelper.dataFromConfig("dvl")
             print(self.dvlPort)
-            sub = deviceHelper.variables.get("sub")
-            print(f"[DEBUG] Sub is {sub}")
-            if sub == "onyx":
+            self.sub = deviceHelper.variables.get("sub")
+            print(f"[DEBUG] Sub is {self.sub}")
+            if self.sub == "onyx":
                 self.ser = serial.Serial(
                     port=self.dvlPort,
                     baudrate=115200,
@@ -47,12 +59,12 @@ class DVL:
                 time.sleep(2)
                 self.read = self.read_onyx
 
-            elif sub == "graey":
+            elif self.sub == "graey":
                 # autostart = False
                 self.read = self.read_graey
                 self.dvl_rot = math.radians(0)
             else:
-                raise ValueError(f"Invalid sub {sub}")
+                raise ValueError(f"Invalid sub {self.sub}")
 
         self.enable_compass = compass
 
@@ -313,19 +325,48 @@ class DVL:
         self.position = [0, 0, 0]
         self.error = [0, 0, 0]
 
-    def update(self):
+    def update(self): 
         """Update DVL data (runs in a thread)"""
-        print("[DEBUG] Called update()")
-        while self.__running:
+        print("[DEBUG] DVL update() loop started")
+
+        while self.__running and not rospy.is_shutdown():
             vel_packet = self.read()
+
             if vel_packet is None:
                 continue
+
             if self.enable_compass:
                 ret = self.process_packet_compass(vel_packet)
             else:
                 ret = self.process_packet(vel_packet)
-            self.data_available = ret
 
+            self.data_available = ret
+            self.rate.sleep()
+
+    def publish_dvl(self, frame_id: str):
+        """Publish DVL data to rostopics
+        Args:
+            - frame_id (str): Frame ID containing name of AUV"""
+        while not rospy.is_shutdown():
+            now = rospy.Time.now()
+            vel_msg = Vector3Stamped()
+            vel_msg.header.stamp = now
+            vel_msg.header.frame_id = frame_id
+
+            vel_msg.vector.x = self.vel_rot[0]
+            vel_msg.vector.y = self.vel_rot[1]
+            vel_msg.vector.z = self.vel_rot[2]
+            self.vel_pub.publish(vel_msg)
+
+            pos_msg = PointStamped()
+            pos_msg.header.stamp = now
+            pos_msg.header.frame_id = frame_id
+            pos_msg.point.x = self.position[0]
+            pos_msg.point.y = self.position[1]
+            pos_msg.point.z = self.position[2]
+            self.pos_pub.publish(pos_msg)
+            self.rate.sleep()
+    
     def start(self):
         # ensure not running
         print("[DEBUG] Started successfully")
@@ -336,6 +377,18 @@ class DVL:
         self.__running = True
         self.__thread_vel = threading.Thread(target=self.update, daemon=True)
         self.__thread_vel.start()
+
+        # Add publisher thread depending on sub
+        if self.sub == "graey":
+            self.__thread_pub = threading.Thread(target=self.publish_dvl, args=("graey_dvl"), daemon=True)
+        elif self.sub == "onyx":
+            self.__thread_pub = threading.Thread(target=self.publish_dvl, args=("onyx_dvl"), daemon=True)
+
+        else:
+            raise ValueError(f"[ERROR] Unknown sub: {self.sub}")
+
+        self.__thread_pub.start()
+
 
     def stop(self):
         self.__running = False
@@ -408,16 +461,20 @@ def csvLog(dvl, filename="dvl_log.csv"):
 
             except KeyboardInterrupt:
                 print("\n[INFO] Logging interrupted. Saving CSV file...")
-
+                print(f"[INFO] Data saved to {filename}")
 if __name__ == '__main__':
     # Make a new dvl instance
-    dvl1 = DVL()
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    try:
+        dvl1 = DVL()
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"dvl_log_{timestamp}.csv"
+        csvLog(dvl1, filename)
+        rospy.spin()
     
-    filename = f"dvl_log_{timestamp}.csv"
-    csvLog(dvl1, filename)
-
-    # while True:
-    #     time.sleep(1.0)
-    #     # print("[DEBUG: Ran a check on DVL timing]")
-    #     print(dvl1.position)
+    except KeyboardInterrupt:
+        print("\n[INFO] DVL stopped by user.")
+        dvl1.stop()
+        rospy.shutdown()
+        
+    finally:
+        print("Node exited.")

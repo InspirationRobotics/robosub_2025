@@ -6,7 +6,7 @@ import math
 from transforms3d.euler import quat2euler
 from auv.device.imu.vn100_serial import VN100
 
-rospy.init_node("vectornav_api_node", anonymous=True)
+rospy.init_node("vectornav_ros_api", anonymous=True)
 
 class ImuNode:
     def __init__(self):
@@ -25,8 +25,8 @@ class ImuNode:
 
     def get_orientation(self, msg):
         """Parses quaternion orientation to Euler angles (roll, pitch, yaw)"""
-        quat_orient = msg.orientation
-        orientation_list = [quat_orient.x, quat_orient.y, quat_orient.z, quat_orient.w]
+        self.quat_orient = msg.orientation
+        orientation_list = [self.quat_orient.x, self.quat_orient.y, self.quat_orient.z, self.quat_orient.w]
         (roll, pitch, yaw) = quat2euler(orientation_list)
 
         # Convert to degrees and normalize
@@ -37,17 +37,17 @@ class ImuNode:
         print(f"Roll: {self.roll:.2f}°\nPitch: {self.pitch:.2f}°\nYaw: {self.yaw:.2f}°")
 
     def publishThread(self):
+        """Publishes orientation (quaternion), angular velocity, and linear acceleration
+        to vectornav custom rostopic"""
         while not rospy.is_shutdown():
             imu_msg = sensor_msgs.msg.Imu()
             imu_msg.header.stamp = rospy.Time.now()
             imu_msg.header.frame_id = "vectornav"
 
-            # Fake quaternion from euler (you should ideally use a conversion function)
-            # Here we just copy euler angles into wrong fields for demonstration
-            imu_msg.orientation.x = self.yaw
-            imu_msg.orientation.y = self.pitch
-            imu_msg.orientation.z = self.roll
-            imu_msg.orientation.w = 0.0  # Invalid! Replace with proper conversion if needed
+            imu_msg.orientation.x = self.quat_orient.x
+            imu_msg.orientation.y = self.quat_orient.y
+            imu_msg.orientation.z = self.quat_orient.z
+            imu_msg.orientation.w = self.quat_orient.w
 
             imu_msg.angular_velocity.x = self.sensor.gyroX
             imu_msg.angular_velocity.y = self.sensor.gyroY
