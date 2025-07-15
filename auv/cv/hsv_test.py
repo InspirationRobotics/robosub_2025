@@ -108,6 +108,6 @@ class CV:
 
 if __name__ == "__main__":
     # path = input("Enter path to image or video file: ").strip()
-    path = "/Users/avikaprasad/Desktop/pole_1.png"
+    path = "/Users/avikaprasad/Downloads/poles.mp4"
     cv = CV(path)
     cv.run()

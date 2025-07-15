@@ -33,18 +33,39 @@ class CV:
             self.x_midpoint = width / 2
             print(f"[INFO] Frame shape set dynamically: width={width}, height={height}")
 
-        # Crop a bit off the bottom (e.g., last 100 pixels)
-        crop_bottom = 100
-        cropped_frame = frame[0:self.shape[1] - crop_bottom, 0:self.shape[0]]
+        crop_bottom = 40
+        frame = frame[0:self.shape[1] - crop_bottom, :]
 
-        # Convert to HSV and create red mask
-        hsv = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2HSV)
-        lower_red1 = np.array([20, 0, 0])
-        upper_red1 = np.array([255, 255, 50])
-        red_mask = cv2.inRange(hsv, lower_red1, upper_red1)
+        # Step 1: HSV Red Mask
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        lower_red1 = np.array([0, 80, 50])
+        upper_red1 = np.array([12, 255, 255])
+        lower_red2 = np.array([168, 80, 50])
+        upper_red2 = np.array([180, 255, 255])
+        mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
+        mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+        red_mask = cv2.bitwise_or(mask1, mask2)
 
-        # Find contours
-        contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # Step 2: Apply mask to image (keep only red regions)
+        red_regions = cv2.bitwise_and(frame, frame, mask=red_mask)
+
+        # Step 3: Convert to grayscale
+        gray = cv2.cvtColor(red_regions, cv2.COLOR_BGR2GRAY)
+
+        # Step 4: Blur + Edge Detection
+        blurred = cv2.GaussianBlur(gray, (5, 5), 1.5)
+        edges = cv2.Canny(blurred, 50, 150)
+
+        return edges, frame
+
+    def run_on_frame(self, frame):
+        edge_mask, cropped = self.detect_red_edges(frame)
+
+        # Overlay edges on the cropped original
+        overlay = cv2.cvtColor(edge_mask, cv2.COLOR_GRAY2BGR)
+        result = cv2.addWeighted(cropped, 0.8, overlay, 0.5, 0)
+
+        return result, edge_mask
 
         red_poles = []
         for cnt in contours:
