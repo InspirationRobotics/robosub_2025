@@ -19,7 +19,7 @@ class CV:
         self.x_midpoint = None
         self.tolerance = 40  # How centered the object should be
         self.config = config
-        self.state = "searching"  # searching → centering → approaching
+        self.state = "searching"
         self.end = False
         self.start_time = time.time()
         self.rows_completed = 0
@@ -27,7 +27,7 @@ class CV:
         print("[INFO] Pole Center & Approach CV initialized")
 
     def detect_red_pole(self, frame):
-        crop_bottom = 40
+        crop_bottom = 80
         height = frame.shape[0]
         frame = frame[0:height - crop_bottom, :]
 
@@ -42,7 +42,7 @@ class CV:
         mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
         red_mask = cv2.bitwise_or(mask1, mask2)
 
-        # Step 2: Morphological operations to clean mask
+        # Step 2: Morphological operations
         kernel = np.ones((5, 5), np.uint8)
         red_mask_clean = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel)
         red_mask_clean = cv2.morphologyEx(red_mask_clean, cv2.MORPH_OPEN, kernel)
@@ -50,24 +50,42 @@ class CV:
         # Step 3: Canny edge detection
         edges = cv2.Canny(red_mask_clean, 50, 150)
 
-        # Step 4: Find contours from edges
-        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # Step 4: Hough Line Transform
+        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=50, minLineLength=40, maxLineGap=10)
+        vertical_lines = []
 
+        if lines is not None:
+            for line in lines:
+                x1, y1, x2, y2 = line[0]
+                angle = np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi
+                if abs(angle) > 75:  # Near-vertical
+                    vertical_lines.append((x1, y1, x2, y2))
+
+        # Step 5: Find contours
+        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         red_poles = []
         for cnt in contours:
             area = cv2.contourArea(cnt)
             if area > 1000:
                 x, y, w, h = cv2.boundingRect(cnt)
                 aspect_ratio = h / float(w) if w != 0 else 0
-                if aspect_ratio > 1.5:  # Prefer vertical shapes
-                    red_poles.append((x, y, w, h, area))
+                if aspect_ratio > 1.5:
+                    # Check if a vertical Hough line intersects the bounding box
+                    for x1, y1, x2, y2 in vertical_lines:
+                        if x1 >= x and x1 <= x + w:
+                            red_poles.append((x, y, w, h, area))
+                            break
 
         if red_poles:
             red_poles.sort(key=lambda x: x[4], reverse=True)
             x, y, w, h, area = red_poles[0]
-            return {"status": True, "xmin": x, "xmax": x + w, "ymin": y,"ymax": y + h, "area": area}, red_mask_clean  # return cleaned mask for visualization
-        return {"status": False, "xmin": None, "xmax": None, "ymin": None,"ymax": None, "area": 0}, red_mask_clean
-
+            return {
+                "status": True, "xmin": x, "xmax": x + w, "ymin": y, "ymax": y + h, "area": area
+            }, red_mask_clean
+        return {
+            "status": False, "xmin": None, "xmax": None, "ymin": None, "ymax": None, "area": 0
+        }, red_mask_clean
+    
     def movement_calculation(self, detection):
         forward = 0
         lateral = 0
