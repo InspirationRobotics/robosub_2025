@@ -14,7 +14,7 @@ import time
 class CV:
     camera = "/auv/camera/videoOAKdRawForward"
 
-    def __init__(self, **config):
+    def _init_(self, **config):
         self.shape = None  # Will set this dynamically
         self.x_midpoint = None
         self.tolerance = 40  # How centered the object should be
@@ -22,6 +22,7 @@ class CV:
         self.state = "searching"  # searching → centering → approaching
         self.end = False
         self.start_time = time.time()
+        self.rows_completed = 0
 
         print("[INFO] Pole Center & Approach CV initialized")
 
@@ -48,6 +49,7 @@ class CV:
 
         # Step 2: Apply mask to image (keep only red regions)
         red_regions = cv2.bitwise_and(frame, frame, mask=red_mask)
+<<<<<<< HEAD
 
         # Step 3: Convert to grayscale
         gray = cv2.cvtColor(red_regions, cv2.COLOR_BGR2GRAY)
@@ -66,28 +68,17 @@ class CV:
         result = cv2.addWeighted(cropped, 0.8, overlay, 0.5, 0)
 
         return result, edge_mask
+=======
+>>>>>>> 9cb61a56753115c8e2127ed49302052053bbc20f
 
-        red_poles = []
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            if area > 1000:
-                x, y, w, h = cv2.boundingRect(cnt)
-                red_poles.append((x, y, w, h, area))
+        # Step 3: Convert to grayscale
+        gray = cv2.cvtColor(red_regions, cv2.COLOR_BGR2GRAY)
 
-        # If any red pole found, return the largest one
-        if red_poles:
-            red_poles.sort(key=lambda x: x[4], reverse=True)
-            x, y, w, h, area = red_poles[0]
-            return {
-                "status": True,
-                "xmin": x,
-                "xmax": x + w,
-                "ymin": y,
-                "ymax": y + h,
-                "area": area
-            }, red_mask
+        # Step 4: Blur + Edge Detection
+        blurred = cv2.GaussianBlur(gray, (5, 5), 1.5)
+        edges = cv2.Canny(blurred, 50, 150)
 
-        return {"status": False, "xmin": None, "xmax": None,"ymin": None,"ymax": None,"area": 0}, red_mask
+        return edges, frame
 
     def movement_calculation(self, detection):
         forward = 0
@@ -95,9 +86,9 @@ class CV:
         yaw = 0
         vertical = 0
 
-        if self.state == "searching":
+        if self.state == "initial_search":
             if detection["status"]:
-                self.state = "approaching"
+                self.state = "centering"
             else:
                 # Spin in place to search
                 yaw = -1.5
@@ -109,14 +100,14 @@ class CV:
                 offset = x_center - self.x_midpoint
 
                 if abs(offset) > self.tolerance:
-                    lateral = -1.0 if offset > 0 else 1.0  # strafe to align toward the center
+                    lateral = -1.0 if offset > 0 else 1.0
                     print(f"[INFO] Centering: offset={offset:.1f} → lateral={lateral}")
                 else:
                     print("[INFO] Centering: Pole centered → transitioning to approaching")
                     self.state = "approaching"
             else:
                 print("[WARN] Lost pole while centering → reverting to searching")
-                self.state = "searching"
+                self.state = "initial_search"
 
         elif self.state == "approaching":
             if detection["status"]:
@@ -131,13 +122,37 @@ class CV:
                     self.state = "strafing"
             else:
                 print("[WARN] Lost pole while approaching → reverting to searching")
-                self.state = "searching"
+                self.state = "initial_search"
         
         elif self.state == "strafing":
             while time.time() - self.start_time < 1.5:  # Strafing for 1.5 seconds
                 lateral = 2.0
                 print(f"[INFO] Strafing: Moving laterally to come in between poles")
-                break
+                self.state = "slaloming"
+
+        elif self.state == "slaloming":
+            while time.time() - self.start_time < 2:  # Slaloming for 2 seconds
+                forward = 2.0
+                print(f"[INFO] Slaloming: Moving forward through the poles")
+                self.rows_completed += 1
+                
+            if self.rows_completed >= 3:
+                self.end = True
+                print("[INFO] Completed slalom through poles → ending")
+                
+            else:
+                self.state = "internal_searching"
+        
+        elif self.state == "internal_searching":
+            elapsed_time = time.time() - self.start_time
+            yaw = 1.0 if int(elapsed_time / 0.5) % 2 == 0 else -1.0
+            print(f"[INFO] Internal Searching: Yawing to find next pole (elapsed time: {elapsed_time:.1f}s)")
+            
+            if detection["status"]:
+                self.state = "approaching"
+                print("[INFO] Found next pole while searching → transitioning to approaching")
+            else:
+                self.state = "internal_searching"
 
         return forward, lateral, yaw, vertical
 

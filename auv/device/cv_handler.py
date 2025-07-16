@@ -55,9 +55,10 @@ class CVHandler:
 
         try:
             # Generic module file path: auv.cv.file_name
+            rospy.loginfo(f"running {file_name}")
             module = importlib.import_module(f"auv.cv.{file_name}")
         except Exception as e:
-            print("[ERROR] [cv_handler] Error while importing CV module from file name")
+            print(f"[ERROR] [cv_handler] Error while importing CV module from {file_name}")
             print(f"[ERROR] {e}")
             return
 
