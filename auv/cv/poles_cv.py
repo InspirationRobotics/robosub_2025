@@ -27,15 +27,9 @@ class CV:
         print("[INFO] Pole Center & Approach CV initialized")
 
     def detect_red_pole(self, frame):
-        # Set shape dynamically on first frame
-        if self.shape is None:
-            height, width = frame.shape[:2]
-            self.shape = (width, height)
-            self.x_midpoint = width / 2
-            print(f"[INFO] Frame shape set dynamically: width={width}, height={height}")
-
         crop_bottom = 40
-        frame = frame[0:self.shape[1] - crop_bottom, :]
+        height = frame.shape[0]
+        frame = frame[0:height - crop_bottom, :]
 
         # Step 1: HSV Red Mask
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
