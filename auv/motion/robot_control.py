@@ -33,7 +33,7 @@ class RobotControl:
     Class to control the robot
     """
 
-    def __init__(self, enable_dvl=True, enable_fog = False):
+    def __init__(self, enable_dvl=False, enable_fog = False):
         """
         Initialize the RobotControl class
 
