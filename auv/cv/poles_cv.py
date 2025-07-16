@@ -14,7 +14,7 @@ import time
 class CV:
     camera = "/auv/camera/videoOAKdRawForward"
 
-    def _init_(self, **config):
+    def __init__(self, **config):
         self.shape = None  # Will set this dynamically
         self.x_midpoint = None
         self.tolerance = 40  # How centered the object should be
@@ -49,27 +49,6 @@ class CV:
 
         # Step 2: Apply mask to image (keep only red regions)
         red_regions = cv2.bitwise_and(frame, frame, mask=red_mask)
-<<<<<<< HEAD
-
-        # Step 3: Convert to grayscale
-        gray = cv2.cvtColor(red_regions, cv2.COLOR_BGR2GRAY)
-
-        # Step 4: Blur + Edge Detection
-        blurred = cv2.GaussianBlur(gray, (5, 5), 1.5)
-        edges = cv2.Canny(blurred, 50, 150)
-
-        return edges, frame
-
-    def run_on_frame(self, frame):
-        edge_mask, cropped = self.detect_red_edges(frame)
-
-        # Overlay edges on the cropped original
-        overlay = cv2.cvtColor(edge_mask, cv2.COLOR_GRAY2BGR)
-        result = cv2.addWeighted(cropped, 0.8, overlay, 0.5, 0)
-
-        return result, edge_mask
-=======
->>>>>>> 9cb61a56753115c8e2127ed49302052053bbc20f
 
         # Step 3: Convert to grayscale
         gray = cv2.cvtColor(red_regions, cv2.COLOR_BGR2GRAY)
