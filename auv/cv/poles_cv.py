@@ -81,7 +81,7 @@ class CV:
                 self.state = "centering"
             else:
                 # Spin in place to search
-                yaw = 0.8
+                yaw = 1.0
                 print("[INFO] Searching: No red pole detected → yawing")
 
         elif self.state == "centering":
@@ -100,17 +100,17 @@ class CV:
                 self.state = "initial_search"
 
         elif self.state == "approaching":
-            if detection["status"]:
+	    
+             forward = 1.0
+             print(f"[INFO] Approaching: area={area:.0f} → moving forward")
+           
+	     if detection["status"]:
                 area = detection["area"]
-                if area < 16000:
-                    forward = 2.0
-                    print(f"[INFO] Approaching: area={area:.0f} → moving forward")
+                if area >= 30000:
+               	    self.state = "strafing"
                 else:
-                    forward = 0
-                    self.end = True
-                    print("[INFO] Pole is close enough → stopping")
-                    self.state = "strafing"
-            else:
+                    self.state = "approaching"
+             else:
                 print("[WARN] Lost pole while approaching → reverting to searching")
                 self.state = "initial_search"
         
