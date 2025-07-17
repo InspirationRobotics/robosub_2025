@@ -122,5 +122,5 @@ def test_input(input_path):
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    path = "/Users/avikaprasad/Downloads/poles.mp4"  # Replace with your image, video, or stream path
+    path = "/Users/avikaprasad/Desktop/pole.png"  # Replace with your image, video, or stream path
     test_input(path)
