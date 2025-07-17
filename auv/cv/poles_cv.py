@@ -31,50 +31,33 @@ class CV:
         height = frame.shape[0]
         frame = frame[0:height - crop_bottom, :]
 
-        # Step 1: Convert to HSV and create a mask for red color
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        lower_red1 = np.array([0, 80, 50])
-        upper_red1 = np.array([12, 255, 255])
-        lower_red2 = np.array([168, 80, 50])
+        
+        # Red range (adjust if too aggressive)
+        lower_red1 = np.array([0, 100, 50])
+        upper_red1 = np.array([10, 255, 255])
+        lower_red2 = np.array([160, 100, 50])
         upper_red2 = np.array([180, 255, 255])
 
         mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
         mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
         red_mask = cv2.bitwise_or(mask1, mask2)
 
-        # Step 2: Morphological operations
+        # Morphological cleaning
         kernel = np.ones((5, 5), np.uint8)
         red_mask_clean = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel)
         red_mask_clean = cv2.morphologyEx(red_mask_clean, cv2.MORPH_OPEN, kernel)
 
-        # Step 3: Canny edge detection
-        edges = cv2.Canny(red_mask_clean, 50, 150)
-
-        # Step 4: Hough Line Transform
-        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=50, minLineLength=40, maxLineGap=10)
-        vertical_lines = []
-
-        if lines is not None:
-            for line in lines:
-                x1, y1, x2, y2 = line[0]
-                angle = np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi
-                if abs(angle) > 75:  # Near-vertical
-                    vertical_lines.append((x1, y1, x2, y2))
-
-        # Step 5: Find contours
-        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # Find contours
+        contours, _ = cv2.findContours(red_mask_clean, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         red_poles = []
         for cnt in contours:
             area = cv2.contourArea(cnt)
-            if area > 1000:
+            if area > 800:  # Lowered threshold to increase sensitivity
                 x, y, w, h = cv2.boundingRect(cnt)
-                aspect_ratio = h / float(w) if w != 0 else 0
-                if aspect_ratio > 1.5:
-                    # Check if a vertical Hough line intersects the bounding box
-                    for x1, y1, x2, y2 in vertical_lines:
-                        if x1 >= x and x1 <= x + w:
-                            red_poles.append((x, y, w, h, area))
-                            break
+                aspect_ratio = h / float(w) if w > 0 else 0
+                if aspect_ratio > 1.5:  # Tall shapes
+                    red_poles.append((x, y, w, h, area))
 
         if red_poles:
             red_poles.sort(key=lambda x: x[4], reverse=True)
@@ -82,6 +65,7 @@ class CV:
             return {
                 "status": True, "xmin": x, "xmax": x + w, "ymin": y, "ymax": y + h, "area": area
             }, red_mask_clean
+
         return {
             "status": False, "xmin": None, "xmax": None, "ymin": None, "ymax": None, "area": 0
         }, red_mask_clean
