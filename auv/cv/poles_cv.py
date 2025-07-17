@@ -34,9 +34,9 @@ class CV:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         
         # Red range (adjust if too aggressive)
-        lower_red1 = np.array([0, 100, 50])
+        lower_red1 = np.array([0, 50, 50])
         upper_red1 = np.array([10, 255, 255])
-        lower_red2 = np.array([160, 100, 50])
+        lower_red2 = np.array([155, 50, 50])
         upper_red2 = np.array([180, 255, 255])
 
         mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
@@ -81,7 +81,7 @@ class CV:
                 self.state = "centering"
             else:
                 # Spin in place to search
-                yaw = -0.8
+                yaw = 0.8
                 print("[INFO] Searching: No red pole detected → yawing")
 
         elif self.state == "centering":
@@ -90,7 +90,7 @@ class CV:
                 offset = x_center - self.x_midpoint
 
                 if abs(offset) > self.tolerance:
-                    lateral = -1.0 if offset > 0 else 1.0
+                    lateral = 1.0 if offset > 0 else -1.0
                     print(f"[INFO] Centering: offset={offset:.1f} → lateral={lateral}")
                 else:
                     print("[INFO] Centering: Pole centered → transitioning to approaching")
