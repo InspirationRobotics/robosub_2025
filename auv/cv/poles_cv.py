@@ -19,7 +19,7 @@ class CV:
         self.x_midpoint = None
         self.tolerance = 40  # How centered the object should be
         self.config = config
-        self.state = "initial_searching"
+        self.state = "initial_search"
         self.end = False
         self.start_time = time.time()
         self.rows_completed = 0
