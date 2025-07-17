@@ -163,6 +163,12 @@ class CV:
         return forward, lateral, yaw, vertical
 
     def run(self, raw_frame, target, detections):
+        
+        if self.shape is None:
+            h, w = raw_frame.shape[:2]
+            self.shape = (w, h)
+            self.x_midpoint = w // 2
+        
         detection, red_mask_clean = self.detect_red_pole(raw_frame)
         forward, lateral, yaw, vertical = self.movement_calculation(detection)
 
