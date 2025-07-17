@@ -12,39 +12,74 @@ class CV:
         if self.shape is None:
             h, w = frame.shape[:2]
             self.shape = (w, h)
-            print(f"[INFO] Frame shape: width={w}, height={h}")
 
-        crop_bottom = 40
-        frame = frame[0:self.shape[1] - crop_bottom, :]
-
-        # Step 1: HSV Red Mask
+        # Step 1: Convert to HSV and create a mask for red color
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         lower_red1 = np.array([0, 80, 50])
         upper_red1 = np.array([12, 255, 255])
         lower_red2 = np.array([168, 80, 50])
         upper_red2 = np.array([180, 255, 255])
+
         mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
         mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
         red_mask = cv2.bitwise_or(mask1, mask2)
 
-        # Step 2: Apply mask to image (keep only red regions)
-        red_regions = cv2.bitwise_and(frame, frame, mask=red_mask)
+        # Step 2: Morphological operations
+        kernel = np.ones((5, 5), np.uint8)
+        red_mask_clean = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel)
+        red_mask_clean = cv2.morphologyEx(red_mask_clean, cv2.MORPH_OPEN, kernel)
 
-        # Step 3: Convert to grayscale
-        gray = cv2.cvtColor(red_regions, cv2.COLOR_BGR2GRAY)
+        # Step 3: Canny edge detection
+        edges = cv2.Canny(red_mask_clean, 50, 150)
 
-        # Step 4: Blur + Edge Detection
-        blurred = cv2.GaussianBlur(gray, (5, 5), 1.5)
-        edges = cv2.Canny(blurred, 50, 150)
+        # Step 4: Hough Line Transform
+        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=50, minLineLength=40, maxLineGap=10)
+        vertical_lines = []
 
-        return edges, frame
+        if lines is not None:
+            for line in lines:
+                x1, y1, x2, y2 = line[0]
+                angle = np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi
+                if abs(angle) > 75:  # Near-vertical
+                    vertical_lines.append((x1, y1, x2, y2))
+
+        # Step 5: Find contours
+        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        red_poles = []
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area > 1000:
+                x, y, w, h = cv2.boundingRect(cnt)
+                aspect_ratio = h / float(w) if w != 0 else 0
+                if aspect_ratio > 1.5:
+                    # Check if a vertical Hough line intersects the bounding box
+                    for x1, y1, x2, y2 in vertical_lines:
+                        if x1 >= x and x1 <= x + w:
+                            red_poles.append((x, y, w, h, area))
+                            break
+
+        if red_poles:
+            red_poles.sort(key=lambda x: x[4], reverse=True)
+            x, y, w, h, area = red_poles[0]
+            return {
+                "status": True, "xmin": x, "xmax": x + w, "ymin": y, "ymax": y + h, "area": area
+            }, red_mask_clean
+        return {
+            "status": False, "xmin": None, "xmax": None, "ymin": None, "ymax": None, "area": 0
+        }, red_mask_clean
 
     def run_on_frame(self, frame):
-        edge_mask, cropped = self.detect_red_edges(frame)
+        detection, edge_mask = self.detect_red_edges(frame)
 
-        # Overlay edges on the cropped original
         overlay = cv2.cvtColor(edge_mask, cv2.COLOR_GRAY2BGR)
-        result = cv2.addWeighted(cropped, 0.8, overlay, 0.5, 0)
+        result = cv2.addWeighted(frame, 0.8, overlay, 0.5, 0)
+
+        if detection["status"]:
+            x1, y1 = detection["xmin"], detection["ymin"]
+            x2, y2 = detection["xmax"], detection["ymax"]
+            cv2.rectangle(result, (x1, y1), (x2, y2), (0, 255, 255), 2)
+            cv2.putText(result, f"Area: {detection['area']}", (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
         return result, edge_mask
 
@@ -87,5 +122,5 @@ def test_input(input_path):
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    path = "/Users/avikaprasad/Desktop/pole_main.png"  # Can be image, video, or RTSP stream
+    path = "/Users/avikaprasad/Downloads/poles.mp4"  # Replace with your image, video, or stream path
     test_input(path)
