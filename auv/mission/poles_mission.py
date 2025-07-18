@@ -24,7 +24,7 @@ class PoleSlalomMission:
         self.received = False
         self.target = target
 
-        self.robot_control = robot_control.RobotControl()
+        self.rc = robot_control.RobotControl()
         self.cv_handler = cv_handler.CVHandler(**self.config)
 
         for file_name in self.cv_files:
@@ -45,7 +45,16 @@ class PoleSlalomMission:
         Run the pole slalom mission loop.
         """
         print("[INFO] Pole Slalom mission running")
-
+        
+        # configuring robot control modes and headings
+        self.rc.set_control_mode('depth_hold')
+        self.rc.set_absolute_z(0.5)
+        self.rc.go_to_heading(0)
+        time.sleep(1)
+        self.rc.set_absolute_yaw(0)
+        self.rc.activate_heading_control(activate=True)
+        time.sleep(2)
+        
         while not rospy.is_shutdown():
             if not self.received:
                 time.sleep(0.01)
@@ -66,11 +75,11 @@ class PoleSlalomMission:
             yaw = cv_data.get("yaw", 0)
             end = cv_data.get("end", False)
 
-            print("[MOTION] Fwd: {forward}, Lat: {lateral}, Yaw: {yaw}")
+            print("[MOTION] Fwd: {forward}, Lat: {lateral}")
 
             if end:
                 print("[INFO] Pole slalom mission complete.")
-                self.robot_control.movement(lateral=0, forward=0, yaw=0)
+                self.robot_control.movement(lateral=0, forward=0)
                 break
             else:
                 self.robot_control.movement(lateral=lateral, forward=forward, yaw=yaw)
