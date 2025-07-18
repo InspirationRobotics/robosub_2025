@@ -19,16 +19,10 @@ import geometry_msgs.msg
 
 
 # Get the mathematical functions that handle various navigation tasks from utils.py
-from auv.motion.utils import get_distance, get_heading_from_coords, heading_error, rotate_vector, inv_rotate_vector, get_norm
-from auv.utils import deviceHelper # Get the configuration of the devices plugged into the sub(thrusters, camera, etc.)
-from auv.utils import arm, disarm
-from auv.device.dvl import dvl # DVL class that enables position estimation
-from auv.device.fog import fog_interface as fog
-
-from simple_pid import PID
-from transforms3d.euler import euler2quat
-from transforms3d.euler import quat2euler
-import threading
+from .utils import get_distance, get_heading_from_coords, heading_error, rotate_vector, inv_rotate_vector
+from ..utils import deviceHelper # Get the configuration of the devices plugged into the sub(thrusters, camera, etc.)
+from ..device.fog import fog_interface as fog
+import math
 import numpy as np
 import time
 import math
@@ -52,7 +46,7 @@ class RobotControl:
     Class to control the robot
     """
 
-    def __init__(self, debug=False):
+    def __init__(self, enable_dvl=False, enable_fog = False):
         """
         Initialize the RobotControl class
 

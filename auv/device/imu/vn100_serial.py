@@ -4,9 +4,12 @@ import threading
 import numpy as np
 
 from serial import Serial
+from transforms3d.euler import euler2quat
 
 from auv.utils import deviceHelper
 from sensor_msgs.msg import Imu
+
+# rospy.init_node("vectornav_serial_api", anonymous=True)
 
 class VN100:
     def __init__(self, port: str = deviceHelper.dataFromConfig("vectornav")):
