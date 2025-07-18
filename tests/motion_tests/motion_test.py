@@ -15,10 +15,13 @@ rc.set_depth(0.9)
 #first_time = time.time()
 time.sleep(5.0)
 
+rc.set_heading(0, "vectornav_imu")
+
+
 #1)Roll motion with depth hold test:
-first_time = time.time()
-while time.time() - first_time < 6:
-    rc.movement(roll=5)
+#first_time = time.time()
+#while time.time() - first_time < 6:
+    #rc.movement(roll=5)
 
 
 #2)Yaw control test:
