@@ -21,7 +21,7 @@ class CV:
         self.config = config
         self.state = "initial_search"
         self.end = False
-        self.start_time = time.time()
+        self.start_time = None
         self.rows_completed = 0
 
         print("[INFO] Pole Center & Approach CV initialized")
@@ -100,39 +100,50 @@ class CV:
                 self.state = "initial_search"
 
         elif self.state == "approaching":
-	    
-             forward = 1.0
-             print(f"[INFO] Approaching: area={area:.0f} → moving forward")
-           
-	     if detection["status"]:
+
+            if detection["status"]:
                 area = detection["area"]
-                if area >= 30000:
-               	    self.state = "strafing"
+                forward = 1.0
+                print(f"[INFO] Approaching: area={area:.0f} → moving forward")
+                if area >= 5000:
+                    self.state = "strafing"
                 else:
                     self.state = "approaching"
-             else:
+            else:
                 print("[WARN] Lost pole while approaching → reverting to searching")
                 self.state = "initial_search"
         
         elif self.state == "strafing":
-            while time.time() - self.start_time < 1.5:  # Strafing for 1.5 seconds
-                lateral = 2.0
-                print(f"[INFO] Strafing: Moving laterally to come in between poles")
+            if self.start_time is None:
+                self.start_time = time.time()
+                print("[INFO] Strafing started")
+
+            if time.time() - self.start_time < 1.5:
+                lateral = 1.5
+                print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
+            else:
                 self.state = "slaloming"
+                self.start_time = None
+                print("[INFO] Strafing complete → transitioning to slaloming")
 
         elif self.state == "slaloming":
-            while time.time() - self.start_time < 2:  # Slaloming for 2 seconds
+            if self.start_time is None:
+                self.start_time = time.time()
+                print("[INFO] Slaloming started")
+
+            if time.time() - self.start_time < 2.0:
                 forward = 2.0
-                print(f"[INFO] Slaloming: Moving forward through the poles")
-                self.rows_completed += 1
-                
-            if self.rows_completed >= 3:
-                self.end = True
-                print("[INFO] Completed slalom through poles → ending")
-                
+                print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
             else:
-                self.state = "internal_searching"
-        
+                self.rows_completed += 1
+                print(f"[INFO] Slaloming complete → rows_completed={self.rows_completed}")
+                if self.rows_completed >= 3:
+                    self.end = True
+                    print("[INFO] Completed slalom through poles → ending")
+                else:
+                    self.state = "internal_searching"
+                self.start_time = None
+  
         elif self.state == "internal_searching":
             elapsed_time = time.time() - self.start_time
             yaw = 1.0 if int(elapsed_time / 0.5) % 2 == 0 else -1.0
