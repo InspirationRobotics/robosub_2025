@@ -74,8 +74,7 @@ class CV:
         forward = 0
         lateral = 0
         yaw = 0
-        vertical = 0
-
+        
         if self.state == "initial_search":
             if detection["status"]:
                 self.state = "centering"
@@ -155,7 +154,7 @@ class CV:
             else:
                 self.state = "internal_searching"
 
-        return forward, lateral, yaw, vertical
+        return forward, lateral, yaw
 
     def run(self, raw_frame, target, detections):
         
@@ -191,4 +190,4 @@ class CV:
         # cv2.imshow("Red Mask (Cleaned)", red_mask_clean)
 
         return {
-            "lateral": lateral, "forward": forward, "yaw": yaw, "vertical": vertical, "end": self.end}, frame
+            "lateral": lateral, "forward": forward, "yaw": yaw, "end": self.end}, frame
