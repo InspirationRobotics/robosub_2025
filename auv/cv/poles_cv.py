@@ -1,7 +1,6 @@
 """
 Pole Slalom CV. Detects red poles, yaws to face it, and approaches until close.
 """
-
 import cv2
 import time
 import numpy as np
@@ -79,9 +78,9 @@ class CV:
             if detection["status"]:
                 self.state = "centering"
             else:
-                # Spin in place to search
-                yaw = 1.0
-                print("[INFO] Searching: No red pole detected → yawing")
+                # # Spin in place to search
+                # yaw = 1.0
+                print("[INFO] Searching: No red pole detected")
 
         elif self.state == "centering":
             if detection["status"]:
@@ -185,9 +184,5 @@ class CV:
         # Draw state text
         cv2.putText(frame, f"State: {self.state}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-
-        # Optional: show red mask overlay (commented for headless runtime)
-        # cv2.imshow("Red Mask (Cleaned)", red_mask_clean)
-
         return {
             "lateral": lateral, "forward": forward, "yaw": yaw, "end": self.end}, frame
