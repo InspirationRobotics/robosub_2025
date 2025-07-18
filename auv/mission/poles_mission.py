@@ -79,10 +79,10 @@ class PoleSlalomMission:
 
             if end:
                 print("[INFO] Pole slalom mission complete.")
-                self.robot_control.movement(lateral=0, forward=0)
+                self.rc.movement(lateral=0, forward=0)
                 break
             else:
-                self.robot_control.movement(lateral=lateral, forward=forward, yaw=yaw)
+                self.rc.movement(lateral=lateral, forward=forward, yaw=yaw)
 
             time.sleep(0.01)
 
@@ -95,7 +95,7 @@ class PoleSlalomMission:
         for file_name in self.cv_files:
             self.cv_handler.stop_cv(file_name)
 
-        self.robot_control.movement(lateral=0, forward=0, yaw=0)
+        self.rc.movement(lateral=0, forward=0, yaw=0)
         print("[INFO] Pole Slalom mission terminated")
 
 

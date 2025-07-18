@@ -89,7 +89,7 @@ class CV:
                 offset = x_center - self.x_midpoint
 
                 if abs(offset) > self.tolerance:
-                    lateral = - 1.0 if offset > 0 else 1.0
+                    lateral = 1.0 if offset > 0 else -1.0
                     print(f"[INFO] Centering: offset={offset:.1f} → lateral={lateral}")
                 else:
                     print("[INFO] Centering: Pole centered → transitioning to approaching")
