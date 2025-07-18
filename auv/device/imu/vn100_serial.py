@@ -4,7 +4,7 @@ import time
 import threading
 
 from serial import Serial
-from transforms3d import euler2quat
+from transforms3d.euler import euler2quat
 
 from auv.utils import deviceHelper
 from sensor_msgs.msg import Imu
