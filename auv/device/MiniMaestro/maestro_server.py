@@ -78,12 +78,20 @@ class MaestroServer:
     def torpedoCallback(self, request):
         rospy.loginfo("launching torpedo")
 
-        if self.has_launched_torpedo:
-            self.maestro.set_pwm(*self.torpedo_state["firing_second"])
-        else:
+        if not self.has_launched_torpedo:
             self.maestro.set_pwm(*self.torpedo_state["firing_first"])
             self.has_launched_torpedo = True
 
+        elif not self.has_reloaded_torpedo:
+            self.maestro.set_pwm(*self.torpedo_state["firing_second"])
+            self.has_reloaded_torpedo = True
+
+        else:
+            # reset for the next cycle
+            self.maestro.set_pwm(*self.torpedo_state["reload_required"])
+            self.has_launched_torpedo = False
+            self.has_reloaded_torpedo = False
+            
         return TriggerResponse(
             success=True,
             message="Torpedo launched!"
