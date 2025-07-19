@@ -15,7 +15,7 @@ from auv.utils import deviceHelper
 class MaestroServer:
     def __init__(self, port=deviceHelper.dataFromConfig("polulu")):
         rospy.init_node('maestroServer')
-        self.maestro = MiniMaestro()
+        self.maestro = MiniMaestro(port=port)
 
         self.torpedo_state = {"firing_first": (2, 2400), "firing_second": (2, 1700), "reload_required": (2, 1300)}
         self.dropper_state = {"dropping_first": (1, 1600), "dropping_second": (1, 1200), "reload_required": (1, 700)}
