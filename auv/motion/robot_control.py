@@ -1,88 +1,95 @@
 """
-To control the robot by setting PWM values for each thruster. The class RobotControl publishes PWM values to the MAVROS topics.
+To control the robot by setting PWM values to auv/devices/thrusters. The class RobotControl publishes PWM values to the MAVROS topics.
 These MAVROS topics are predefined topics that the pixhawk subscribes to. RobotControl does not handle the interface between the 
 pixhawk flight controller and the software -- that is the job that pixstandalone.py does. 
 """
 
-import time
 
 # Import the MAVROS message types that are needed
+import rospy
+import std_msgs
+from std_msgs.msg import Float64, Float32MultiArray, String
 from geometry_msgs.msg import Twist
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Vector3Stamped
 import mavros_msgs.msg
 import mavros_msgs.srv
-import rospy
-from std_msgs.msg import Float64, Float32MultiArray, String
 from std_srvs.srv import Trigger
 import geometry_msgs.msg
 
-# Import the PID controller
-from simple_pid import PID
+
 
 # Get the mathematical functions that handle various navigation tasks from utils.py
-from .utils import get_distance, get_heading_from_coords, heading_error, rotate_vector, inv_rotate_vector
-from ..utils import deviceHelper # Get the configuration of the devices plugged into the sub(thrusters, camera, etc.)
-from ..device.dvl import dvl # DVL class that enables position estimation
-from ..device.fog import fog_interface as fog
-import math
-import numpy as np
+from auv.motion.utils import get_distance, get_heading_from_coords, heading_error, rotate_vector, inv_rotate_vector, get_norm
+from auv.utils import deviceHelper # Get the configuration of the devices plugged into the sub(thrusters, camera, etc.)
+from auv.utils import arm, disarm
+from auv.device.dvl import dvl # DVL class that enables position estimation
+from auv.device.fog import fog_interface as fog
 
-config = deviceHelper.variables # Get the configuration of the devices plugged into the sub(thrusters, camera, etc.)
+from simple_pid import PID
+from transforms3d.euler import euler2quat
+from transforms3d.euler import quat2euler
+import threading
+import numpy as np
+import time
+import math
+
+
+def clip(pwmMin:int, pwmMax:int, value:int):
+    """
+    A clip function to ensure the pwm is in the acceptable range
+
+    Args: 
+        pwmMin (int) : min pwm
+        pwmMax (int) : max pwm
+        value  (int) : calculated pwm
+    """
+    value = min(pwmMax,value)
+    value = max(pwmMin,value)
+    return value
 
 class RobotControl:
     """
     Class to control the robot
     """
 
-    def __init__(self, enable_dvl=True, enable_fog = False):
+    def __init__(self, debug=False):
         """
         Initialize the RobotControl class
 
         Args:
             enable_dvl (bool): Flag to enable or disable DVL
         """
+        self.rate = rospy.Rate(20) # 10 Hz
+        # Get the configuration of the devices plugged into the sub(thrusters, camera, etc.)
+        self.config     = deviceHelper.variables
+        self.debug      = debug   
+        self.lock       = threading.Lock()         
 
-        # Initialize the configuration of the devices, depth of the sub, compass of the sub, DVL
-        self.config = config
-        self.depth = self.config.get("INIT_DEPTH", 0.0)
-        self.compass = None
-
-        # Initialize vectornav variables
-        self.vectornav_pitch = None
-        self.vectornav_roll = None
-        self.vectornav_yaw = None
-
-        # dvl sensor setup (both subs)
-        if enable_dvl:
-            self.dvl = dvl.DVL()
-            self.dvl.start()
-        else:
-            self.dvl = None
-
-        fog_enable = enable_fog
-
-        self.fog = None
-
-        # Establish thruster and depth publishers
-        self.sub_compass = rospy.Subscriber("/auv/devices/compass", Float64, self.get_callback_compass)
-        self.vectornav = rospy.Subscriber("/auv/devices/vectornav", geometry_msgs.msg.Vector3, self.callback_vectornav)
-        self.sub_fog = rospy.Subscriber("/auv/devices/fog", Float64, self.get_callback_fog)
-        self.sub_depth = rospy.Subscriber("/auv/devices/baro", Float32MultiArray, self.callback_depth)
-        self.pub_thrusters = rospy.Publisher("auv/devices/thrusters", mavros_msgs.msg.OverrideRCIn, queue_size=10)
-        self.pub_depth = rospy.Publisher("auv/devices/setDepth", Float64, queue_size=10)
-        self.pub_rel_depth = rospy.Publisher("auv/devices/setRelativeDepth", Float64, queue_size=10)
-        self.pub_mode = rospy.Publisher("auv/status/mode", String, queue_size=10)
-        self.pub_button = rospy.Publisher("/mavros/manual_control/send", mavros_msgs.msg.ManualControl, queue_size=10)
-        self.pub_ang_vel = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel_unstamped", geometry_msgs.msg.Twist, queue_size=10)
+        # Store informaiton
+        self.sub            = deviceHelper.variables.get("sub")
+        self.mode           = "pid"
+        self.heading_control = False
+        self.position       = {'x':0,'y':0,'z':0}
+        self.orientation    = {'yaw':0,'pitch':0,'roll':0}   # in degrees, see self.pose_callback
+        self.service        = None   # ros service name to move servos
         
-        # TODO: reset pix standalone depth Integration param 
+        # Establish thruster and depth publishers
+        self.sub_pose       = rospy.Subscriber("/auv/state/pose", PoseStamped, self.pose_callback)  
+        self.pub_thrusters  = rospy.Publisher("/mavros/rc/override", mavros_msgs.msg.OverrideRCIn, queue_size=10)
+        self.pub_button     = rospy.Publisher("/mavros/manual_control/send", mavros_msgs.msg.ManualControl, queue_size=10)
 
+        # Create variable to store pwm when direct control
+        self.direct_input = [0] * 6
+        # store desire point
+        self.desired_point  = {"x":None,"y":None,"z":None,"yaw":None,"pitch":None,"roll":None}
         # A set of PIDs (Proportional - Integral - Derivative) to handle the movement of the sub
         """
         PIDs work by continously computing the error between the desired setpoint (desired yaw angle, forward velocity, etc.) and the 
         actual value. Based on this error, PIDs generate control signals to adjust the robot's actuators (in this case thrusters) to 
         minimize the desired setpoint. 
 
-        Video:  
+        Video: https://www.youtube.com/watch?v=wkfEZmsQqiA
 
         These definitions "tune" the PID controller for the necessities of the sub -- Proportional is tuned up high, which means greater 
         response to the current error but possible overshooting and oscillation
@@ -96,7 +103,21 @@ class RobotControl:
                 setpoint=0,
                 output_limits=(-1, 1),
             ),
-            "forward": PID(
+            "pitch": PID(
+                self.config.get("YAW_PID_P", 0.5),
+                self.config.get("YAW_PID_I", 0.1),
+                self.config.get("YAW_PID_D", 0.1),
+                setpoint=0,
+                output_limits=(-5, 5),   
+            ),
+            "roll": PID(
+                self.config.get("YAW_PID_P", 0.5),
+                self.config.get("YAW_PID_I", 0.1),
+                self.config.get("YAW_PID_D", 0.1),
+                setpoint=0,
+                output_limits=(-5, 5),   
+            ),
+            "surge": PID(
                 self.config.get("FORWARD_PID_P", 4.0),
                 self.config.get("FORWARD_PID_I", 0.01),
                 self.config.get("FORWARD_PID_D", 0.1),
@@ -110,79 +131,190 @@ class RobotControl:
                 setpoint=0,
                 output_limits=(-2, 2),
             ),
+            "depth": PID(
+                self.config.get("DEPTH_PID_P", 100),
+                self.config.get("DEPTH_PID_I", 10),
+                self.config.get("DEPTH_PID_D", 0.75),
+                setpoint=0,
+            ),  
         }
+
 
         # Wait for the topics to run
         time.sleep(1)
 
-    def get_callback_compass(self, msg):
-        def _callback_compass(msg):
-            """Get the compass heading from /auv/devices/compass topic"""
-            self.compass = msg.data
-            print(self.compass)
+        # Arm the robot
+        arm.arm()
 
-        def _callback_compass_dvl(msg):
-            """Get the compass heading from dvl"""
-            self.compass = msg.data
-            self.dvl.compass_rad = math.radians(msg.data)
+        # Run thread
+        self.running = True
+        self.thread = threading.Thread(target=self.publisherThread)
+        self.thread.daemon = True
+        self.thread.start()
 
-        # If DVL return compass data from the DVL, else from the compass
-        if self.dvl:
-            return _callback_compass_dvl
-        else:
-            return _callback_compass
-    
-    def callback_vectornav(self, msg):
-        self.vectornav_pitch = msg.x
-        self.vectornav_roll = msg.y
-        self.vectornav_yaw = msg.z
-    
-    def get_callback_fog(self, msg):
-        """Get the compass heading from /auv/devices/fog topic"""
-        self.fog = msg.data
+    def pose_callback(self, msg):
+        self.position['x'] = msg.pose.position.x
+        self.position['y'] = msg.pose.position.y
+        self.position['z'] = msg.pose.position.z
 
-    def callback_depth(self, msg):
-        """Get depth data from barometer /auv/devices/baro topic"""
-        self.depth = msg.data[0]
+        self.orientation['yaw']     = (msg.pose.orientation.z)
+        self.orientation['pitch']   = (msg.pose.orientation.y)
+        self.orientation['roll']    = (msg.pose.orientation.x)
 
-    def set_depth(self, d):
-        """Set depth to a given absolute value"""
-        depth = Float64()
-        depth.data = d
-        self.pub_depth.publish(depth)
-        print(f"[INFO] Depth set to {d}")
+    def publisherThread(self):
+        """
+        Publisher to publish the thruster values
+        """
+        # TODO add np clip protection to the pwms
+        while self.running and not rospy.is_shutdown():
+            if self.mode == "pid":
+                # Update desire pose
+                self.desired = {
+                    # Get desired X, Y, Z
+                    'x': self.desired_point["x"] if self.desired_point["x"] is not None else self.position['x'],
+                    'y': self.desired_point["y"] if self.desired_point["y"] is not None else self.position['y'],
+                    'z': self.desired_point["z"] if self.desired_point["z"] is not None else self.position['z'],
 
-    def set_relative_depth(self, delta_depth):
-        """Change the depth of the sub by a relative value (up 3 meters, down 3 meters, etc.)"""
-        rel_depth = Float64()
-        rel_depth.data = delta_depth
-        self.pub_rel_depth.publish(rel_depth)
-        print(f"[INFO] Changing Depth relatively by {delta_depth}, current {self.depth}")
-    
-    def set_mode(self, mode_input):
-        """Change the mode of the sub to specified mode"""
-        mode = String()
-        mode.data = mode_input
-        self.pub_mode.publish(mode)
-        print(f"[INFO] Changing mode to {mode}")
-    
-    def button_press(self, button=4):
-        """DO NOT USE. This simulates a button press on QGroundControl, primarily used to toggle roll/pitch
-        using unsigned 16 bit integer. Lowest bit is button 0, second lowest bit is button 1, etc.
-        BE WARNED that the sub disarms 3 seconds after any use of this method"""
-        press = mavros_msgs.msg.ManualControl()
-        press.buttons = button
-        self.pub_button.publish(press)
-    
+                    
+                    'yaw': self.desired_point["yaw"] if self.desired_point.get("yaw") is not None else self.orientation['yaw'],
+                    'pitch': self.desired_point["pitch"] if self.desired_point.get("pitch") is not None else self.orientation['pitch'],
+                    'roll': self.desired_point["roll"] if self.desired_point.get("roll") is not None else self.orientation['roll'],
+                }
 
-    def movement(
+                # Calculate error
+                errors = {
+                    "x": self.desired["x"] - self.position['x'],
+                    "y": self.desired["y"] - self.position['y'],
+                    "z": self.desired["z"] - self.position['z'],
+                    "yaw": self.desired["yaw"] - self.orientation['yaw'] if self.desired['yaw'] > self.orientation['yaw'] else self.orientation['yaw'] - self.desired['yaw'],
+                    "pitch": self.desired["pitch"] - self.orientation['pitch'],
+                    "roll": self.desired["roll"] - self.orientation['roll'],
+                }
+
+                # Set the PWM values
+                # Original PID outputs in world frame
+                
+                lateral_pwm_world = self.PIDs["lateral"](errors["x"])
+                surge_pwm_world   = self.PIDs["surge"](errors["y"])
+                depth_pwm_world   = self.PIDs["depth"](errors["z"])
+
+
+                yaw = self.orientation["yaw"]
+                pitch = self.orientation["pitch"]
+                roll = self.orientation["roll"]
+
+                # Rotation matrix from world to body frame
+                R = np.array([
+                    [
+                        math.cos(yaw)*math.cos(pitch),
+                        math.sin(yaw)*math.cos(pitch),
+                        -math.sin(pitch)
+                    ],
+                    [
+                        math.cos(yaw)*math.sin(pitch)*math.sin(roll)-math.sin(yaw)*math.cos(roll),
+                        math.sin(yaw)*math.sin(pitch)*math.sin(roll)+math.cos(yaw)*math.cos(roll),
+                        math.cos(pitch)*math.sin(roll)
+                    ],
+                    [
+                        math.cos(yaw)*math.sin(pitch)*math.cos(roll)+math.sin(yaw)*math.sin(roll),
+                        math.sin(yaw)*math.sin(pitch)*math.cos(roll)-math.cos(yaw)*math.sin(roll),
+                        math.cos(pitch)*math.cos(roll)
+                    ]
+                ])
+
+                pwm_world = np.array([surge_pwm_world, lateral_pwm_world, depth_pwm_world])
+                pwm_body = R.T @ pwm_world
+
+                surge_pwm_body, lateral_pwm_body, depth_pwm_body = pwm_body
+
+                yaw_pwm   = self.PIDs["yaw"](errors["yaw"])
+                pitch_pwm = self.PIDs["pitch"](errors["pitch"]) if "pitch" in self.PIDs else 0
+                roll_pwm  = self.PIDs["roll"](errors["roll"]) if "roll" in self.PIDs else 0
+
+                self.__movement(
+                    lateral=lateral_pwm_body,
+                    forward=surge_pwm_body,
+                    vertical=depth_pwm_body,
+                    yaw=yaw_pwm,
+                    pitch=pitch_pwm,
+                    roll=roll_pwm
+                )
+            
+            elif self.mode=="depth_hold":
+                
+                # Set depth PWM value
+                if self.sub=="graey":
+                    depth_pwm = (self.PIDs['depth'](self.position['z']) * -1) /80.0
+                elif self.sub=="onyx":
+                    depth_pwm = (self.PIDs['depth'](self.position['z']))/80.0
+                else:
+                    depth_pwm = (self.PIDs['depth'](self.position['z']) * -1) /80.0
+
+                # Calculate heading error
+                if self.desired_point['yaw'] is not None:
+                    error = heading_error(heading=self.orientation['yaw'], target=self.desired_point['yaw'])
+                else:
+                    error =0
+
+
+                with self.lock:
+                    pitch_pwm   = self.direct_input[0]
+                    roll_pwm    = self.direct_input[1]
+                    yaw_pwm     = self.direct_input[3] if not self.heading_control else self.PIDs["yaw"](-error / 180) 
+                    surge_pwm   = self.direct_input[4]
+                    lateral_pwm = self.direct_input[5]
+
+                self.__movement(
+                    lateral=lateral_pwm,
+                    forward=surge_pwm,
+                    vertical=depth_pwm,
+                    yaw=yaw_pwm,
+                    pitch=pitch_pwm,
+                    roll=roll_pwm
+                )            
+            else:
+                rospy.logerr("Invalid control mode")
+            self.rate.sleep()
+
+    def movement(        
         self,
         yaw=None,
         forward=None,
         lateral=None,
         pitch=None,
         roll=None,
-        vertical=0,
+        vertical=None,
+        **kwargs,
+    ):
+        """
+        A function that sets the pwms and not sending pwm directly to mavros topic, it's for easier interface
+        Args:
+            yaw (float): Power for the yaw maneuver
+            forward (float): Power to move forward
+            lateral (float): Power for moving laterally (negative one way (less than 1500), positive the other way (more than 1500))
+            pitch (float): Power for the pitch maneuver
+            roll (float): Power for the roll maneuver
+            vertical (float): Distance to change the depth by
+        
+        """
+        channels = [0] * 6
+        channels[0] = pitch if pitch else 0
+        channels[1] = roll if roll else 0
+        channels[2] = vertical if vertical else 0
+        channels[3] = yaw  if yaw else 0
+        channels[4] = forward if forward else 0
+        channels[5] = lateral if lateral else 0
+        with self.lock:
+            self.direct_input = channels
+
+    def __movement(
+        self,
+        yaw=None,
+        forward=None,
+        lateral=None,
+        pitch=None,
+        roll=None,
+        vertical=None,
         **kwargs,
     ):
         """
@@ -197,83 +329,99 @@ class RobotControl:
             pitch (float): Power for the pitch maneuver
             roll (float): Power for the roll maneuver
             vertical (float): Distance to change the depth by
-
-        # TODO Handle timeout of the pixhawk
         """
 
+        
+        # Create a message to send to the thrusters
         pwm = mavros_msgs.msg.OverrideRCIn()
 
         # Calculate PWM values
         channels = [1500] * 18
-        # channels[2] = int((vertical * 80) + 1500) if vertical else 1500
+        channels[0] = int((pitch * 80) + 1500) if pitch else 1500
+        channels[1] = int((roll * 80) + 1500) if roll else 1500
+        channels[2] = int((vertical * 80) + 1500) if vertical else 1500  
         channels[3] = int((yaw * 80) + 1500) if yaw else 1500
         channels[4] = int((forward * 80) + 1500) if forward else 1500
         channels[5] = int((lateral * 80) + 1500) if lateral else 1500
 
-        # TODO: Implement correct pitch/roll channels w/ QGroundControl
-        channels[0] = int((pitch * 80) + 1500) if pitch else 1500
-        channels[1] = int((roll * 80) + 1500) if roll else 1500
+        # Clip the numbers to ensure in range
+        for i,num in enumerate(channels):
+            channels[i] = clip(1100,1900,num)
+        
         pwm.channels = channels
 
         # Publish PWMs to /auv/devices/thrusters
-        # print(f"[INFO] Channels sent to pixhawk = {pwm}")
-        if vertical!=0: self.set_relative_depth(vertical)
-        self.pub_thrusters.publish(pwm)
+        if self.debug:
+            rospy.loginfo(f"pwms : {channels[0:6]} | input: {[pitch,roll,vertical,yaw,forward,lateral]}")
+        else:
+            self.pub_thrusters.publish(pwm)
 
-    def set_heading(self, target: int, heading_sensor="pix_compass"):
+    def activate_heading_control(self, activate:bool):
+        self.heading_control = activate
+
+    def set_control_mode(self, msg:String):
         """
-        Yaw to the target heading; target heading is absolute (not relative)
-        This is a blocking function
-        
+        Callback function to handle the control mode of the robot.
+
         Args:
-            target (int): Absolute desired heading 
-            fog (boolean): Whether to use FOG (True) or compass (False)
+            msg (String): The control mode command. Expected values are:
+                        - "pid" for PID control
+                        - "direct" for direct thruster control
         """
-        # Mod the target to make sure it is between 0 - 359 degrees
+        self.reset()
+        
+        if msg=="pid":
+            self.mode = msg
+            rospy.loginfo("Set to pid control mode")
+        elif msg=="depth_hold":
+            self.mode = msg
+            rospy.loginfo("Set to depth hold mode")
+        else:
+            self.mode = "direct"
+            rospy.logewarn("Control mode not found")
+        
+    def set_absolute_z(self, depth):
+        """
+        Set the depth of the robot
+
+        Args:
+            depth (float): Depth to set the robot to
+        """
+        # Clear the PID error
+        self.PIDs["depth"].reset()
+        self.PIDs["depth"].setpoint = depth
+    
+    def set_absolute_x(self, x):
+        """
+        Set the x position of the robot
+
+        Args:
+            x (float): X position to set the robot to
+        """
+        # Clear the PID error
+        self.PIDs["lateral"].reset()
+        self.desired_point["x"] = -x
+
+    def set_absolute_y(self, y):
+        """
+        Set the y position of the robot
+
+        Args:
+            y (float): Y position to set the robot to
+        """
+        # Clear the PID error
+        self.PIDs["surge"].reset()
+        self.desired_point["y"] = -y
+
+    def go_to_heading(self, target):
         target = (target) % 360
         print(f"[INFO] Setting heading to {target}")
-        time_check = time.time()
         self.prev_error = None
         while not rospy.is_shutdown():
-            if heading_sensor == "fog":
-                if self.fog is None:
-                    print("[WARN] FOG not ready")
-                    time.sleep(0.5)
-                    continue
-                error = heading_error(self.fog, target)
-            elif heading_sensor == "pix_compass":
-                if self.compass is None:
-                    print("[WARN] Compass not ready")
-                    time.sleep(0.5)
-                    continue
-                error = heading_error(self.compass, target)
-            elif heading_sensor == "vectornav_imu":
-                if self.vectornav_yaw is None:
-                    print("[WARN] Vectornav IMU Not ready")
-                    time.sleep(0.5)
-                    continue
-                error = heading_error(self.vectornav_yaw, target)
-            # else:
-            #     print("[WARN] Unknown sensor specified")
 
-                
+            error = heading_error(self.orientation['yaw'], target)
 
-            # Break the function if the error hasn't changed 
-            # by 3 degrees over 3 secs - prevents the AUV from getting
-            # stuck at an "incorrect" heading
-            if time.time() - time_check > 3:
-                time_check = time.time()
-                if self.prev_error is None:
-                    self.prev_error = error
-                elif abs(error - self.prev_error) < 3:
-                    break
-                else:
-                    self.prev_error = error
-
-            # Normalize error to the range -1 to 1 for the PID controller
             output = self.PIDs["yaw"](-error / 180)
-
-            # print(f"[DEBUG] Heading error: {error}, output: {output} {self.compass} {target}")
 
             if abs(error) <= 5:
                 print("[INFO] Heading reached")
@@ -283,19 +431,7 @@ class RobotControl:
             time.sleep(0.1)
 
         print(f"[INFO] Finished setting heading to {target}")
-    
-    def get_heading(self, sensor="pix_compass") -> int:
-        """Returns a compass heading. This may be helpful if you need
-        to save a heading to re-orient the sub later"""
-        if sensor == "pix_compass":
-            return self.compass
-        elif sensor == "vectornav_imu":
-            return self.vectornav_yaw
-        elif sensor == "fog":
-            return self.fog
-        else:
-            print("[WARN] Unknown sensor specified")
-    
+            
     def move_servo(self, service: str):
         """Operate a servo via the maestro_server file
         Args:
@@ -318,439 +454,157 @@ class RobotControl:
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
-    def setHeadingOld(self, target: int):
+    def set_absolute_yaw(self, yaw:float):
         """
-        Yaws until the sub reaches desired heading
-        This function is deprecated
+        Set the heading of the robot
 
         Args:
-            target (int): Absolute (not relative) desired target heading
+            yaw (float): robot desired yaw angle, unit: degrees
         """
-        pwm = mavros_msgs.msg.OverrideRCIn()
-        pwm.channels = [1500] * 18
-        target = (target) % 360
-
-        # dir variable is the direction -- 1 is clockwise, -1 is counterclockwise
-        while not rospy.is_shutdown():
-            current = int(self.compass)
-            dir = 1  # cw
-            diff = abs(target - current)
-            # Switch the direction of the yaw since going the other way will be faster (since there are 360 degrees in a circle)
-            if diff >= 180:
-                dir *= -1
-            if current > target:
-                dir *= -1
-            if diff >= 180:
-                diff = 360 - diff
-            # If farther from desired heading, speed will increase, if close to desired heading, speed will decrease
-            # Note how this has to be handled manually (there is no PID controller implemented in this function)
-            if diff <= 10:
-                speed = 55
-            else:
-                speed = 70
-            # Once compass is within 2 degrees of desired heading, publish PWMs to stop yawing
-            if diff <= 1:
-                pwm.channels[3] = 1500
-                self.pub_thrusters.publish(pwm)  # Publishing pwms to stop yawing
-                break
-            else:
-                pwm.channels[3] = 1500 + (dir * speed)
-                self.pub_thrusters.publish(pwm)  # Publishing pwms to continue yawing
-
-    def navigate_dvl(self, x, y, z, end_heading=None, relative_coord=True, relative_heading=True, update_freq=10):
+        self.desired_point['yaw'] = yaw % 360
+        rospy.loginfo(f"Set desire heading to {yaw%360}")
+            
+    def set_absolute_pitch(self,pitch):
         """
-        To navigate using the DVL to a specific point. This includes 3-D mobility (forward, lateral, depth), not just 1-D (forward or backward). Since this method is complex 
-        and requires the compass to work perfectly, if we want to move forward and only move forward or backward, use forward_dvl instead. The compass
-        should be calibrated in order to run.
-
-        This is a blocking function
+        Set the pitch angle of the robot
 
         Args:
-            x (float): distance in meters to move laterally
-            y (float): distance in meters to move forward by
-            z (depth): depth to move to
-
-            **x and y are by default relative to the current position and heading; z on the other hand is absolute
-
-            end_heading (optional, int): the heading to reach at the end of the navigation. It defaults to the heading necessary to reach the target point 
-            from the starting point in a straight line
-
-            relative_coord (bool): flag indicating whether the coordinates are relative or not
-            relative_heading (bool): flag indicating whether the coordinates should be rotated by the relative heading
-            update_freq (int): the frequency at which the PID controllers are updated (in Hz)
+            pitch (float): robot desired pitch angle, unit: degrees
         """
+        self.PIDs["pitch"].reset()
+        self.desired_point["pitch"] = np.deg2rad(pitch)
 
-        if self.dvl is None:
-            print("[ERROR] DVL not available, cannot navigate")
-            return
-
-        # Reset the PID integrals (this resets Proportional, Integral, and Derivative controllers)
-        for pid in self.PIDs.values():
-            pid.reset()
-
-        if not relative_coord:
-            # Heading 0 is north, so the positive side of the y-axis is going towards the north
-            # Change position of target coordinates to coordinates relative to the current position of the sub
-            x -= self.dvl.position[0]
-            y -= self.dvl.position[1]
-
-        if relative_heading:
-            # Rotate the vector [x, y] by the current heading (to make the heading relative)
-            x, y = rotate_vector(x, y, self.vectornav_yaw if self.vectornav_yaw is not None else self.compass)
-
-        # Get the setpoint (target) heading from the relative coordinates
-        target_heading = get_heading_from_coords(x, y)
-        print(f"[INFO] Navigating to {x}, {y}, {z}, {target_heading}deg current {self.compass}")
-
-        # Rotate to the heading and set the depth of the sub
-        self.set_heading(target_heading)
-        self.set_depth(z)
-
-        # Enter a local scope to handle the coordinates cleanly
-        with self.dvl:
-            # Set the depth independently
-            self.set_depth(z)
-
-            # Navigate to the target point 
-            while not rospy.is_shutdown():
-                if not self.dvl.is_valid:
-                    print("[WARN] DVL data not valid, skipping")
-                    time.sleep(0.5)
-                    continue
-
-                # Ensure the position data is avaliable
-                if not self.dvl.data_available:
-                    continue
-                self.dvl.data_available = False
-
-                # Get the x and y error by rotating the vector by finding the difference between the x and y coordinates of the current position and the target position
-                # Does this by rotating the vector [x_error, y_error] by the current heading (the function inv_rotate_vector() is in utils.py)
-                err_x, err_y = inv_rotate_vector(
-                    x - self.dvl.position[0],
-                    y - self.dvl.position[1],
-                    self.compass,
-                )
-
-                # Check if the target coordinates have been reached
-                x_err_th = 0.1 + self.dvl.error[0]
-                y_err_th = 0.1 + self.dvl.error[1]
-                if abs(err_x) <= x_err_th and abs(err_y) <= y_err_th:
-                    print("[INFO] Target reached")
-                    break
-
-                # Calculate PID outputs
-                output_x = self.PIDs["lateral"](-err_x)
-                output_y = self.PIDs["forward"](-err_y)
-                print(f"[DEBUG] err_x={err_x}, err_y={err_y}, output_x={output_x}, output_y={output_y}")
-                self.movement(lateral=output_x, forward=output_y)
-
-    def forward_dvl(self, distance, pid=True, throttle=None):
+    def set_absolute_roll(self,roll):
         """
-        Move forward using the DVL.
-        This is a blocking function.
+        Set the roll angle of the robot
 
         Args:
-            throttle (float): power at which to move forward at
-            distance (float): distance in meters to move forward by
-            pid (boolean): Whether to use PID (True) or numpy.clip() (False)
+            roll (float): desired roll angle, unit: degrees
         """
-        if self.dvl is None:
-            print("[ERROR] DVL not available, cannot navigate")
-            return
+        self.PIDs["roll"].reset()
+        self.desired_point["roll"] = np.deg2rad(roll)
 
-        print(f"[INFO] Moving forward {distance}m at throttle {throttle}")
-
-        # Enter a local scope to handle coordinates cleanly
-        with self.dvl:
-            curr_time = time.time()
-            prev_time = None
-            # Navigate to the target point
-            while not rospy.is_shutdown():
-                time.sleep(0.25)
-                if not self.dvl.is_valid:
-                    print("[WARN] DVL data not valid, skipping")
-                    time.sleep(0.1)
-                    continue
-                # Ensure position data is updated/avaliable
-                if not self.dvl.data_available:
-                    continue
-                self.dvl.data_available = False
-
-                # Find the y-axis error (recall that the y-axis is the forward-backwards dimension)
-                y = self.dvl.position[1]
-                error = distance - y
-
-                # Check if the target has been reached
-                if abs(error) <= 0.1:
-                    print("[INFO] Target reached")
-                    break
-                # Apply gain to the error and clip by the maximum throttle value(s)
-                if pid:
-                    forward_output = self.PIDs["forward"](-error)
-                else:
-                    forward_output = np.clip(error * 4, -throttle, throttle)
-
-                # Move forward using the PWM calculations in the movement function
-                self.movement(forward=forward_output)
-
-    def lateral_dvl(self, distance, pid=True, throttle=None):
+    def set_relative_z(self, depth):
         """
-        Move laterally using the DVL -- this contains the exact same method as forward_dvl except the x, not y-axis is used.
-        This is a blocking function.
+        Set the depth of the robot relative to the current depth
 
         Args:
-            throttle (float): power to move at
-            distance (float): distance to move laterally (in meters)
+            depth (float): Relative depth to set the robot to (-2 means up, 2 means down)
         """
-        if self.dvl is None:
-            print("[ERROR] DVL not available, cannot navigate")
-            return
+        # Clear the PID error
+        self.PIDs["depth"].reset()
+        self.desired_point["z"] = depth + self.pose.pose.position.z
 
-        print(f"[INFO] Moving laterally {distance}m at throttle {throttle}")
-
-        # Enter a local scope to handle coordinates nicely
-        with self.dvl:
-            # Navigate to the target point
-            while not rospy.is_shutdown():
-                time.sleep(0.1)
-                if not self.dvl.is_valid:
-                    print("[WARN] DVL data not valid, skipping")
-                    time.sleep(0.1)
-                    continue
-
-                # Ensure position data is updated/avaliable
-                if not self.dvl.data_available:
-                    continue
-                self.dvl.data_available = False
-
-                # Calculate the error between the current and target x-coordinates (recall that the x-axis is the lateral dimension)
-                x = self.dvl.position[0]
-                error = distance - x
-
-                # Check if we reached the target
-                if abs(error) <= 0.1:
-                    print("[INFO] Target reached")
-                    break
-                
-                # Apply gain and clip at the maximum throttle value(s)
-                if pid:
-                    lateral_output = self.PIDs["lateral"](-error)
-                else:
-                    lateral_output = np.clip(error * 4, -throttle, throttle)
-                print(f"[DEBUG] error={error}, lateral_output={lateral_output}")
-
-                # Move laterally using PWM values
-                self.movement(lateral=lateral_output)
-
-    def forwardHeading(self, power, t):
+    def set_relative_x(self, x):
         """
-        Moves forward at a specific power for a duration of time, with a backstop method (method for gradually decreasing the speed of a vehicle to allow precise movements).
+        Set the x position of the robot relative to the current position
 
         Args:
-            power (float): the power to move at
-            t (float): duration of movement (in seconds)
-
-        Equations for power levels:
-            Power 1: 7.8t + 3.4 (in inches)
-            Power 2: 21t + 0.00952
-            Power 3: 32.1t - 18.7
+            x (float): Relative x position to set the robot to (-2 means left, 2 means right)
         """
-        
-        forwardPower = (power * 80) + 1500  # Calculating PWM values for forward thrusters
-        if t > 3:  # Designating time for the backstop so that inertia does not increase the distance travelled by the sub
-            timeStop = t / 6
-        else:
-            timeStop = 0.5
+        # Clear the PID error
+        self.PIDs["lateral"].reset()
+        self.desired_point["x"] = x + self.pose.pose.position.x
 
-        # t = t + timeStop # this doesn't make sense because this increases time over long distance
-
-        # Power to stop the sub's forward momentum (less than 1500 is reverse)
-        powerStop = 1500 - (power * 40)
-
-        # Create and publish PWM values for moving forward
-        pwm = mavros_msgs.msg.OverrideRCIn()
-        pwm.channels = [1500] * 18
-        pwm.channels[4] = forwardPower
-
-        # For the amount of time specified, move forward by publishing PWMs continuously to the thrusters
-        startTime = time.time()
-        while time.time() - startTime < t:
-            self.pub_thrusters.publish(pwm)  # Publishing PWMs for forward commands to thrusters
-            time.sleep(0.1)
-
-        print("[INFO] finished forward")
-        # Calculating gradual decrease of thruster power
-        gradDec = int((forwardPower - powerStop) / (timeStop * 10))
-        startTime = time.time()
-        # Gradually decreasing forward thruster power (PWMs) for the designated time calculated above
-        while time.time() - startTime < timeStop:
-            current_p = pwm.channels[4]
-            pwm.channels[4] = current_p - gradDec
-            self.pub_thrusters.publish(pwm)  # Publishing reduced PWMs for continued reduced forward thrust
-            time.sleep(0.1)
-
-        t2 = 0
-        print("[INFO] finished backstopping")
-        # Create neutral channels (1500 is the neutral value)
-        pwm.channels = [1500] * 18
-        startTime = time.time()
-        # Publishing idle PWMs for 0.5 secs to stop the sub
-        while time.time() - startTime <= 0.5:
-            self.pub_thrusters.publish(pwm)
-            time.sleep(0.05)
-        print("[INFO] finished forward heading")
-
-    def lateralUni(self, power, t):
+    def set_relative_y(self, y):
         """
-        Calls the universal backstop function for lateral movement
+        Set the y position of the robot relative to the current position
 
         Args:
-            power (float): power for the movement
-            t (float): duration of the movement (in s)
+            y (float): Relative y position to set the robot to (-2 means left, 2 means right)
         """
-        forwardPower = (power * 80) + 1500
-        pwm = mavros_msgs.msg.OverrideRCIn()
-        pwm.channels = [1500] * 18
-        pwm.channels[5] = int(forwardPower)
-        startTime = time.time()
-        while time.time() - startTime < t:
-            self.pub_thrusters.publish(pwm)
-            time.sleep(0.1)
-        self.backStop(pwm, t) # Universal backstop
+        # Clear the PID error
+        self.PIDs["surge"].reset()
+        self.desired_point["y"] = y + self.pose.pose.position.y
 
-    def forwardUni(self, power, t):
+    def set_relative_yaw(self, yaw):
         """
-        Calls the universal backstop function for forward movement
+        Set the heading of the robot relative to the current heading
 
         Args:
-            power (float): power for the movement
-            t (float): duration of the movement (in s)
+            yaw (float): Relative heading to set the robot to (-2 means left, 2 means right), unit: degrees
         """
-        forwardPower = (power * 80) + 1500
-        pwm = mavros_msgs.msg.OverrideRCIn()
-        pwm.channels = [1500] * 18
-        pwm.channels[4] = int(forwardPower)
-
-        # If the sub is Graey calculate the PWM differently (go to channel 5 instead of 4 and subtract by power)
-        if config.get("sub", "onyx") == "graey":
-            pwm.channels[5] = 1500-int(power*7)
-        startTime = time.time()
-        while time.time() - startTime < t:
-            self.pub_thrusters.publish(pwm)
-            time.sleep(0.1)
-        self.backStop(pwm, t) # Universal backstop
-
-    def mapping(self, x, in_min, in_max, out_min, out_max):
-        """
-        Map a value from one range onto another
-
-        Args:
-            x (float): value to be mapped
-            in_min (float): minimum value of the input range
-            in_max (float): maximum value of the input range
-            out_min (float): minimum value of the output range
-            out_max (float): maximum value of the output range
-        
-        Returns:   
-            float: mapped value
-        """
-        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+        # Clear the PID error
+        self.PIDs["yaw"].reset()
+        self.desired_point["yaw"] = yaw + self.orientation['yaw']
     
-
-    def backStop(self, pwm, t):
+    def set_relative_pitch(self, pitch):
         """
-        Universal backstop mechanism that is given a PWM value to reduce and overall time of movement which calculates
-        inertia and sends negative PWM commands to the thrusters for reverse thrust to stop the sub.
+        Set the heading of the robot relative to the current heading
 
         Args:
-            pwm (int): the PWM value
-            t (float): the duration of the movement (not for the backstop, but for the total movement)
+            pitch (float): Relative pitch to set the robot to, unit: degrees
         """
-        # Designate the time for backstopping
-        if t > 3:
-            timeStop = t / 6
-        else:
-            timeStop = 0.5
-        
-        # Initialize neutral channels
-        maxPower = [1500] * 18
-        powerStop = [1500] * 18
+        # Clear the PID error
+        self.PIDs["pitch"].reset()
+        self.desired_point["pitch"] = np.deg2rad(pitch) + self.orientation['pitch']
 
-        # Calculate maximum power and power to stop for each channel
-        for i in range(len(pwm.channels)):
-            if pwm.channels[i] != 1500:
-                maxPower[i] = pwm.channels[i] # Don't go higher than the current value
-                powerStop[i] = (1500 - pwm.channels[i]) / 2 + 1500 # To stop, cut the gain (current movement value - neutral) from neutral in half and reverse it (for reverse thrust)
-        
-        # Gradually decrease PWMs to stop the sub
-        startTime = time.time()
-        while time.time() - startTime <= timeStop:
-            for i in range(len(pwm.channels)):
-                # Map the time left from the range of the time calculated for backstopping onto the current PWM movement value to PWM value to reverse thrust
-                # As the time duration for the backstop goes up, the amount of reverse thrust will increase (PWM will go down)
-                if pwm.channels[i] != 1500:
-                    pwm.channels[i] = int(
-                        self.mapping(
-                            time.time() - startTime,
-                            0,
-                            timeStop,
-                            maxPower[i],
-                            powerStop[i],
-                        )
-                    )
-            self.pub_thrusters.publish(pwm)
-            time.sleep(0.05)
-        
-        # Set at neutral PWMs to stop the sub completely
-        pwm.channels = [1500] * 18
-        startTime = time.time()
-        while time.time() - startTime <= 0.5:
-            self.pub_thrusters.publish(pwm)
-            time.sleep(0.05)
-        print("[INFO] finished backstopping")
-
-    # uses functions from testing to correlate pwms and time to distance and then utilizes forwardHeadingUni commmand to send pwms to thrusters for calculated pwms and time
-    def forwardDist(self, dist, power):
+    def set_relative_roll(self, roll):
         """
-        Move the sub forward by a certain distance at a certain power -- uses functions created through testing to correlate the PWM value
-        and time necessary to move a certain distance, then calls ForwardUni() to move that distance.
+        Set the heading of the robot relative to the current heading
 
         Args:
-            dist (float): distance to move forward (in meters)
-            power (float): power level for forward movement 
+            roll (float): Relative heading to set the robot to, unit: degrees
         """
-        # Convert distance from meters to inches
-        inches = 39.37 * dist
-        print(power, inches)
-        eqPower = abs(round(power))
-        time = 0
-        # Calculate the amount of time needed based on the power level
-        if eqPower >= 3:
-            inches = inches - 9.843
-            time = (inches + 18.7) / 32.1
-        elif eqPower == 2:
-            time = (inches - 0.01) / 21
-        elif eqPower == 1:
-            time = (inches - 3.4) / 7.8
-        # Move forward for the specified time and at the specified power
-        self.forwardUni(power, time)
+        # Clear the PID error
+        self.PIDs["roll"].reset()
+        self.desired_point["roll"] = np.deg2rad(roll) + self.orientation['roll']
+
+    def waypointNav(self,x,y):
+        if self.mode=="depth_hold":
+            self.heading_control = False
+            reached = False
+            
+            try:
+                rospy.loginfo("Waypoint loop starting")
+                while not reached and not rospy.is_shutdown():
+                    with self.lock:
+                        dx = x - self.position['x']
+                        dy = y - self.position['y']
+                    D = get_norm(dx,dy)
+                    if D < 1:
+                        reached = True
+                        rospy.loginfo("Reach waypoint or got interupted")
+                    current_heading = self.orientation['yaw'] % 360
+                    target_heading  = get_heading_from_coords(dx,dy)
+                    yaw_error = heading_error(current_heading, target_heading)
+                    yaw_pwm = self.PIDs["yaw"]( - yaw_error / 180)
+                    surge_pwm = max(min(D/5.0,1) * 1.5,0.5)
+
+                    rospy.loginfo(f"distance away: {D}")
+                    rospy.loginfo(f"yaw pwm: {yaw_pwm}, forward pwm: {surge_pwm}")
+                    self.movement(yaw=yaw_pwm,forward=surge_pwm)
+                    time.sleep(0.1)
+            except KeyboardInterrupt as e:
+                reached = True
+
+    def reset(self):
+        for key, pid in self.PIDs.items():
+                pid.reset()
+        
+        self.desired_point  = {"x":None,"y":None,"z":None,"yaw":None,"pitch":None,"roll":None}
+        self.direct_input = [0] * 6
+
+    def exit(self):
+        """
+        Exit the robot control
+        """
+        # Stop the robot
+        self.__movement()
+        # Stop the thread
+        self.running = False
+        # Wait for thread to stop
+        if self.thread.is_alive():
+            self.thread.join(timeout=2.0)
+        # Stop the node
+        disarm.disarm()
+        rospy.loginfo("[RobotControl] Shutdown complete.")
+
 
     
-    def roll(self, power=3, set_time=5):
-        """DO NOT USE - THIS DOES NOT WORK. Meant to roll with specified 
-        time and power, with toggle continuously being pressed"""
-        start_time = time.time()
-        button_number = 256 # Most likely?
-        print("[INFO] Starting roll.")
-        while time.time() - start_time < set_time:
-            self.button_press(button_number)
-            self.movement(lateral=power)
-        print("[INFO] Roll terminated.")
+    
 
-    def roll2(self, roll_vel=1):
-        """DO NOT USE - THIS DOES NOT WORK. Meant to 
-        publish a roll velocity in rad/sec"""
-        roll_cmd = geometry_msgs.msg.Twist()
-        roll_cmd.angular.x = roll_vel
-        self.pub_ang_vel.publish(roll_cmd)
 
+
+
+    

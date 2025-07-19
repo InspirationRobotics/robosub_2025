@@ -49,6 +49,7 @@ void loop() {
     digitalWrite(7,LOW);
     delay(18);
     delayMicroseconds(500);
+
     // Neutral 1500us PWM to all servos
     for (int i = 0; i < numServos; i++) {
       servos[i].writeMicroseconds(1500);    

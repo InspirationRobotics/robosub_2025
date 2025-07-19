@@ -10,6 +10,7 @@ testing_data/
 *.log
 *.csv
 *.txt
+*.bag
 
 # swap, pycache and egg-info
 *.pyc

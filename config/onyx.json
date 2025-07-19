@@ -12,10 +12,12 @@
     "ping_port": "platform-3610000.xhci-usb-0:2.1.2:1.0",
     "teensy_port": "platform-3610000.xhci-usb-0:2.2.1:1.0",
     "battery_indicator": false,
-    "depth_pid_params": [
-        150,
-        20,
-        2
-    ],
-    "depth_pid_offset": 1480
+    "DEPTH_PID_P" : 150,
+    "DEPTH_PID_I" : 20,
+    "DEPTH_PID_D" : 2,
+    "YAW_PID_P" : 12,
+    "YAW_PID_I" : 0.01,
+    "YAW_PID_D" : 0.0,
+    "depth_pid_offset": 1480,
+    "modem_address": "020"
 }

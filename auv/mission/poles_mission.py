@@ -6,22 +6,23 @@ import json
 import rospy
 from std_msgs.msg import String
 
-from ..device import cv_handler  # For running mission-specific CV scripts
-from ..motion import robot_control  # For running the motors on the sub
-from ..utils import disarm
+from auv.device import cv_handler  # For running mission-specific CV scripts
+from auv.motion import robot_control  # For running the motors on the sub
+from auv.utils import disarm
 
 
 class PoleSlalomMission:
-    cv_files = ["pole_cv"]  # Name of your red pole CV script file (no .py extension)
-
-    def __init__(self, target=None, **config):
+    # Name of your red pole CV script file (no .py extension)
+    def __init__(self, target="right", **config):
         """
         Initialize the mission class; configure everything needed in the run function.
         """
+        self.cv_files = ["poles_cv"]
         self.config = config
         self.data = {}
         self.next_data = {}
         self.received = False
+        self.target = target
 
         self.robot_control = robot_control.RobotControl()
         self.cv_handler = cv_handler.CVHandler(**self.config)
@@ -29,7 +30,7 @@ class PoleSlalomMission:
         for file_name in self.cv_files:
             self.cv_handler.start_cv(file_name, self.callback)
 
-        self.cv_handler.set_target("pole_cv", target)
+        self.cv_handler.set_target("poles_cv", target)
         print("[INFO] Pole Slalom Mission Init")
 
     def callback(self, msg):
@@ -44,15 +45,14 @@ class PoleSlalomMission:
         Run the pole slalom mission loop.
         """
         print("[INFO] Pole Slalom mission running")
-        rate = rospy.Rate(10)  # 10 Hz
 
         while not rospy.is_shutdown():
             if not self.received:
-                rate.sleep()
+                time.sleep(0.01)
                 continue
 
-            for key in self.next_data:
-                if key in self.data:
+            for key in self.next_data.keys():
+                if key in self.data.keys():
                     self.data[key].update(self.next_data[key])
                 else:
                     self.data[key] = self.next_data[key]
@@ -60,13 +60,13 @@ class PoleSlalomMission:
             self.received = False
             self.next_data = {}
 
-            cv_data = self.data["pole_cv"]
+            cv_data = self.data.get("poles_cv", {})
             lateral = cv_data.get("lateral", 0)
             forward = cv_data.get("forward", 0)
             yaw = cv_data.get("yaw", 0)
             end = cv_data.get("end", False)
 
-            print(f"[MOTION] Fwd: {forward}, Lat: {lateral}, Yaw: {yaw}")
+            print("[MOTION] Fwd: {forward}, Lat: {lateral}, Yaw: {yaw}")
 
             if end:
                 print("[INFO] Pole slalom mission complete.")
@@ -75,7 +75,7 @@ class PoleSlalomMission:
             else:
                 self.robot_control.movement(lateral=lateral, forward=forward, yaw=yaw)
 
-            rate.sleep()
+            time.sleep(0.01)
 
         print("[INFO] Pole Slalom mission run complete")
 
