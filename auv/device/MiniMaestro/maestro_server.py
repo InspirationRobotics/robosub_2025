@@ -22,6 +22,7 @@ class MaestroServer:
         self.gripper_state = {"static": (0, 1500), "opening": (0, 1550), "closing": (0, 1450)}
 
         self.has_launched_torpedo = False
+        self.has_reloaded_torpedo = False
 
         self.dropperService = rospy.Service('/auv/device/dropper', Trigger, self.dropperCallback)
         self.gripperService = rospy.Service('/auv/device/gripper', Trigger, self.gripperCallback)
@@ -91,7 +92,8 @@ class MaestroServer:
             self.maestro.set_pwm(*self.torpedo_state["reload_required"])
             self.has_launched_torpedo = False
             self.has_reloaded_torpedo = False
-            
+
+
         return TriggerResponse(
             success=True,
             message="Torpedo launched!"
