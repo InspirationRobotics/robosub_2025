@@ -14,7 +14,7 @@ import json
 import glob
 import numpy as np
 import depthai as dai
-from cv_bridge import CvBridge, CvBridgeError
+from auv.utils.img_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
@@ -146,23 +146,23 @@ class oakCamera:
             print("Found model; creating pipeline")
 
             # Open the JSON file and load the data
-            jsonFile        = open(jsonFile)
-            data            = json.load(jsonFile)
-            NN_params       = data["nn_config"]["NN_specific_metadata"]
-            nnBlobPath      = blobFile
-            classAmt        = NN_params["classes"]
-            anchors         = NN_params["anchors"]
-            anchorMasks     = NN_params["anchor_masks"]
-            self.labelMap   = data["mappings"]["labels"]
+            jsonFile = open(jsonFile)
+            data = json.load(jsonFile)
+            NN_params = data["nn_config"]["NN_specific_metadata"]
+            nnBlobPath = blobFile
+            classAmt = NN_params["classes"]
+            anchors = NN_params["anchors"]
+            anchorMasks = NN_params["anchor_masks"]
+            self.labelMap = data["mappings"]["labels"]
 
             # Create the model-based pipeline
             pipeline = dai.Pipeline()
 
             # Define the sources and outputs
-            camRgb              = pipeline.create(dai.node.ColorCamera)
-            detectionNetwork    = pipeline.create(dai.node.YoloDetectionNetwork)
-            xoutRgb             = pipeline.create(dai.node.XLinkOut)
-            nnOut               = pipeline.create(dai.node.XLinkOut)
+            camRgb = pipeline.create(dai.node.ColorCamera)
+            detectionNetwork = pipeline.create(dai.node.YoloDetectionNetwork)
+            xoutRgb = pipeline.create(dai.node.XLinkOut)
+            nnOut = pipeline.create(dai.node.XLinkOut)
 
             # Setting the correct stream names
             xoutRgb.setStreamName("rgb")
@@ -182,23 +182,23 @@ class oakCamera:
 
             # Neural network-specific settings
             detectionNetwork.setConfidenceThreshold(confidence) # Detections having a confidence below this confidence value will be ignored
-            detectionNetwork.setNumClasses(classAmt)            # Specify the number of classes the detection network should recognize
-            detectionNetwork.setCoordinateSize(4)               # Define the size of the coordinates to represent each detection (there are 4: xmin, ymin, xmax, ymax)
-            detectionNetwork.setAnchors(anchors)                # Set the anchors for the network. Anchors are used in determining the default sizes and shapes of bounding boxes
-            detectionNetwork.setAnchorMasks(anchorMasks)        # Set the anchor masks for the network. Anchor masks help focus on different aspects of an image for different anchors. 
-            detectionNetwork.setIouThreshold(0.5)               # Set the Intersection over Union (IoU) threshold for filtering overlapping detections
-            detectionNetwork.setBlobPath(nnBlobPath)            # Set the path for the blob file that contains the Neural Network to be used
+            detectionNetwork.setNumClasses(classAmt) # Specify the number of classes the detection network should recognize
+            detectionNetwork.setCoordinateSize(4) # Define the size of the coordinates to represent each detection (there are 4: xmin, ymin, xmax, ymax)
+            detectionNetwork.setAnchors(anchors) # Set the anchors for the network. Anchors are used in determining the default sizes and shapes of bounding boxes
+            detectionNetwork.setAnchorMasks(anchorMasks) # Set the anchor masks for the network. Anchor masks help focus on different aspects of an image for different anchors. 
+            detectionNetwork.setIouThreshold(0.5) # Set the Intersection over Union (IoU) threshold for filtering overlapping detections
+            detectionNetwork.setBlobPath(nnBlobPath) # Set the path for the blob file that contains the Neural Network to be used
             # detectionNetwork.setNumInferenceThreads(2) needed?
-            detectionNetwork.input.setBlocking(False)           # Make the input queue non-blocking so the input stream does not wait for a full queue to continue running the stream
+            detectionNetwork.input.setBlocking(False) # Make the input queue non-blocking so the input stream does not wait for a full queue to continue running the stream
 
             # Linking the different components of the pipeline
-            camRgb.preview.link(detectionNetwork.input)         # Link the color camera (RGB) to the input of the detection network
+            camRgb.preview.link(detectionNetwork.input) # Link the color camera (RGB) to the input of the detection network
             
             
             # This effectively allows for two feeds, one for performing manipulations through the NN that the a feed will show,
             # while another feed will show just the RGB feed of the raw OAK-D camera stream 
-            detectionNetwork.passthrough.link(xoutRgb.input)    # Link a passthrough (allows for the data to pass through the NN (neural network) link unaltered) to the color camera
-            detectionNetwork.out.link(nnOut.input)              # Link the NN results to the NN output (shows the NN labeling results)
+            detectionNetwork.passthrough.link(xoutRgb.input) # Link a passthrough (allows for the data to pass through the NN (neural network) link unaltered) to the color camera
+            detectionNetwork.out.link(nnOut.input) # Link the NN results to the NN output (shows the NN labeling results)
 
             # Initializing Oak-D with pipeline
             device_info = dai.DeviceInfo(self.mxid)
@@ -314,51 +314,20 @@ class oakCamera:
         self.kill() # Kill all other models/streams than may be running
         self.start(modelName) # Start the model
 
-    def debugRunner(self):
-        qcam = self.device.getOutputQueue(name="rgb", maxSize=4, blocking=False) # Get the RGB camera output (maxSize == 4 represents the largest queue possible)
-        #   If there is an actual model to be run, then get the device's neural network output queue
-
-
-        while not self.rospy.is_shutdown() and not self.isKilled:
-            try:
-                frame1 = qcam.get().getCvFrame()
-                # Add "DEBUG" text
-                cv2.putText(
-                    frame1,
-                    "DEBUG",                  # text
-                    (500, 500),                 # position (x, y)
-                    cv2.FONT_HERSHEY_SIMPLEX,  # font
-                    1.0,                      # font scale
-                    (0, 0, 255),              # color (B, G, R) — red
-                    5,                        # thickness
-                    cv2.LINE_AA               # line type
-                )
-                # Publish the frame that was used as a ROS Image in the correct topic
-                msg = self.br.cv2_to_imgmsg(frame1)
-                self.pubFrame.publish(msg)
-
-                # If three seconds have elapsed since a new CV output frame was received, then move to camera view (simulated webcam)
-                if time.time() - self.time > 3:  
-                    self.sendFakeFrame(frame1)
-            except:
-                pass
-
-            self.loop_rate.sleep()
     def runner(self):
         """
         Deals with running a ML (neural network) model on the OAK-D data. This is what actually retrieves the results from the data processing by the model.
         """
-        qcam = self.device.getOutputQueue(name="rgb", maxSize=4, blocking=False) # Get the RGB camera output (maxSize == 4 represents the largest queue possible)
+        cam = self.device.getOutputQueue(name="rgb", maxSize=4, blocking=False) # Get the RGB camera output (maxSize == 4 represents the largest queue possible)
         
         # If there is an actual model to be run, then get the device's neural network output queue
         if self.modelPath != "raw":
             qDet = self.device.getOutputQueue(name="nn", maxSize=4, blocking=False)
-            frame1 = qcam.get().getCvFrame()
 
         while not self.rospy.is_shutdown() and not self.isKilled:
             try:
                 # Get an RGB frame from the camera queue
-                frame1 = qcam.get().getCvFrame()
+                frame1 = cam.get().getCvFrame()
                 if self.modelPath != "raw":
                     # Retrieve a detection packet from the detection queue
                     inDet = qDet.get()
@@ -425,7 +394,7 @@ class oakCamera:
         self.rospy.loginfo(f"Killed Camera {str(self.id)} Stream...")
         pass  # todo
 
-    def start(self, modelPath="raw",debug:bool=False):
+    def start(self, modelPath="raw"):
         """
         For starting a model to run on the OAK-D data. This function creates the Depth AI pipeline based on the model path, 
         and begins a thread to run the model.
@@ -438,12 +407,6 @@ class oakCamera:
         self.createPipeline(self.modelSelect(modelPath)) # Create the pipeline based on the model path
         self.isKilled = False
         self.rospy.loginfo(f"Starting Camera {str(self.id)} Stream...")
-        if not debug:
-            self.oakThread = threading.Timer(0, self.runner)
-            self.oakThread.daemon = True
-            self.oakThread.start()
-        else:
-            self.oakThread = threading.Timer(0, self.debugRunner)
-            self.oakThread.daemon = True
-            self.oakThread.start()
-
+        self.oakThread = threading.Timer(0, self.runner)
+        self.oakThread.daemon = True
+        self.oakThread.start()

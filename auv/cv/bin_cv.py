@@ -1,11 +1,8 @@
 """
-Bin CV. Locates the correct side of the bin (red or blue), and aligns with the intention to drop the marker into the correct side of the bin.
+Bin CV. Locates the correct side of the bin (shark or sawfish), and aligns with the intention to drop the marker into the correct side of the bin.
 """
 
-# Import what you need from within the package.
-
 import time
-
 import cv2
 import numpy as np
 
@@ -14,133 +11,100 @@ class CV:
     Bin CV class. DO NOT change the name of the class, as this will mess up all of the backend files to run the CV scripts.
     """
 
-    # Camera to get the camera stream from.
-    camera = "/auv/camera/videoOAKdRawBottom"
-    model = "bins" 
+    camera = "/auv/camera/videoOAKdRawBottom"  # Switches to bottom cam after approach
+    model = "sawfish_bin"  # Will be replaced dynamically depending on mission param
 
     def __init__(self, **config):
-        """
-        Initialize the CV class. 
-        Setup/attributes here will contain everything needed for the run function.
-        
-        Args:
-            config: Dictionary that contains the configuration of the devices on the sub.
-        """
-
-        # This is an example of getting a stored value from the configuration. 
         self.config = config
         self.shape = (640, 480)
-        self.state = "search"
+        self.x_midpoint = self.shape[0] / 2
+        self.y_midpoint = self.shape[1] / 2
 
-        self.x_midpoint = self.shape[0]/2
-        self.y_midpoint = self.shape[1]/2
+        self.state = "approach"
+        self.distance_threshold = 1.0  # feet
+        self.focal_length_px = 615  # approx for OAK-D-W at 640x480
 
-        self.start_time = None
-        self.last_lateral = 0
-        self.lateral_time_search = 2
-
-        self.depth_time = time.time()
-
-        self.tolerance = 20 # Pixels
+        self.physical_bin_width_ft = 1.5  # real bin width in ft
         self.aligned = False
         self.end = False
 
-        print("[INFO] Bin CV init")
+        self.target_side = config.get("target_side", "sawfish")  # 'shark' or 'sawfish'
+        self.last_detection_time = time.time()
 
-    def smart_movement(self, detection_x, detection_y):
-        """Function to determine the correct strafe and forward values to align with the detection"""
-        if detection_x < self.x_midpoint - self.tolerance:
+        print(f"[INFO] Bin CV initialized. Target side: {self.target_side}")
+
+    def estimate_distance(self, bbox_width_px):
+        if bbox_width_px == 0:
+            return float("inf")
+        return (self.physical_bin_width_ft * self.focal_length_px) / bbox_width_px
+
+    def smart_movement(self, x, y):
+        lateral = 0
+        forward = 0
+        tol = 20
+
+        if x < self.x_midpoint - tol:
             lateral = -0.5
-        elif detection_x > self.x_midpoint + self.tolerance:
+        elif x > self.x_midpoint + tol:
             lateral = 0.5
-        else:
-            lateral = 0
 
-        # NOTE: Y goes from top down, so top pixel will be 1, bottom will be 480
-        if detection_y < self.y_midpoint - self.tolerance:
+        if y < self.y_midpoint - tol:
             forward = 0.5
-        elif detection_y > self.y_midpoint + self.tolerance:
+        elif y > self.y_midpoint + tol:
             forward = -0.5
-        else:
-            forward = 0
 
         return forward, lateral
 
     def run(self, frame, target, detections):
-        """
-        Run the CV script.
-
-        Args:
-            frame: The frame from the camera stream
-            target: This can be any type of information, for example, the object to look for
-            detections: This only applies to OAK-D cameras; this is the list of detections from the ML model output
-
-        Here should be all the code required to run the CV.
-        This could be a loop, grabbing frames using ROS, etc.
-
-        Returns:
-            dictionary, visualized frame: {motion commands/flags for servos and other indication flags}, visualized frame
-        """
-
-        lateral = 0
         forward = 0
-        yaw = 0
+        lateral = 0
         vertical = 0
+        yaw = 0
 
-        # Find the number of detections, if no detections, enter a search grid
-        # If there is one detection, move up to increase field of view
-        # If there are two detections, lock into the right detection
+        if self.state == "approach":
+            for det in detections:
+                if "bin" in det.label and det.confidence > 0.5:
+                    bbox_width = det.xmax - det.xmin
+                    distance = self.estimate_distance(bbox_width)
 
-        if len(detections) == 0:
-            self.state = "search"
-
-        elif len(detections) == 1:
-            self.state = "up"
-
-        elif len(detections) == 2:
-            self.state = "lock"
-            for detection in detections:
-                x_midpoint = (detection.xmin + detection.xmax)/2
-                y_midpoint = (detection.ymin + detection.ymax)/2
-                if detection.confidence > 0.65 and target in detection.label:
-                    target_x = x_midpoint
-                    target_y = y_midpoint
-                elif detection.confidence > 0.65 and target not in detection.label:
-                    other_x = x_midpoint
-                    other_y = y_midpoint
-
-        if self.state == "search":
-            forward = 0.5
-            if self.start_time == None:
-                self.start_time = time.time()
-                self.last_lateral = 1  # Initial direction
-
-            elapsed_time = time.time() - self.start_time
-
-            if elapsed_time < self.lateral_time_search:
-                lateral = self.last_lateral
+                    if distance > self.distance_threshold:
+                        forward = 0.3
+                    else:
+                        self.state = "align"
+                        print("[INFO] Switched to bottom camera for alignment")
+                    break
             else:
-                # Switch direction and reset timer
-                self.last_lateral = -self.last_lateral
-                self.start_time = time.time()
-                lateral = self.last_lateral
-                self.lateral_time_search += 1
+                # No bin detected
+                forward = 0.3
 
-        if self.state == "up":
-            if time.time() - self.depth_time > 10:
-                self.depth_time = time.time()
-                vertical = 0.05
+        elif self.state == "align":
+            found_target = False
+            for det in detections:
+                if self.target_side in det.label and det.confidence > 0.65:
+                    x_mid = (det.xmin + det.xmax) / 2
+                    y_mid = (det.ymin + det.ymax) / 2
+                    forward, lateral = self.smart_movement(x_mid, y_mid)
+                    found_target = True
 
-        if self.state == "lock":
-            if target_x and target_y:
-                forward, lateral = self.smart_movement(target_x, target_y)
-                if forward == 0 and lateral == 0:
-                    self.aligned = True
+                    if forward == 0 and lateral == 0:
+                        self.aligned = True
+                        self.end = True
+                        print("[INFO] Alignment complete over target bin side")
+                    break
+
+            if not found_target:
+                # Lost target during alignment
+                if time.time() - self.last_detection_time > 2:
+                    lateral = 0.3  # strafe to look for it
+                else:
+                    forward = 0.1
             else:
-                print("[ERROR] Unable to detect the target")
+                self.last_detection_time = time.time()
 
-        if self.aligned == True:
-            self.end = True
-
-        # Continuously return motion commands, the state of the mission, and the visualized frame.
-        return {"lateral": lateral, "forward": forward, "yaw": yaw, "vertical": vertical, "end": self.end}, frame
+        return {
+            "lateral": lateral,
+            "forward": forward,
+            "yaw": yaw,
+            "vertical": vertical,
+            "end": self.end
+        }, frame

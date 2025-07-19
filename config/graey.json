@@ -7,10 +7,12 @@
     "vectornav_port":"platform-70090000.xusb-usb-0:2.1.1:1.0",
     "modem_port": "platform-70090000.xusb-usb-0:2.1.2:1.0",
     "battery_indicator": false,
-    "depth_pid_params": [
-        100,
-        10,
-        0.75
-    ],
-    "depth_pid_offset": 1490
+    "DEPTH_PID_P" : 100,
+    "DEPTH_PID_I" : 10,
+    "DEPTH_PID_D" : 0.75,
+    "YAW_PID_P" : 12,
+    "YAW_PID_I" : 0.01,
+    "YAW_PID_D" : 0.0,
+    "depth_pid_offset": 1490,
+    "modem_address": "010"
 }
