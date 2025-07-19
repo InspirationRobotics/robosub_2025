@@ -7,19 +7,18 @@ import math
 
 def heading_error(heading, target):
     """
-    Calculate heading error between the current and target heading
+    Calculate signed heading error between current and target heading.
 
     Args:
-        heading (float): Current heading in degrees
-        target (float): Target heading in degrees
+        heading (float): Current heading in degrees [0, 360)
+        target (float): Target heading in degrees [0, 360)
 
     Returns:
-        float: Heading error in degrees, handling the case where 359 degrees and 0 degrees are close
+        float: Signed heading error in degrees, range [-180, 180]
     """
-    error = target - heading
-    if abs(error) > 180:
-        error = (error + 360) % 360
+    error = (target - heading + 180) % 360 - 180
     return error
+
 
 
 def get_norm(x, y):

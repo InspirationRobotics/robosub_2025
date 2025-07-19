@@ -12,5 +12,6 @@
         10,
         0.75
     ],
-    "depth_pid_offset": 1490
+    "depth_pid_offset": 1490,
+    "modem_address": "010"
 }

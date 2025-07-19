@@ -11,7 +11,7 @@ import time
 
 import cv2
 import numpy as np
-from cv_bridge import CvBridge, CvBridgeError
+from auv.utils.img_bridge import CvBridge
 from sensor_msgs.msg import Image
 
 from auv.device.cams import pyfakewebcam # For simulating a webcam by writing frames to a V4L2 virtual video device

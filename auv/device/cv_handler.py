@@ -18,7 +18,7 @@ import traceback
 
 import cv2
 import rospy
-from cv_bridge import CvBridge
+from auv.utils.img_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
@@ -50,24 +50,32 @@ class CVHandler:
             dummy_camera (optional): the video file that simulates a camera feed
         """
         if file_name in self.active_cv_scripts:
-            print("[ERROR] [cv_handler] Cannot start a script that is already running")
+            rospy.logerr("[cv_handler] Cannot start a script that is already running")
             return
 
         try:
             # Generic module file path: auv.cv.file_name
+            rospy.loginfo(f"running {file_name}")
             module = importlib.import_module(f"auv.cv.{file_name}")
         except Exception as e:
-            print("[ERROR] [cv_handler] Error while importing CV module from file name")
-            print(f"[ERROR] {e}")
+            rospy.logerr(f"[cv_handler] Error while importing CV module from {file_name}")
+            rospy.logerr(f"{e}")
             return
 
         # Import the CV class defined in the particular file
         cv_class = getattr(module, "CV", None)
         if cv_class is None:
-            print("[ERROR] [cv_handler] No CV class found in file, check the file name and file content")
+            rospy.logerr("[cv_handler] No CV class found in file, check the file name and file content")
             return
+        class_name = cv_class.__name__                        # "CV"
+        module_name = cv_class.__module__                     # e.g. "auv.device.cams.my_cv_module"
+        module_path = getattr(module, '__file__', 'Unknown')  # full path to the module .py file
+
+        rospy.loginfo(f"Loaded class {class_name} from module {module_name}")
+        rospy.loginfo(f"Module file path: {module_path}")
 
         # Initialize simulated CV script handler or a real CV script handler
+        rospy.loginfo(f"current config: {self.config}")
         if dummy_camera:  
             self.active_cv_scripts[file_name] = _DummyScriptHandler(file_name, cv_class(**self.config), dummy_camera)
         else:  
@@ -82,7 +90,7 @@ class CVHandler:
             file_name (str): File that contains the script that should be stopped
         """
         if file_name not in self.active_cv_scripts:
-            print("[ERROR] [cv_handler] Cannot stop a script that is not running")
+            rospy.logerr("[cv_handler] Cannot stop a script that is not running")
             return
 
         self.active_cv_scripts[file_name].stop()
@@ -155,6 +163,7 @@ class _ScriptHandler:
         self.br = CvBridge()
 
         # Create the ROS node, the subscribers and the publishers
+        rospy.loginfo(f"camera topic name: {self.camera_topic}")
         self.sub_cv = rospy.Subscriber(self.camera_topic, Image, self.callback_cam)
         self.pub_viz = rospy.Publisher(self.camera_topic.replace("Raw", "Output"), Image, queue_size=10)
         self.pub_out = rospy.Publisher(f"auv/cv_handler/{file_name}", String, queue_size=10)

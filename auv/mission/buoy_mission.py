@@ -178,7 +178,7 @@ if __name__ == "__main__":
 
     # Run the mission
     arm.arm()
-    rc.set_depth(0.5)
+    rc.set_absolute_z(0.5)
     time.sleep(5)
     mission.run()
     mission.cleanup()

@@ -17,5 +17,6 @@
         20,
         2
     ],
-    "depth_pid_offset": 1480
+    "depth_pid_offset": 1480,
+    "modem_address": "020"
 }
