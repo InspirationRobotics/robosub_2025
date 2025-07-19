@@ -32,7 +32,7 @@ class MaestroServer:
         # TODO setting all servos to default
         
         
-    def dropperCallback(self):
+    def dropperCallback(self, request):
         rospy.loginfo("dropping a marker")
 
         # Logic for dropping one marker
@@ -46,7 +46,7 @@ class MaestroServer:
         )
 
 
-    def gripperCallback(self):
+    def gripperCallback(self, request):
         rospy.loginfo("Gripper has been triggered")
 
         def gripper_state(state: str):
@@ -75,7 +75,7 @@ class MaestroServer:
         )
 
 
-    def torpedoCallback(self):
+    def torpedoCallback(self, request):
         rospy.loginfo("launching torpedo")
 
         if self.has_launched_torpedo:
