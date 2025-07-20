@@ -141,10 +141,13 @@ def main():
     rospy.loginfo("[Main] RobotControl initialized.")
 
     # -- depth hold logic (line 241 logic)
-    current_depth = rc.position["z"]
     rc.set_control_mode("depth_hold")
-    rc.set_absolute_z(current_depth)
-    rospy.loginfo(f"[Main] Holding depth at Z={current_depth:.2f} m")
+    rc.set_absolute_z(0.6)  # Set desired depth to 0.6m
+    
+    time.sleepp(5)  # Allow time for depth hold to stabilize
+    target_depth = rc.position["z"]
+    rc.set_absolute_z(target_depth)
+    rospy.loginfo(f"[Main] Holding depth at Z={target_depth:.2f} m")
 
     # -- Start station keeping (with velocity integration)
     loiter = DVLLoiter(rc)
