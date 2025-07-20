@@ -116,14 +116,14 @@ class CV:
                 self.start_time = time.time()
                 print("[INFO] Strafing started")
 
-            if time.time() - self.start_time < 2.5:
+            if time.time() - self.start_time < 4.0:
                 lateral = 1.5
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
             else:
                 self.start_time = None
-                self.rows_completed += 1
                 self.state = "search"
                 print("[INFO] Strafing complete → transitioning to next row")
+                self.rows_completed += 1
 
         if self.rows_completed == 3:
             self.end = True
