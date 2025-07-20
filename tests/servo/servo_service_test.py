@@ -4,6 +4,8 @@ import rospy
 from auv.motion.robot_control import RobotControl
 from traceback import print_exc
 
+rospy.init_node("servoTest")
+
 def test_servo(service_name):
     rc = RobotControl()
     try:
