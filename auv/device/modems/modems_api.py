@@ -161,7 +161,7 @@ class Modem:
         # Get a list ready to be added to self.in_transit
         pass
         
-        self.in_transit.append() # fill this in, you should append a list
+        self.send_msg(msg=None,ack=None,dest_addr=None,priority=None) # need to fill these in by parsing the incoming string form the topic
 
     def _send_to_modem(self, data):
         """
