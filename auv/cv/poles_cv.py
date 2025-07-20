@@ -14,7 +14,7 @@ class CV:
     camera = "/auv/camera/videoOAKdRawForward"
 
     def __init__(self, **config):
-        self.shape = None  # Will set this dynamically
+        self.shape = None  # sets dynamically in run()
         self.x_midpoint = None
         self.tolerance = 40  # How centered the object should be in px
         self.config = config
@@ -32,7 +32,7 @@ class CV:
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         
-        # Red range (adjust if too aggressive)
+        # Red range for HSV
         lower_red1 = np.array([0, 50, 50])
         upper_red1 = np.array([10, 255, 255])
         lower_red2 = np.array([155, 50, 50])
@@ -58,6 +58,7 @@ class CV:
                 if aspect_ratio > 1.5:  # Tall shapes
                     red_poles.append((x, y, w, h, area))
 
+        # Sorts by area to find the largest red pole
         if red_poles:
             red_poles.sort(key=lambda x: x[4], reverse=True)
             x, y, w, h, area = red_poles[0]
