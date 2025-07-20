@@ -323,11 +323,7 @@ def csvLog(dvl, filename="dvl_log.csv"):
                     vel_packet = dvl.read()
                     if vel_packet is None or not vel_packet["valid"]:
                         continue
-
-                    if dvl.enable_compass:
-                        dvl.process_packet_compass(vel_packet)
-                    else:
-                        dvl.process_packet(vel_packet)
+                    dvl.process_packet(vel_packet)
 
                     row = [
                         dvl.current_time,
