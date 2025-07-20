@@ -142,8 +142,8 @@ def main():
 
     # -- depth hold logic (line 241 logic)
     current_depth = rc.position["z"]
-    rc.set_absolute_z(current_depth)
     rc.set_control_mode("depth_hold")
+    rc.set_absolute_z(current_depth)
     rospy.loginfo(f"[Main] Holding depth at Z={current_depth:.2f} m")
 
     # -- Start station keeping (with velocity integration)
