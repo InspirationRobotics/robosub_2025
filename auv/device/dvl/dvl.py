@@ -152,18 +152,19 @@ class DVL:
 
 
         try:
-            # data["Attitude"] = [float(SA[1]), float(SA[2]), float(SA[3])]
-            # data["Salinity"] = float(TS[2])
-            # data["Temp"] = float(TS[3])
-            # data["Transducer_depth"] = float(TS[4])
-            # data["Speed_of_sound"] = float(TS[5])
-            # data["Result_code"] = TS[6]
-            # data["DVL_velocity"] = [int(BI[1]), int(BI[2]), int(BI[3]), int(BI[4])]
-            # data["isDVL_velocity_valid"] = BI[5] == "A"
-            # data["AUV_velocity"] = [int(BS[1]), int(BS[2]), int(BS[3])]
-            # data["isAUV_velocity_valid"] = BS[4] == "A"
-            # data["Distance_from_bottom"] = float(BD[4])
-            # data["Time_since_valid"] = float(BD[5])
+            data["Attitude"] = [float(SA[1]), float(SA[2]), float(SA[3])]
+            data["Salinity"] = float(TS[2])
+            data["Temp"] = float(TS[3])
+            data["Transducer_depth"] = float(TS[4])
+            data["Speed_of_sound"] = float(TS[5])
+            data["Result_code"] = TS[6]
+            data["DVL_velocity"] = [int(BI[1]), int(BI[2]), int(BI[3]), int(BI[4])]
+            data["isDVL_velocity_valid"] = BI[5] == "A"
+            data["AUV_velocity"] = [int(BS[1]), int(BS[2]), int(BS[3])]
+            data["isAUV_velocity_valid"] = BS[4] == "A"
+            data["Distance_from_bottom"] = float(BD[4])
+            data["Time_since_valid"] = float(BD[5])
+            # above previously commented out 20250719, comment back in when done logging
 
             centi = int(TS[1][12:14]) * 0.01
             seconds = int(TS[1][10:12])
@@ -349,9 +350,9 @@ if __name__ == '__main__':
     try:
         dvl1 = DVL()
         dvl1.start()
-        # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        # filename = f"dvl_log_{timestamp}.csv"
-        # csvLog(dvl1, filename)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"dvl_log_{timestamp}.csv"
+        csvLog(dvl1, filename)
         rospy.spin()
     
     except KeyboardInterrupt:
