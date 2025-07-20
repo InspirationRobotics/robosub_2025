@@ -18,7 +18,7 @@ class MaestroServer:
         self.maestro = MiniMaestro(port=port)
 
         self.torpedo_state = {"firing_first": (2, 1656), "firing_second": (2, 1781), "reload_required": (2, 0)}
-        self.dropper_state = {"beginning position": (1,20), "dropping_first": (1, 40), "dropping_second": (1, 50), "reload_required": (1, 1000)}
+        self.dropper_state = {"beginning position": (1,100), "dropping_first": (1, 200), "dropping_second": (1, 500), "reload_required": (1, 1000)}
         self.gripper_state = {"static": (0, 1500), "opening": (0, 1550), "closing": (0, 1450)}
 
         self.has_launched_torpedo = False
