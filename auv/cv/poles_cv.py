@@ -118,7 +118,6 @@ class CV:
 
             if time.time() - self.start_time < 2.5:
                 lateral = 1.5
-                forward = 1
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
             else:
                 self.start_time = None
