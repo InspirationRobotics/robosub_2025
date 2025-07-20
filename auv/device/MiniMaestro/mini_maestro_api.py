@@ -50,4 +50,4 @@ if __name__ == "__main__":
 
     # Close connection when done
 
-maestro.close()
+    maestro.close()
