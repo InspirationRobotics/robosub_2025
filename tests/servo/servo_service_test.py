@@ -2,6 +2,7 @@ import signal
 import sys
 import rospy
 from auv.motion.robot_control import RobotControl
+from auv.device.maestro.maestro_server import MaestroServer
 from traceback import print_exc
 
 rospy.init_node("servoTest")
@@ -22,6 +23,7 @@ def shutdown_handler(signum, frame):
     rospy.signal_shutdown("Shutdown requested")
 
 if __name__ == "__main__":
+    server = MaestroServer()
     # Register signal handlers for safe shutdown
     signal.signal(signal.SIGINT, shutdown_handler)   # Handles Ctrl+C
     signal.signal(signal.SIGTERM, shutdown_handler)  # Handles kill/termination
