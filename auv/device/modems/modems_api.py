@@ -6,10 +6,11 @@ import time
 import RPi.GPIO as GPIO
 import serial
 import threading
-from ...utils.deviceHelper import dataFromConfig, variables # Configuration of the various devices attached to a sub (either Graey or Onyx)
+import rospy
+from auv.utils import deviceHelper
+from auv.utils.deviceHelper import dataFromConfig, variables # Configuration of the various devices attached to a sub (either Graey or Onyx)
 from auv.mission.style_mission import StyleMission
-
-port = dataFromConfig("modem") # Get the modem port ID from the JSON config file of the sub
+from std_msgs.msg import String
 
 
 class LED:
@@ -91,9 +92,10 @@ class Modem:
             auto_start (bool): Flag indicating whether to automatically start the modem or not.
         """
         self.led = LED()
+        self.__port = deviceHelper.variables.get("modem_port")  # Get the modem port ID from the JSON config file of the sub
         # Initialize the serial communication
         self.ser = serial.Serial(
-            port=port,
+            port=self.__port,
             baudrate=9600,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
@@ -126,7 +128,7 @@ class Modem:
         self.ack_received = [] # To hold the received acknowledgment numbers 
 
         # Variables specific to this particular type of modem
-        self.modemAddr = None
+        self.modemAddr = deviceHelper.variables.get("modem_address")
         self.voltage = None
 
         self.receive_active = True
@@ -137,8 +139,29 @@ class Modem:
         self.thread_recv = threading.Thread(target=self._receive_loop)
         self.thread_send = threading.Thread(target=self._send_loop)
 
+        # Initalize ros subscribers and publishers
+        rospy.init_node('maestroServer')
+        self.pub = rospy.Publisher('/auv/devices/modem_received', String, queue_size=10)
+        self.sub = rospy.Subscriber("/auv/devices/modem_send", String, self.send_callback)
         if auto_start:
             self.start()
+    def publish_to_ros(self, msg):
+        tosend = String()
+        tosend.data = msg
+        self.pub.publish(tosend)
+
+    def send_callback(self, msg):
+        """
+        Callback function when received a data from /auv/devices/modem_send
+        This function store a message to self.in_transit
+        """
+        toSend = msg.data
+
+        # TODO parse the message and format it to """[msg, time.time(), 0, ack, dest_addr, priority]""" so we can store it at self.in_transit
+        # Get a list ready to be added to self.in_transit
+        pass
+        
+        self.in_transit.append() # fill this in, you should append a list
 
     def _send_to_modem(self, data):
         """
@@ -518,6 +541,8 @@ class Modem:
                 f.write(f"[{time.time()}][RECV][src:{src_addr}][ack:{ack}] {msg}\n")
             else:
                 f.write(f"[{time.time()}][RECV][src:{src_addr}][ack:{ack}]\n")
+        
+        self.publish_to_ros(msg)
 
     def on_receive_msg(self, src_addr: str, msg: str, ack: int, distance: int):
         """
@@ -531,7 +556,8 @@ class Modem:
         """
         if msg is None:
             return
-
+        
+        self.publish_to_ros(msg)
         print(f"[{time.time()}][RECV][src:{src_addr}][ack:{ack}][dist:{distance}] {msg}")
 
     def on_receive_flash_led(self, src_addr: str, msg: str, ack: int, distance: int):
@@ -544,6 +570,7 @@ class Modem:
             ack (int): Acknowledgment message
             distance (int): Distance between sender and receiver
         """
+        self.publish_to_ros(msg)
         led.on_recv_msg()
 
     def on_receive_ack(self, src_addr: str, msg: str, ack: int, distance: int):
@@ -570,7 +597,7 @@ class Modem:
             if packet[3] == ack:
                 self.ack_received.append(ack)
                 return
-
+        self.publish_to_ros(msg)
         print(f'[WARNING] Received ack: "{ack}" but no corresponding message found, maybe timed out?')
 
     def on_send_msg_logging(self, dst_addr: str, msg: str, ack: int):
@@ -588,6 +615,8 @@ class Modem:
                 f.write(f"[{time.time()}][SEND][dst:{dst_addr}][ACK:{ack}]\n")
             else:
                 f.write(f"[{time.time()}][SEND][dst:{dst_addr}][ack:{ack}] {msg}\n")
+
+        self.publish_to_ros(msg)
 
     def on_receive_handshake(self, msg: str):
         """
@@ -639,6 +668,7 @@ class Modem:
         self.sending_active = True
         self.thread_recv.start()
         self.thread_send.start()
+        rospy.spin()  # keep the script running in termianl
 
     def stop(self):
         """Stop the receiving and sending threads"""
