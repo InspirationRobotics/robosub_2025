@@ -309,38 +309,101 @@ class DVL:
             self.error[2] + prev_error[2],
         ]
 
-def csvLog(dvl, filename="dvl_log.csv"):
-        """
-        Logs DVL position and velocity data to a CSV file.
-        """
-        with open(filename, mode="w", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(["Time (s)", "vx (m/s)", "vy (m/s)", "vz (m/s)", "X (m)", "Y (m)", "Z (m)", "Valid"])
+def csvLog(dvl, filename="dvl_log_full.csv"):
+    """
+    Logs all Onyx DVL packet data to a CSV file.
+    """
 
-            try:
-                while True:
-                    time.sleep(0.1)  # sampling delay
-                    vel_packet = dvl.read()
-                    if vel_packet is None or not vel_packet["valid"]:
-                        continue
-                    dvl.process_packet(vel_packet)
+    # These fields match what's extracted from `read_onyx()`
+    fieldnames = [
+        "time",                   # accumulated time
+        "vx", "vy", "vz",         # velocity (m/s)
+        "X", "Y", "Z",            # integrated position (if available)
+        "valid",                  # is AUV velocity data valid?
+        "Attitude_pitch", "Attitude_roll", "Attitude_yaw",
+        "Salinity", "Temp", "Transducer_depth", "Speed_of_sound",
+        "Result_code", "isDVL_velocity_valid", "isAUV_velocity_valid",
+        "Distance_from_bottom", "Time_since_valid"
+    ]
 
-                    row = [
-                        dvl.current_time,
-                        vel_packet["vx"],
-                        vel_packet["vy"],
-                        vel_packet["vz"],
-                        dvl.position[0],
-                        dvl.position[1],
-                        dvl.position[2],
-                        vel_packet["valid"],
-                    ]
-                    writer.writerow(row)
-                    print(f"[LOGGING] {row}")
+    with open(filename, mode="w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
 
-            except KeyboardInterrupt:
-                print("\n[INFO] Logging interrupted. Saving CSV file...")
-                print(f"[INFO] Data saved to {filename}")
+        try:
+            while not rospy.is_shutdown():
+                time.sleep(0.1)
+                packet = dvl.read()
+                if packet is None or not packet["valid"]:
+                    continue
+
+                dvl.process_packet(packet)
+
+                # Build dictionary for logging
+                row = {
+                    "time":              dvl.current_time,
+                    "vx":                packet.get("vx", 0.0),
+                    "vy":                packet.get("vy", 0.0),
+                    "vz":                packet.get("vz", 0.0),
+                    "X":                 dvl.position[0],
+                    "Y":                 dvl.position[1],
+                    "Z":                 dvl.position[2],
+                    "valid":             packet.get("valid", False),
+                    "Attitude_pitch":    packet.get("Attitude", [None, None, None])[0],
+                    "Attitude_roll":     packet.get("Attitude", [None, None, None])[1],
+                    "Attitude_yaw":      packet.get("Attitude", [None, None, None])[2],
+                    "Salinity":          packet.get("Salinity", None),
+                    "Temp":              packet.get("Temp", None),
+                    "Transducer_depth":  packet.get("Transducer_depth", None),
+                    "Speed_of_sound":    packet.get("Speed_of_sound", None),
+                    "Result_code":       packet.get("Result_code", None),
+                    "isDVL_velocity_valid": packet.get("isDVL_velocity_valid", None),
+                    "isAUV_velocity_valid": packet.get("isAUV_velocity_valid", None),
+                    "Distance_from_bottom": packet.get("Distance_from_bottom", None),
+                    "Time_since_valid":  packet.get("Time_since_valid", None),
+                }
+
+                writer.writerow(row)
+                rospy.loginfo(f"[DVL Logger] {row}")
+
+        except KeyboardInterrupt:
+            rospy.logwarn("[DVL Logger] Logging interrupted by user, saving CSV...")
+        finally:
+            rospy.loginfo(f"[DVL Logger] Log complete. File saved to: {filename}")
+
+
+# def csvLog(dvl, filename="dvl_log.csv"):
+#         """
+#         Logs DVL position and velocity data to a CSV file.
+#         """
+#         with open(filename, mode="w", newline="") as file:
+#             writer = csv.writer(file)
+#             writer.writerow(["Time (s)", "vx (m/s)", "vy (m/s)", "vz (m/s)", "X (m)", "Y (m)", "Z (m)", "Valid"])
+
+#             try:
+#                 while True:
+#                     time.sleep(0.1)  # sampling delay
+#                     vel_packet = dvl.read()
+#                     if vel_packet is None or not vel_packet["valid"]:
+#                         continue
+#                     dvl.process_packet(vel_packet)
+
+#                     row = [
+#                         dvl.current_time,
+#                         vel_packet["vx"],
+#                         vel_packet["vy"],
+#                         vel_packet["vz"],
+#                         dvl.position[0],
+#                         dvl.position[1],
+#                         dvl.position[2],
+#                         vel_packet["valid"],
+#                     ]
+#                     writer.writerow(row)
+#                     print(f"[LOGGING] {row}")
+
+#             except KeyboardInterrupt:
+#                 print("\n[INFO] Logging interrupted. Saving CSV file...")
+#                 print(f"[INFO] Data saved to {filename}")
 if __name__ == '__main__':
     # Make a new dvl instance
     try:
