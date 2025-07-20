@@ -450,7 +450,7 @@ class RobotControl:
         try:
             servo_client = rospy.ServiceProxy(self.service, Trigger)
             resp1 = servo_client()
-            return resp1.sum
+            return resp1.message
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
