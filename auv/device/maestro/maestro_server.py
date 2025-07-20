@@ -30,7 +30,11 @@ class MaestroServer:
         rospy.loginfo("Ready to take servo requests.")
         rospy.spin()
 
-        # TODO setting all servos to default
+        # Set all servos to default state
+        self.maestro.set_pwm(*self.torpedo_state["reload_required"])
+        self.maestro.set_pwm(*self.dropper_state["reload_required"])
+        self.maestro.set_pwm(*self.gripper_state["static"])
+        
         
         
     def dropperCallback(self, request):
