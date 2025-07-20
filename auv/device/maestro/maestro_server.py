@@ -17,8 +17,8 @@ class MaestroServer:
         rospy.init_node('maestroServer')
         self.maestro = MiniMaestro(port=port)
 
-        self.torpedo_state = {"firing_first": (2, 1656), "firing_second": (2, 1781), "reload_required": (2, 64)}
-        self.dropper_state = {"dropping_first": (1, 1765), "dropping_second": (1, 1000), "reload_required": (1, 2500)}
+        self.torpedo_state = {"firing_first": (2, 1656), "firing_second": (2, 1800), "reload_required": (2, 1300)}
+        self.dropper_state = {"beginning position": (1,1765), "dropping_first": (1, 1136), "dropping_second": (1,64)}
         self.gripper_state = {"static": (0, 1500), "opening": (0, 1550), "closing": (0, 1450)}
 
         self.has_launched_torpedo = False
@@ -41,13 +41,21 @@ class MaestroServer:
         rospy.loginfo("dropping a marker")
 
         # Logic for dropping one marker (1800 - hold, 1450 - drop)
-        self.maestro.set_pwm(1,1450)
+        self.maestro.set_pwm(1,1500)
         time.sleep(1.0) # TODO find time for dropping only one marker
-        self.maestro.set_pwm(1,1800)
+        self.maestro.set_pwm(1,1765)
+        print("marker 1 dropped")
+        time.sleep(2)
+        self.maestro.set_pwm(1,1000)
+        print("marker 2 dropped")
+        time.sleep(1)
+        self.maestro.set_pwm(1,2500)
+        time.sleep(1.0)
+
 
         return TriggerResponse(
             success=True,
-            message="Marker dropped!"
+            message="Marker is  dropped!"
         )
 
 
