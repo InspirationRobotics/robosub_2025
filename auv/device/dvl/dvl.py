@@ -14,7 +14,7 @@ import csv
 from datetime import datetime
 
 import serial
-from geometry_msgs.msg import Vector3Stamped, PointStamped
+from geometry_msgs.msg import TwistStamped
 
 from auv.device.dvl import dvl_tcp_parser
 from auv.utils import deviceHelper
@@ -23,16 +23,11 @@ from auv.utils import deviceHelper
 class DVL:
     """DVL class to enable position estimation"""
     
-    def __init__(self, autostart=True, compass=False, test=False):
+    def __init__(self, autostart=True, test=False):
         rospy.init_node("dvl", anonymous=True)
         self.rate = rospy.Rate(10)  # 10 Hz
         
-        self.vel_pub = rospy.Publisher('/auv/devices/dvl/velocity', Vector3Stamped, queue_size=10)
-
-
-        # TODO: Review if we need a position publisher
-
-        self.pos_pub = rospy.Publisher('/auv/devices/dvl/position', PointStamped, queue_size=10)
+        self.vel_pub = rospy.Publisher('/auv/devices/dvl/velocity', TwistStamped, queue_size=10)
         
         self.test = test
         if not self.test:
@@ -66,36 +61,19 @@ class DVL:
             else:
                 raise ValueError(f"Invalid sub {self.sub}")
 
-        self.enable_compass = compass
-
         self.__running = False
         self.__thread_vel = None
         self.prev_time = None
         self.current_time = None
         
-        # sensor error
-        self.compass_error = math.radians(1.0)  # rad/s
-        
         self.error = [0, 0, 0]  # accumulated error
 
-        # NORTH = 0, EAST = pi/2, SOUTH = pi, WEST = 3pi/2
-        self.compass_rad = None  # rad
-
-        self.vel_rot = [0, 0, 0]  # rotated velocity vector
-
-        # position in meters
-        # X = lateral
-        # Y = forward
-        # Z = {"Onyx": "distance from bottom",
-        # "Graey": "Distance from surface"}
-        self.position = [0, 0, 0]  
-
+        self.vel = [0, 0, 0]  
 
         self.is_valid = False
         self.data_available = False
 
-        # stores position and error history for context manager
-        self.position_memory = []
+        # stores error history for context manager
         self.error_memory = []
 
         # DVL data packet. Must put this in __init__ to allow for the
@@ -205,129 +183,48 @@ class DVL:
         # print("[DEBUG] Data in read_onyx: ", data)
         return data
 
-    def process_packet_compass(self, packet):
-        """integrate velocity into position"""
-
-        vel = [packet.get("vx", 0), packet.get("vy", 0), packet.get("vz", 0)]
-        self.current_time = packet.get("time", 0)  # seconds
-        self.dvl_error = packet.get("error", 0)
-
-        if self.prev_time is None or self.compass_rad is None:
-            self.prev_time = self.current_time
-            print("[WARN] DVL not ready, waiting for compass or some more sample")
-            return False
-
-        dt = self.current_time - self.prev_time
-        if dt < 0:
-            print("[WARN] DVL time error, skipping")
-            return False
-
-        self.is_valid = packet["valid"]
-        if not self.is_valid:
-            # print("[WARN] DVL velocity not valid, skipping")
-            return False
-
-        self.prev_time = self.current_time
-
-        # rotate velocity vector using compass heading
-        # plus 45 degrees
-        # X = lateral, Y = forward, Z = vertical
-        self.vel_rot = [
-            vel[0] * math.cos(self.compass_rad + self.dvl_rot) + vel[1] * math.sin(self.compass_rad + self.dvl_rot),
-            vel[1] * math.cos(self.compass_rad + self.dvl_rot) - vel[0] * math.sin(self.compass_rad + self.dvl_rot),
-            vel[2],
-        ]
-
-        # integrate velocity to position with respect to time
-        self.position = [
-            self.position[0] + self.vel_rot[0] * dt,
-            self.position[1] + self.vel_rot[1] * dt,
-            self.position[2] + self.vel_rot[2] * dt,
-        ]
-
-        vel_rot_error = [
-            (vel[0] + self.dvl_error) * math.cos(self.compass_rad + self.dvl_rot + self.compass_error)
-            + (vel[1] + self.dvl_error) * math.sin(self.compass_rad + self.dvl_rot + self.compass_error),
-            (vel[1] + self.dvl_error) * math.cos(self.compass_rad + self.dvl_rot + self.compass_error)
-            - (vel[0] + self.dvl_error) * math.sin(self.compass_rad + self.dvl_rot + self.compass_error),
-            vel[2] + self.dvl_error,  # we actually have a sensor for depth, so useless
-        ]
-
-        # calculate accumulated error
-        self.error = [
-            self.error[0] + abs(self.vel_rot[0] - vel_rot_error[0]) * dt,
-            self.error[1] + abs(self.vel_rot[1] - vel_rot_error[1]) * dt,
-            self.error[2] + abs(self.vel_rot[2] - vel_rot_error[2]) * dt,
-        ]
-
-        return True
-
     def process_packet(self, packet):
         """Integrate velocity into position without compass"""
 
-        vel = [packet.get("vx", 0), packet.get("vy", 0), packet.get("vz", 0)]
+        self.vel = [packet.get("vx", 0), packet.get("vy", 0), packet.get("vz", 0)]
         self.current_time = packet.get("time", 0)  # seconds
         self.dvl_error = packet.get("error", 0)
 
         if self.prev_time is None:
             self.prev_time = self.current_time
-            print("[WARN] DVL not ready, waiting for some more sample")
+            rospy.logwarn("DVL not ready, waiting for some more sample")
             return False
 
         dt = self.current_time - self.prev_time
         if dt < 0:
-            print("[WARN] DVL time error, skipping")
+            rospy.logwarn("DVL time error, skipping")
             return False
 
         self.is_valid = packet["valid"]
         if not self.is_valid:
-            # print("[WARN] DVL velocity not valid, skipping")
             return False
-        
-        # print("[DEBUG] Running the process packet method")
-        # print(f"[DEBUG]: Current time is {self.current_time}")
-        # print(f"[DEBUG]: Previous time is {self.prev_time}")
+
 
         self.prev_time = self.current_time
 
-        # Rotate velocity vector by DVL rotation of 45 degrees
-
-        self.vel_rot = [
-            vel[0] * math.cos(self.dvl_rot) + vel[1] * math.sin(self.dvl_rot),
-            vel[1] * math.cos(self.dvl_rot) - vel[0] * math.sin(self.dvl_rot),
-            vel[2],
-        ]
-
-        # integrate velocity to position with respect to time
-        self.position = [
-            self.position[0] + self.vel_rot[0] * dt,
-            self.position[1] + self.vel_rot[1] * dt,
-            self.position[2] + self.vel_rot[2] * dt,
-        ]
-
         vel_error = [
-            vel[0] + self.dvl_error,
-            vel[1] + self.dvl_error,
-            vel[2] + self.dvl_error,
+            self.vel[0] + self.dvl_error,
+            self.vel[1] + self.dvl_error,
+            self.vel[2] + self.dvl_error,
         ]
 
         # calculate accumulated error
         self.error = [
-            self.error[0] + abs(vel[0] - vel_error[0]) * dt,
-            self.error[1] + abs(vel[1] - vel_error[1]) * dt,
-            self.error[2] + abs(vel[2] - vel_error[2]) * dt,
+            self.error[0] + abs(self.vel[0] - vel_error[0]) * dt,
+            self.error[1] + abs(self.vel[1] - vel_error[1]) * dt,
+            self.error[2] + abs(self.vel[2] - vel_error[2]) * dt,
         ]
 
         return True
 
-    def reset_position(self):
-        """Reset position to 0"""
-        self.position = [0, 0, 0]
-        self.error = [0, 0, 0]
-
     def update(self): 
         """Update DVL data (runs in a thread)"""
-        print("[DEBUG] DVL update() loop started")
+        rospy.loginfo("DVL update() loop started")
 
         while self.__running and not rospy.is_shutdown():
             vel_packet = self.read()
@@ -335,10 +232,8 @@ class DVL:
             if vel_packet is None:
                 continue
 
-            if self.enable_compass:
-                ret = self.process_packet_compass(vel_packet)
-            else:
-                ret = self.process_packet(vel_packet)
+
+            ret = self.process_packet(vel_packet)
 
             self.data_available = ret
             self.rate.sleep()
@@ -349,29 +244,25 @@ class DVL:
             - frame_id (str): Frame ID containing name of AUV"""
         while not rospy.is_shutdown():
             now = rospy.Time.now()
-            vel_msg = Vector3Stamped()
+            vel_msg = TwistStamped()
             vel_msg.header.stamp = now
             vel_msg.header.frame_id = frame_id
 
-            vel_msg.vector.x = self.vel_rot[0]
-            vel_msg.vector.y = self.vel_rot[1]
-            vel_msg.vector.z = self.vel_rot[2]
-            self.vel_pub.publish(vel_msg)
+            vel_msg.twist.linear.x = self.vel[0]
+            vel_msg.twist.linear.y = self.vel[1]
+            vel_msg.twist.linear.z = self.vel[2]
+            vel_msg.twist.angular.x = 0.0
+            vel_msg.twist.angular.y = 0.0
+            vel_msg.twist.angular.z = 0.0
 
-            pos_msg = PointStamped()
-            pos_msg.header.stamp = now
-            pos_msg.header.frame_id = frame_id
-            pos_msg.point.x = self.position[0]
-            pos_msg.point.y = self.position[1]
-            pos_msg.point.z = self.position[2]
-            self.pos_pub.publish(pos_msg)
+            self.vel_pub.publish(vel_msg)
             self.rate.sleep()
     
     def start(self):
         # ensure not running
-        print("[DEBUG] Started successfully")
+        rospy.loginfo("Started successfully")
         if self.__running:
-            print("[WARN] DVL already running")
+            rospy.logwarn("DVL already running")
             return
 
         self.__running = True
@@ -380,15 +271,14 @@ class DVL:
 
         # Add publisher thread depending on sub
         if self.sub == "graey":
-            self.__thread_pub = threading.Thread(target=self.publish_dvl, args=("graey_dvl"), daemon=True)
+            self.__thread_pub = threading.Thread(target=self.publish_dvl, args=("base_link",), daemon=True)
         elif self.sub == "onyx":
-            self.__thread_pub = threading.Thread(target=self.publish_dvl, args=("onyx_dvl"), daemon=True)
+            self.__thread_pub = threading.Thread(target=self.publish_dvl, args=("base_link",) , daemon=True)
 
         else:
             raise ValueError(f"[ERROR] Unknown sub: {self.sub}")
 
         self.__thread_pub.start()
-
 
     def stop(self):
         self.__running = False
@@ -410,15 +300,7 @@ class DVL:
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit context manager"""
-        prev_pos = self.position_memory.pop()
         prev_error = self.error_memory.pop()
-
-        # restore previous position and error
-        self.position = [
-            self.position[0] + prev_pos[0],
-            self.position[1] + prev_pos[1],
-            self.position[2] + prev_pos[2],
-        ]
 
         self.error = [
             self.error[0] + prev_error[0],
@@ -466,9 +348,10 @@ if __name__ == '__main__':
     # Make a new dvl instance
     try:
         dvl1 = DVL()
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"dvl_log_{timestamp}.csv"
-        csvLog(dvl1, filename)
+        dvl1.start()
+        # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # filename = f"dvl_log_{timestamp}.csv"
+        # csvLog(dvl1, filename)
         rospy.spin()
     
     except KeyboardInterrupt:

@@ -36,22 +36,18 @@ if __name__ == "__main__":
     # Change port based on your system (e.g., "COM3" on Windows, "/dev/ttyUSB0" on Linux/Mac)
     # maestro = MiniMaestro(port="/dev/ttyUSB0")
     # TODO use devicehelper for dynamic port loading
-    maestro = MiniMaestro(port="COM17")
-   
-    maestro.set_pwm(0, 2500)  # Move servo on channel 0
-    time.sleep(1)
+    maestro = MiniMaestro(port="/dev/ttyUSB2")
 
-    maestro.set_pwm(0, 1765)  # Move servo on channel 0
-    print("marker 1 dropped")
-    time.sleep(2) # adjust this number for the amount of time in between dropping the markers
+    # Move servos to new positions
+    maestro.set_pwm(0, 1200)  # Move servo on channel 0
+    time.sleep(2)
 
-    maestro.set_pwm(0, 1000) # Move servo on channel 0
-    print("marker 2 dropped") 
-    time.sleep(1)
+    print("[INFO] triggered")
+    maestro.set_pwm(0, 1700)  # Move servo on channel 0   
+    time.sleep(2)
+    
+    maestro.set_pwm(0, 1500)  # Move servo on channel 0
 
-    maestro.set_pwm(0, 2500)  # Move servo on channel 0
-    time.sleep(1)
-   
     # Close connection when done
 
-maestro.close()
+    maestro.close()
