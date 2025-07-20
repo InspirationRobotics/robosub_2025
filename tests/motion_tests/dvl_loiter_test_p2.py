@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 """
 Combined Depth Hold + Station Keeping Script
 - Uses velocity integration from DVL to compute position
@@ -14,15 +14,14 @@ from auv.motion.robot_control import RobotControl
 from geometry_msgs.msg import Vector3Stamped, QuaternionStamped
 from tf.transformations import euler_from_quaternion
 
-
-class DVLLoiter:
+class DVLLoiter(object):
     """DVL-based station-keeping by integrating velocity into position."""
 
     ERROR_THRESHOLD = 0.05
     POSE_TIMEOUT = 2.0
     CONTROL_RATE_HZ = 10
 
-    def __init__(self, rc: RobotControl):
+    def __init__(self, rc):
         self.rc = rc
         self.running = True
         self.pose_received = False
@@ -37,11 +36,12 @@ class DVLLoiter:
 
         self._setup_pids()
 
-        # Subscribe to DVL velocity & orientation
+        # Subscribe to DVL velocity & (optionally) orientation
         rospy.Subscriber("/auv/devices/dvl/velocity", Vector3Stamped, self._velocity_callback)
         # rospy.Subscriber("/auv/devices/dvl/orientation", QuaternionStamped, self._orientation_callback)
 
-        self.thread = threading.Thread(target=self._station_keep_loop, daemon=True)
+        self.thread = threading.Thread(target=self._station_keep_loop)
+        self.thread.setDaemon(True)
         self.thread.start()
 
     def _setup_pids(self):
@@ -51,14 +51,13 @@ class DVLLoiter:
         self.pid_x.setpoint = 0.0
         self.pid_y.setpoint = 0.0
 
-    def _velocity_callback(self, msg: Vector3Stamped):
+    def _velocity_callback(self, msg):
         current_time = time.time()
-
         vx = msg.vector.x
         vy = msg.vector.y
         vz = msg.vector.z
 
-        # Default DVL error estimate
+        # Default DVL error estimate (user can calibrate as needed)
         dvl_error = 0.0
         self.pose_received = True
 
@@ -72,7 +71,6 @@ class DVLLoiter:
             rospy.logwarn("[DVLLoiter] Invalid dt, skipping integration.")
             return
 
-        # Apply +dvl_error if needed — customizable later
         vx_err = vx + dvl_error
         vy_err = vy + dvl_error
         vz_err = vz + dvl_error
@@ -89,13 +87,13 @@ class DVLLoiter:
         self.error_integral[1] += abs(vy - vy_err) * dt
         self.error_integral[2] += abs(vz - vz_err) * dt
 
-        # Update RobotControl-used position
+        # Update the RobotControl-used position
         self.rc.position.update(self.position_est)
 
         self.last_pose_time = current_time
         self.prev_time = current_time
 
-    def _orientation_callback(self, msg: QuaternionStamped):
+    def _orientation_callback(self, msg):
         quat = [msg.quaternion.x, msg.quaternion.y, msg.quaternion.z, msg.quaternion.w]
         roll, pitch, yaw = euler_from_quaternion(quat)
         self.rc.orientation.update({'roll': roll, 'pitch': pitch, 'yaw': yaw})
@@ -133,28 +131,27 @@ class DVLLoiter:
         self.rc.movement(lateral=0.0, forward=0.0)
         rospy.loginfo("[DVLLoiter] Stopped station keeping loop.")
 
-
 def main():
     rospy.init_node("dvl_loiter_velocity_based")
 
     rc = RobotControl(debug=True)
     rospy.loginfo("[Main] RobotControl initialized.")
 
-    # -- depth hold logic (line 241 logic)
+    # Depth hold logic (line 241 logic)
     rc.set_control_mode("depth_hold")
     rc.set_absolute_z(0.6)  # Set desired depth to 0.6m
-    
+
     time.sleep(5)  # Allow time for depth hold to stabilize
     target_depth = rc.position["z"]
     rc.set_absolute_z(target_depth)
-    rospy.loginfo(f"[Main] Holding depth at Z={target_depth:.2f} m")
+    rospy.loginfo("[Main] Holding depth at Z=%.2f m" % target_depth)
 
-    # -- Start station keeping (with velocity integration)
+    # Start station keeping (with velocity integration)
     loiter = DVLLoiter(rc)
 
-    # run for 5 minutes
+    # Run for 5 minutes
     duration_sec = 300
-    rospy.loginfo(f"[Main] Running station keeping for {duration_sec} seconds.")
+    rospy.loginfo("[Main] Running station keeping for %d seconds." % duration_sec)
     start_time = time.time()
 
     try:
@@ -167,7 +164,6 @@ def main():
     rc.exit()
 
     rospy.loginfo("[Main] Full system shutdown complete.")
-
 
 if __name__ == "__main__":
     main()
