@@ -47,7 +47,7 @@ class VN100:
             data_list = data_line.split(',')
 
             try :
-                self.yaw, self.pitch, self.roll = (float(data_list[1]) + 90 + self.heading_offset) % 360, (float(data_list[3])+180)%360, float(data_list[2])
+                self.yaw, self.pitch, self.roll = (float(data_list[1]) + 90 + self.heading_offset) % 360, (-float(data_list[3])+180)%360, float(data_list[2])
 
                 self.accX, self.accY, self.accZ = -float(data_list[4]), -float(data_list[5]), -float(data_list[6].split('*')[0])  # remove check sum
                 self.gyroX, self.gyroY, self.gyroZ = float(data_list[7]), float(data_list[8]), float(data_list[9].split('*')[0])
