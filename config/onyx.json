@@ -11,6 +11,7 @@
     "polulu_port": "platform-3610000.xhci-usb-0:2.4.2:1.0",
     "ping_port": "platform-3610000.xhci-usb-0:2.1.2:1.0",
     "teensy_port": "platform-3610000.xhci-usb-0:2.2.1:1.0",
+    "vectornav" : "platform-3610000.xhci-usb-0:2.2.2:1.0",
     "battery_indicator": false,
     "DEPTH_PID_P" : 150,
     "DEPTH_PID_I" : 20,
