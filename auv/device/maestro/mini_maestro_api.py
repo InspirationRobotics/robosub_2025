@@ -46,7 +46,7 @@ if __name__ == "__main__":
     maestro.set_pwm(0, 1700)  # Move servo on channel 0   
     time.sleep(2)
     
-    maestro.set_pwm(0, 1500)  # Move servo on channel 0
+    maestro.set_pwm(0, 2000)  # Move servo on channel 0
 
     # Close connection when done
 
