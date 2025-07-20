@@ -16,9 +16,9 @@ class CV:
     def __init__(self, **config):
         self.shape = None  # Will set this dynamically
         self.x_midpoint = None
-        self.tolerance = 40  # How centered the object should be
+        self.tolerance = 40  # How centered the object should be in px
         self.config = config
-        self.state = "initial_search"
+        self.state = "search"
         self.end = False
         self.start_time = None
         self.rows_completed = 0
@@ -75,12 +75,10 @@ class CV:
         yaw = 0
         vertical = 0
         
-        if self.state == "initial_search":
+        if self.state == "search":
             if detection["status"]:
                 self.state = "centering"
             else:
-                # # Spin in place to search
-                # yaw = 1.0
                 print("[INFO] Searching: No red pole detected")
 
         elif self.state == "centering":
@@ -96,7 +94,7 @@ class CV:
                     self.state = "approaching"
             else:
                 print("[WARN] Lost pole while centering → reverting to searching")
-                self.state = "initial_search"
+                self.state = "search"
 
         elif self.state == "approaching":
 
@@ -110,7 +108,7 @@ class CV:
                     self.state = "approaching"
             else:
                 print("[WARN] Lost pole while approaching → reverting to searching")
-                self.state = "initial_search"
+                self.state = "search"
         
         elif self.state == "strafing":
             if self.start_time is None:
@@ -121,39 +119,14 @@ class CV:
                 lateral = 1.5
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
             else:
-                self.state = "slaloming"
                 self.start_time = None
-                print("[INFO] Strafing complete → transitioning to slaloming")
-
-        elif self.state == "slaloming":
-            if self.start_time is None:
-                self.start_time = time.time()
-                print("[INFO] Slaloming started")
-
-            if time.time() - self.start_time < 2.0:
-                forward = 2.0
-                print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
-            else:
                 self.rows_completed += 1
-                print(f"[INFO] Slaloming complete → rows_completed={self.rows_completed}")
-                if self.rows_completed >= 3:
-                    self.end = True
-                    print("[INFO] Completed slalom through poles → ending")
-                else:
-                    self.state = "internal_searching"
-                self.start_time = None
-  
-        elif self.state == "internal_searching":
-            elapsed_time = time.time() - self.start_time
-            yaw = 1.0 if int(elapsed_time / 0.5) % 2 == 0 else -1.0
-            print(f"[INFO] Internal Searching: Yawing to find next pole (elapsed time: {elapsed_time:.1f}s)")
-            
-            if detection["status"]:
-                self.state = "approaching"
-                print("[INFO] Found next pole while searching → transitioning to approaching")
-            else:
-                self.state = "internal_searching"
+                print("[INFO] Strafing complete → transitioning to next row")
 
+        if self.rows_completed == 3:
+            self.end = True
+            print("[INFO] Completed slalom through poles → ending")
+    
         return forward, lateral, yaw, vertical
 
     def run(self, raw_frame, target, detections):
