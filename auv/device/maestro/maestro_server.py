@@ -8,7 +8,7 @@ Service names:
 import rospy
 import time
 from std_srvs.srv import Trigger, TriggerRequest, TriggerResponse
-from auv.device.MiniMaestro.mini_maestro_api import MiniMaestro
+from auv.device.maestro.mini_maestro_api import MiniMaestro
 from auv.utils import deviceHelper
 
 
