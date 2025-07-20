@@ -5,7 +5,7 @@ from auv.motion.robot_control import RobotControl
 from traceback import print_exc
 
 def test_servo(service_name):
-    rc = RobotControl(enable_dvl=False)
+    rc = RobotControl()
     try:
         print(f"Testing servo: {service_name}")
         result = rc.move_servo(service_name)
