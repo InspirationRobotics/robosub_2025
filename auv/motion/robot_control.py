@@ -14,6 +14,7 @@ from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Vector3Stamped
 import mavros_msgs.msg
 import mavros_msgs.srv
+from std_srvs.srv import Trigger
 import geometry_msgs.msg
 
 
@@ -71,7 +72,8 @@ class RobotControl:
         self.heading_control = False
         self.position       = {'x':0,'y':0,'z':0}
         self.orientation    = {'yaw':0,'pitch':0,'roll':0}   # in degrees, see self.pose_callback
-
+        self.service        = None   # ros service name to move servos
+        
         # Establish thruster and depth publishers
         self.sub_pose       = rospy.Subscriber("/auv/state/pose", PoseStamped, self.pose_callback)  
         self.pub_thrusters  = rospy.Publisher("/mavros/rc/override", mavros_msgs.msg.OverrideRCIn, queue_size=10)
@@ -429,8 +431,30 @@ class RobotControl:
             time.sleep(0.1)
 
         print(f"[INFO] Finished setting heading to {target}")
+            
+    def move_servo(self, service: str):
+        """Operate a servo via the maestro_server file
+        Args:
+            - service (str): The servo to operate. Accepted values:
+                - /auv/device/dropper
+                - /auv/device/torpedo
+                - /auv/device/gripper
+        """
+        if service in ["/auv/device/dropper", "/auv/device/torpedo", "/auv/device/gripper"]:
+            self.service = service
+        else:
+            raise ValueError("Unknown servo service called")
+        
+        rospy.wait_for_service(self.service)
 
-    def set_absolute_yaw(self, yaw):
+        try:
+            servo_client = rospy.ServiceProxy(self.service, Trigger)
+            resp1 = servo_client()
+            return resp1.message
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+
+    def set_absolute_yaw(self, yaw:float):
         """
         Set the heading of the robot
 
