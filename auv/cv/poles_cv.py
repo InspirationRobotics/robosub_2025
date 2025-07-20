@@ -14,8 +14,8 @@ class CV:
     camera = "/auv/camera/videoOAKdRawForward"
 
     def __init__(self, **config):
-        self.shape = None  # sets dynamically in run()
-        self.x_midpoint = None
+        self.shape = (640, 480)
+        self.x_midpoint = 320
         self.tolerance = 40  # How centered the object should be in px
         self.config = config
         self.state = "search"
@@ -84,8 +84,8 @@ class CV:
 
         elif self.state == "centering":
             if detection["status"]:
-                x_center = (detection["xmin"] + detection["xmax"]) / 2
-                offset = x_center - self.x_midpoint
+                pole_x_center = (detection["xmin"] + detection["xmax"]) / 2
+                offset = pole_x_center - self.x_midpoint
 
                 if abs(offset) > self.tolerance:
                     lateral = 1.0 if offset > 0 else -1.0
@@ -122,6 +122,7 @@ class CV:
             else:
                 self.start_time = None
                 self.rows_completed += 1
+                self.state = "search"
                 print("[INFO] Strafing complete → transitioning to next row")
 
         if self.rows_completed == 3:
@@ -132,11 +133,6 @@ class CV:
 
     def run(self, raw_frame, target, detections):
         
-        if self.shape is None:
-            h, w = raw_frame.shape[:2]
-            self.shape = (w, h)
-            self.x_midpoint = w // 2
-        
         detection, red_mask_clean = self.detect_red_pole(raw_frame)
         forward, lateral, yaw, vertical = self.movement_calculation(detection)
 
@@ -145,11 +141,11 @@ class CV:
         if detection["status"]:
             x1, y1 = detection["xmin"], detection["ymin"]
             x2, y2 = detection["xmax"], detection["ymax"]
-            x_center = int((x1 + x2) / 2)
+            pole_x_center = int((x1 + x2) / 2)
 
             # Draw bounding box and center lines
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-            cv2.line(frame, (x_center, 0), (x_center, self.shape[1]), (255, 255, 0), 2)
+            cv2.line(frame, (pole_x_center, 0), (pole_x_center, self.shape[1]), (255, 255, 0), 2)
             cv2.line(frame, (int(self.x_midpoint), 0), (int(self.x_midpoint), self.shape[1]), (0, 255, 0), 1)
 
             # Draw area text
