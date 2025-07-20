@@ -41,9 +41,17 @@ class MaestroServer:
         rospy.loginfo("dropping a marker")
 
         # Logic for dropping one marker (1800 - hold, 1450 - drop)
-        self.maestro.set_pwm(1,1450)
+        self.maestro.set_pwm(1,2500)
         time.sleep(1.0) # TODO find time for dropping only one marker
-        self.maestro.set_pwm(1,1800)
+        self.maestro.set_pwm(1,1765)
+        print("marker 1 dropped")
+        time.sleep(2)
+        self.maestro.set_pwm(1,1000)
+        print("marker 2 dropped")
+        time.sleep(1)
+        self.maestro.set_pwm(1,2500)
+        time.sleep(1.0)
+
 
         return TriggerResponse(
             success=True,
