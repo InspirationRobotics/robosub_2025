@@ -56,6 +56,7 @@ class PoleSlalomMission:
         time.sleep(2)
         
         while not rospy.is_shutdown():
+            print("in loop")
             if not self.received:
                 time.sleep(0.01)
                 continue
