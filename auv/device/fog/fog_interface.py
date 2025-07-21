@@ -146,7 +146,6 @@ class FOG:
             self.integrated_sum += angle_deg_sec*(time.time() - self.prev_time)
             self.parsed_data["angle_deg"] = self.integrated_sum
 
-            time.sleep(0.1)
             self.prev_time = time.time()
             self.angle_sum = 0
             self.count = 0
@@ -162,6 +161,7 @@ class FOG:
         # Translate the data to the correct units
         self._translate_data()
 
+        time.sleep(0.1)
         
 
     def _translate_data(self):
