@@ -27,10 +27,10 @@ if __name__ == "__main__":
 
     try:
         # test_servo("/auv/device/gripper")
-        rospy.sleep(2)
+      #  rospy.sleep(2)
         test_servo("/auv/device/dropper")
-        rospy.sleep(2)
-        test_servo('/auv/device/dropper')
+       # rospy.sleep(2)
+       # test_servo('/auv/device/dropper')
         rospy.sleep(2)
         test_servo("/auv/device/torpedo")
         rospy.sleep(2)

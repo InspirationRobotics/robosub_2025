@@ -18,7 +18,7 @@ class MaestroServer:
         self.maestro = MiniMaestro(port=port)
 
         self.torpedo_state = {"firing_first": (2, 1656), "firing_second": (2, 1800), "reload_required": (2, 1300)}
-        self.dropper_state = {"beginning_position": (1,1765), "dropping_first": (1, 1136), "dropping_second": (1,750), "beginning_position": (1,1765)}
+        self.dropper_state = {"beginning_position": (1,1765), "dropping_first": (1, 1136), "dropping_second": (1,750)}
         self.gripper_state = {"static": (0, 1500), "opening": (0, 1550), "closing": (0, 1450)}
 
         self.has_launched_torpedo = False
@@ -56,8 +56,6 @@ class MaestroServer:
             self.has_dropped1_marker = False
             self.has_dropped2_marker = False
 
-       
-       
         """self.maestro.set_pwm(0,1765)  # Move servo on channel 0
         time.sleep(1.0)
         self.maestro.set_pwm(0,1136)  # Move servo on channel 0
@@ -68,19 +66,6 @@ class MaestroServer:
         time.sleep(1.0)
         self.maestro.set_pwm(0,1765)  # Move servo on channel 0
         time.sleep(1)
-        """
-
-        """ # Logic for dropping one marker (1800 - hold, 1450 - drop)
-        self.maestro.set_pwm(1,1500)
-        time.sleep(1.0) # TODO find time for dropping only one marker
-        self.maestro.set_pwm(1,1765)
-        print("marker 1 dropped")
-        time.sleep(2)
-        self.maestro.set_pwm(1,1000)
-        print("marker 2 dropped")
-        time.sleep(1)
-        self.maestro.set_pwm(1,2500)
-        time.sleep(1.0)
         """
 
         return TriggerResponse(
