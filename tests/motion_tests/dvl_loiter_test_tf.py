@@ -166,14 +166,13 @@ def main():
 
     rc = RobotControl(debug=True)
     rospy.loginfo("[Main] RobotControl initialized.")
-
-    # Depth hold
+    
     rc.set_control_mode("depth_hold")
-    rc.set_absolute_z(0.6)  # Set desired depth to 0.6m
+    target_depth = 0.6  # Set desired depth to 0.6m
+    rc.set_absolute_z(target_depth)  # Set initial depth hold
+    # Depth hold
 
     time.sleep(5)  # Allow time for depth hold to stabilize
-    target_depth = rc.position["z"]
-    rc.set_absolute_z(target_depth)
     rospy.loginfo(f"[Main] Holding depth at Z={target_depth:.2f} m")
 
     # Start station keeping (with velocity integration)
