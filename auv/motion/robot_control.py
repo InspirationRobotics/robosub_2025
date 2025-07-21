@@ -15,6 +15,7 @@ from geometry_msgs.msg import Vector3Stamped
 import mavros_msgs.msg
 import mavros_msgs.srv
 from std_srvs.srv import Trigger
+from std_msgs.msg import String
 import geometry_msgs.msg
 
 
@@ -68,7 +69,7 @@ class RobotControl:
 
         # Store informaiton
         self.sub            = deviceHelper.variables.get("sub")
-        self.mode           = "pid"
+        self.mode           = "depth_hold"
         self.heading_control = False
         self.position       = {'x':0,'y':0,'z':0}
         self.orientation    = {'yaw':0,'pitch':0,'roll':0}   # in degrees, see self.pose_callback
@@ -77,7 +78,7 @@ class RobotControl:
         # Establish thruster and depth publishers
         self.sub_pose       = rospy.Subscriber("/auv/state/pose", PoseStamped, self.pose_callback)  
         self.pub_thrusters  = rospy.Publisher("/mavros/rc/override", mavros_msgs.msg.OverrideRCIn, queue_size=10)
-        self.pub_button     = rospy.Publisher("/mavros/manual_control/send", mavros_msgs.msg.ManualControl, queue_size=10)
+        self.pub_modem     = rospy.Publisher("/auv/devices/modem/send", String, queue_size=10)
 
         # Create variable to store pwm when direct control
         self.direct_input = [0] * 6
@@ -453,6 +454,20 @@ class RobotControl:
             return resp1.message
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
+
+    def send_modem(self, addr:str, movement:str,ack:int,priority:int):
+        """
+        Send message to the other sub. Example of expected message: destination Address-Movement-Acknowledgement-Priority. "020-ROLL-1-0"
+        Args:
+            addr (String): destination address
+            movment (String): what movement to perform
+            Ack (int) : Acknowledgement
+            Priority (int) : priority
+        """
+        message_to_send = String()
+        message_to_send.data = f"{addr}-{movement}-{ack}-{priority}"
+        self.pub_modem(message_to_send)
+        rospy.loginfo(f"Send {addr}-{movement}-{ack}-{priority} to modem node !")
 
     def set_absolute_yaw(self, yaw:float):
         """

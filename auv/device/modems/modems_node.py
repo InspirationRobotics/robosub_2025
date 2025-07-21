@@ -141,6 +141,7 @@ class Modem:
 
         # Initalize ros subscribers and publishers
         rospy.init_node('modem_node')
+        self.rate = rospy.Rate(2)  # 2 Hz
         self.pub = rospy.Publisher('/auv/devices/modem_received', String, queue_size=10)
         self.sub = rospy.Subscriber("/auv/devices/modem_send", String, self.send_callback)
         if auto_start:
@@ -374,8 +375,8 @@ class Modem:
                     ret = self._transmit(msg, ack=ack, dest_addr=dest_addr)
                     packet[2] = ret
 
-                time.sleep(0.5)
-            time.sleep(0.5)
+                self.rate.sleep()
+            self.rate.sleep()
 
             # Remove timed-out (to_remove) messages and received acknowledgmen[packet for it, packet in enumerate(self.in_transit) if it not in to_remt messages (self.ack_received)
             self.in_transit = [packet for (it, packet) in enumerate(self.in_transit) if it not in to_remove and packet[3] not in self.ack_received]
@@ -429,6 +430,7 @@ class Modem:
                 packet = raw_packet.decode("utf-8")
                 # Dispatch the packet to be handled by callback functions
                 self._dispatch(packet)
+                self.rate.sleep()
 
             except KeyboardInterrupt:
                 break

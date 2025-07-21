@@ -14,5 +14,6 @@
     "YAW_PID_I" : 0.01,
     "YAW_PID_D" : 0.0,
     "depth_pid_offset": 1490,
-    "modem_address": "010"
+    "modem_address": "010",
+    "modem_destination_address": "020"
 }
