@@ -254,14 +254,11 @@ if __name__ == "__main__":
     # fog.stop_read()
     # ---------------------------------------------------------
 
-    print("Now just running for 30 seconds")
+    rospy.loginfo("Running FOG node")
 
-    fog.start()
-
-    startTime = time.time()
-    for i in range(30):
-        print(i+1)
-        time.sleep(1)
-    fog.stop_read()
-    print("Stopping read thread")
-    fog.close()
+    try:
+        fog.start()
+    except KeyboardInterrupt:
+        fog.stop_read()
+        rospy.loginfo("Stopping read thread")
+        fog.close()
