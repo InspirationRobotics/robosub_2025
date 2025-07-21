@@ -17,7 +17,7 @@ class MaestroServer:
         rospy.init_node('maestroServer')
         self.maestro = MiniMaestro(port=port)
 
-        self.torpedo_state = {"firing_first": (2, 1656), "firing_second": (2, 1800), "reload_required": (2, 3200)}
+        self.torpedo_state = {"firing_first": (2, 1800), "firing_second": (2, 1656), "reload_required": (2, 3200)}
         self.dropper_state = {"beginning_position": (1,1765), "dropping_first": (1, 1136), "dropping_second": (1,750), "beginning_position": (1,1765)}
         self.gripper_state = {"static": (0, 1500), "opening": (0, 1550), "closing": (0, 1450)}
 
