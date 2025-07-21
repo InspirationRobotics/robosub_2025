@@ -2,7 +2,6 @@ import signal
 import sys
 import rospy
 from auv.motion.robot_control import RobotControl
-from auv.device.maestro.maestro_server import MaestroServer
 from traceback import print_exc
 
 rospy.init_node("servoTest")
@@ -12,7 +11,6 @@ def test_servo(service_name):
     try:
         print(f"Testing servo: {service_name}")
         result = rc.move_servo(service_name)
-        #print("Result from {service_name}: {result}".format(service_name=service_name, result=result))
         print(f"Result from {service_name}: {result}")
     except Exception as e:
         print(f"Error testing {service_name}: {e}")
@@ -23,13 +21,12 @@ def shutdown_handler(signum, frame):
     rospy.signal_shutdown("Shutdown requested")
 
 if __name__ == "__main__":
-    server = MaestroServer()
     # Register signal handlers for safe shutdown
     signal.signal(signal.SIGINT, shutdown_handler)   # Handles Ctrl+C
     signal.signal(signal.SIGTERM, shutdown_handler)  # Handles kill/termination
 
     try:
-        test_servo("/auv/device/gripper")
+        # test_servo("/auv/device/gripper")
         rospy.sleep(2)
         test_servo("/auv/device/dropper")
         rospy.sleep(2)
