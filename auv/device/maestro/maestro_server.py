@@ -30,7 +30,7 @@ class MaestroServer:
 
         # Set all servos to default state
         self.maestro.set_pwm(*self.torpedo_state["reload_required"])
-        self.maestro.set_pwm(*self.dropper_state["begining_position"])
+        self.maestro.set_pwm(*self.dropper_state["beginning_position"])
         self.maestro.set_pwm(*self.gripper_state["static"])
         
         rospy.loginfo("Ready to take servo requests.")
