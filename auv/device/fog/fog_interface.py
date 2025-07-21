@@ -22,7 +22,7 @@ class FOG:
         """Initialize the serial connection"""
         rospy.init_node("FOG", anonymous=True)
         # Make serial stuff???
-        self.ser = self._setupSerial(port)
+        self.ser = self._setupSerial(fog_port)
         self.readData = False
 
         self.xDataNames = ["temp", "supply_voltage", "sld_curr", "diag_sig", "angle_deg"]
