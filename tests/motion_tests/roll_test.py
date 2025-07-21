@@ -4,28 +4,15 @@ from auv.motion import robot_control
 from auv.utils import arm, disarm
 
 
-rospy.init_node("roll_test", anonymous=True)
-rc = robot_control.RobotControl(enable_dvl=False)
-
+rospy.init_node("NavTest", anonymous=True)
+rc = robot_control.RobotControl()
+rc.set_control_mode("pid")
 arm.arm()
-time.sleep(3.0)
+rospy.loginfo("Diving down")
+rc.set_absolute_z(0.5)
+time.sleep(5)
 
-first_time = time.time()
-while time.time() - first_time < 10:
-    rc.movement(pitch=200)
 
-# first_time = time.time()
-# while time.time() - first_time < 3:
-#     rc.movement(forward = -2)
-
-# first_time = time.time()
-# while time.time() - first_time < 3:
-#     rc.movement(lateral = 2)
-
-# first_time = time.time()
-# while time.time() - first_time < 3:
-#     rc.movement(lateral = -2)
-
-time.sleep(1.0)
+rospy.loginfo("Reached the end")
 
 disarm.disarm()

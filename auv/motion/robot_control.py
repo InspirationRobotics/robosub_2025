@@ -165,7 +165,6 @@ class RobotControl:
         """
         Publisher to publish the thruster values
         """
-        # TODO add np clip protection to the pwms
         while self.running and not rospy.is_shutdown():
             if self.mode == "pid":
                 # Update desire pose
@@ -175,7 +174,6 @@ class RobotControl:
                     'y': self.desired_point["y"] if self.desired_point["y"] is not None else self.position['y'],
                     'z': self.desired_point["z"] if self.desired_point["z"] is not None else self.position['z'],
 
-                    
                     'yaw': self.desired_point["yaw"] if self.desired_point.get("yaw") is not None else self.orientation['yaw'],
                     'pitch': self.desired_point["pitch"] if self.desired_point.get("pitch") is not None else self.orientation['pitch'],
                     'roll': self.desired_point["roll"] if self.desired_point.get("roll") is not None else self.orientation['roll'],
@@ -185,19 +183,23 @@ class RobotControl:
                 errors = {
                     "x": self.desired["x"] - self.position['x'],
                     "y": self.desired["y"] - self.position['y'],
-                    "z": self.desired["z"] - self.position['z'],
-                    "yaw": self.desired["yaw"] - self.orientation['yaw'] if self.desired['yaw'] > self.orientation['yaw'] else self.orientation['yaw'] - self.desired['yaw'],
+                    "z": None,
+                    "yaw": (heading_error(heading=self.orientation['yaw'], target=self.desired_point['yaw']) * -1) /180,
                     "pitch": self.desired["pitch"] - self.orientation['pitch'],
                     "roll": self.desired["roll"] - self.orientation['roll'],
                 }
-
                 # Set the PWM values
                 # Original PID outputs in world frame
                 
                 lateral_pwm_world = self.PIDs["lateral"](errors["x"])
                 surge_pwm_world   = self.PIDs["surge"](errors["y"])
-                depth_pwm_world   = self.PIDs["depth"](errors["z"])
-
+                # Set depth PWM value
+                if self.sub=="graey":
+                    depth_pwm_world = (self.PIDs['depth'](self.position['z']) * -1) /80.0
+                elif self.sub=="onyx":
+                    depth_pwm_world = (self.PIDs['depth'](self.position['z']))/80.0
+                else:
+                    depth_pwm_world = (self.PIDs['depth'](self.position['z']) * -1) /80.0
 
                 yaw = self.orientation["yaw"]
                 pitch = self.orientation["pitch"]
@@ -493,7 +495,7 @@ class RobotControl:
         """
         # Clear the PID error
         self.PIDs["depth"].reset()
-        self.desired_point["z"] = depth + self.pose.pose.position.z
+        self.desired_point["z"].setpoint = depth + self.pose.pose.position.z
 
     def set_relative_x(self, x):
         """
