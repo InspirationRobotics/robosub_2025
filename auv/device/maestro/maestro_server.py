@@ -18,7 +18,7 @@ class MaestroServer:
         self.maestro = MiniMaestro(port=port)
 
         self.torpedo_state = {"firing_first": (2, 1656), "firing_second": (2, 1800), "reload_required": (2, 1300)}
-        self.dropper_state = {"beginning position": (1,1765), "dropping_first": (1, 1136), "dropping_second": (1,750), "beginning position": (1,1765)}
+        self.dropper_state = {"beginning_position": (1,1765), "dropping_first": (1, 1136), "dropping_second": (1,750), "beginning position": (1,1765)}
         self.gripper_state = {"static": (0, 1500), "opening": (0, 1550), "closing": (0, 1450)}
 
         self.has_launched_torpedo = False
@@ -32,7 +32,7 @@ class MaestroServer:
 
         # Set all servos to default state
         self.maestro.set_pwm(*self.torpedo_state["reload_required"])
-        self.maestro.set_pwm(*self.dropper_state["reload_required"])
+        self.maestro.set_pwm(*self.dropper_state["begining_position"])
         self.maestro.set_pwm(*self.gripper_state["static"])
         
         
