@@ -122,7 +122,7 @@ class DVLLoiter:
             delta_y = self.pid_y(y)
 
             if abs(delta_x) > self.ERROR_THRESHOLD or abs(delta_y) > self.ERROR_THRESHOLD:
-                self.rc.movement(lateral=delta_x, forward=delta_y)
+                self.rc.__movement(lateral=delta_x, forward=delta_y)
             else:
                 self.rc.movement(lateral=0.0, forward=0.0)
 

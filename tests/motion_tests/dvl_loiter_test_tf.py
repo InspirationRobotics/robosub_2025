@@ -142,18 +142,29 @@ class DVLLoiter:
                 rate.sleep()
                 continue
 
+            # Current estimated position from DVL
             x = self.rc.position['x']
             y = self.rc.position['y']
 
-            delta_x = self.pid_x(x)
-            delta_y = self.pid_y(y)
+            # Calculate control efforts
+            delta_x = self.pid_x(x)  # lateral
+            delta_y = self.pid_y(y)  # forward
 
+            # ✳ Clamp to safe actuator range [-5, 5]
+            delta_x = max(min(delta_x, 5), -5)
+            delta_y = max(min(delta_y, 5), -5)
+
+            # 📊 Debug logging
+            rospy.loginfo(f"[DVLLoiter] Position x={x:.3f}, y={y:.3f} | PID Cmd dx={delta_x:.2f}, dy={delta_y:.2f}")
+
+            # Apply control efforts if error exceeds threshold
             if abs(delta_x) > self.ERROR_THRESHOLD or abs(delta_y) > self.ERROR_THRESHOLD:
                 self.rc.movement(lateral=delta_x, forward=delta_y)
             else:
                 self.rc.movement(lateral=0.0, forward=0.0)
 
             rate.sleep()
+
 
     def stop(self):
         self.running = False
