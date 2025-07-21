@@ -1,10 +1,12 @@
 import serial
 import time
 
+
 class MiniMaestro:
     def __init__(self, port, baudrate=9600):
         """
         Initializes the serial connection to the Mini Maestro Servo Controller.
+
 
         Args:
             - port (str): The COM port (e.g., "COM3" for Windows or "/dev/ttyUSB0" for Linux/Mac).
@@ -12,6 +14,7 @@ class MiniMaestro:
         """
         self.__serial_conn = serial.Serial(port, baudrate, timeout=1)
         time.sleep(2)  # Allow time for the connection to establish
+
 
     def set_pwm(self, channel, target):
         """
@@ -26,28 +29,39 @@ class MiniMaestro:
         command = bytes([0x84, channel, lsb, msb])  # Compact binary command
         self.__serial_conn.write(command)
 
+
     def close(self):
         """Closes the serial connection."""
         if self.__serial_conn.is_open:
             self.__serial_conn.close()
+
 
 # Example usage:
 if __name__ == "__main__":
     # Change port based on your system (e.g., "COM3" on Windows, "/dev/ttyUSB0" on Linux/Mac)
     # maestro = MiniMaestro(port="/dev/ttyUSB0")
     # TODO use devicehelper for dynamic port loading
-    maestro = MiniMaestro(port="/dev/ttyUSB2")
+    maestro = MiniMaestro(port="COM17")
+   
+    maestro.set_pwm(0, 1765)  # Move servo on channel 0
+    time.sleep(1)
 
-    # Move servos to new positions
-    maestro.set_pwm(0, 1200)  # Move servo on channel 0
-    time.sleep(2)
 
-    print("[INFO] triggered")
-    maestro.set_pwm(0, 1700)  # Move servo on channel 0   
-    time.sleep(2)
-    
-    maestro.set_pwm(0, 1500)  # Move servo on channel 0
+    maestro.set_pwm(0, 1136)  # Move servo on channel 0
+    print("marker 1 dropped")
+    time.sleep(2) # adjust this number for the amount of time
 
+
+    maestro.set_pwm(0, 750) # Move servo on channel 0
+    print("marker 2 dropped")
+    time.sleep(1)
+
+
+    maestro.set_pwm(0, 1765)  # Move servo on channel 0
+    time.sleep(1)
+   
     # Close connection when done
 
-    maestro.close()
+
+maestro.close()
+
