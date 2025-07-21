@@ -1,5 +1,5 @@
 # IMPORT modem class form modem_api.py
-from auv.device.modems.modems_api import Modem
+from auv.device.modems.modems_node import Modem
 import time
 import rospy
 

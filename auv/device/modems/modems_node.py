@@ -140,11 +140,12 @@ class Modem:
         self.thread_send = threading.Thread(target=self._send_loop)
 
         # Initalize ros subscribers and publishers
-        rospy.init_node('maestroServer')
+        rospy.init_node('modem_node')
         self.pub = rospy.Publisher('/auv/devices/modem_received', String, queue_size=10)
         self.sub = rospy.Subscriber("/auv/devices/modem_send", String, self.send_callback)
         if auto_start:
             self.start()
+
     def publish_to_ros(self, msg):
         tosend = String()
         tosend.data = msg
@@ -156,10 +157,6 @@ class Modem:
         This function store a message to self.in_transit
         """
         toSend = msg.data
-
-        # TODO parse the message and format it to """[msg, time.time(), 0, ack, dest_addr, priority]""" so we can store it at self.in_transit
-        # Get a list ready to be added to self.in_transit
-
 
         # Example of expected message: destination Address-Movement-Acknowledgement-Priority. "020-ROLL-1-0"
         parts = toSend.strip().split("-")

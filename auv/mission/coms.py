@@ -7,7 +7,7 @@ import time
 from auv.mission import gate_mission, cointoss_mission, surfacing_mission, dhd_approach_mission, gate2_mission
 from auv.utils import arm, disarm, deviceHelper
 from auv.motion import robot_control
-from auv.device.modems.modems_api import Modem
+from auv.device.modems.modems_node import Modem
 import rospy
 
 rospy.init_node("coms_mission", anonymous=True)
