@@ -132,7 +132,10 @@ class CV:
         return forward, lateral, yaw, vertical
 
     def run(self, raw_frame, target, detections):
-        
+    # Crop right half only in strafing state
+        if self.state == "strafing":
+            raw_frame = raw_frame[:, 320:]
+
         detection, red_mask_clean = self.detect_red_pole(raw_frame)
         forward, lateral, yaw, vertical = self.movement_calculation(detection)
 
@@ -155,5 +158,6 @@ class CV:
         # Draw state text
         cv2.putText(frame, f"State: {self.state}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+
         return {
             "lateral": lateral, "forward": forward, "yaw": yaw, "vertical": vertical, "end": self.end}, frame
