@@ -152,7 +152,7 @@ class FOG:
             self.count = 0
             # publish data
             self.publish_reading(self.integrated_sum)
-            self.pub_ang_vel(angle_deg_sec)
+            self.pub_ang_vel.publish(angle_deg_sec)
 
         # XData
         if packet_count % 2 != 0 and packet_count < 8:
