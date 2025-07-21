@@ -38,16 +38,17 @@ class MaestroServer:
         
     def dropperCallback(self, request):
         rospy.loginfo("dropping a marker")
-        self.maestro.set_pwm(0, 1765)  # Move servo on channel 0
-        time.sleep(1)
-        self.maestro.set_pwm(0, 1136)  # Move servo on channel 0
+        self.maestro.set_pwm(0,1765)  # Move servo on channel 0
+        time.sleep(1.0)
+        self.maestro.set_pwm(0,1136)  # Move servo on channel 0
         print("marker 1 dropped")
-        time.sleep(2) # adjust this number for the amount of time
-        self.maestro.set_pwm(0, 750) # Move servo on channel 0
+        time.sleep(2.0) # adjust this number for the amount of time
+        self.maestro.set_pwm(0,750) # Move servo on channel 0
         print("marker 2 dropped")
+        time.sleep(1.0)
+        self.maestro.set_pwm(0,1765)  # Move servo on channel 0
         time.sleep(1)
-        self.maestro.set_pwm(0, 1765)  # Move servo on channel 0
-        time.sleep(1)
+     
 
         """ # Logic for dropping one marker (1800 - hold, 1450 - drop)
         self.maestro.set_pwm(1,1500)
