@@ -150,6 +150,9 @@ class FOG:
             self.prev_time = time.time()
             self.angle_sum = 0
             self.count = 0
+            # publish data
+            self.publish_reading(self.integrated_sum)
+            self.pub_ang_vel(angle_deg_sec)
 
         # XData
         if packet_count % 2 != 0 and packet_count < 8:
@@ -159,9 +162,7 @@ class FOG:
         # Translate the data to the correct units
         self._translate_data()
 
-        # publish data
-        self.publish_reading(self.integrated_sum)
-        self.pub_ang_vel(angle_deg_sec)
+        
 
     def _translate_data(self):
         if "temp" in self.data.keys():
