@@ -64,7 +64,7 @@ class MaestroServer:
 
         return TriggerResponse(
             success=True,
-            message="Marker is  dropped!"
+            message="The markers are dropped!"
         )
 
 
