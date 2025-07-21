@@ -159,9 +159,25 @@ class Modem:
 
         # TODO parse the message and format it to """[msg, time.time(), 0, ack, dest_addr, priority]""" so we can store it at self.in_transit
         # Get a list ready to be added to self.in_transit
-        pass
-        
-        self.send_msg(msg=None,ack=None,dest_addr=None,priority=None) # need to fill these in by parsing the incoming string form the topic
+
+
+        # Example of expected message: destination Address-Movement-Acknowledgement-Priority. "020-ROLL-1-0"
+        parts = toSend.strip().split("-")
+        if len(parts) != 4:
+            print(f"[Modem] Malformed message: '{toSend}' (expected 4 parts)")
+            return
+
+        MSG = parts[1]
+
+        try:
+            DEST_ADDR = int(parts[0])
+            ACK = int(parts[2])
+            PRIORITY = int(parts[3])
+        except ValueError as e:
+            print(f"[Modem] Failed to parse integer fields: {e}")
+            return
+
+        self.send_msg(msg= MSG, ack= ACK, dest_addr= DEST_ADDR, priority= PRIORITY) # need to fill these in by parsing the incoming string form the topic
 
     def _send_to_modem(self, data):
         """
