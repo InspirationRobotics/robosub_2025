@@ -140,7 +140,6 @@ class Modem:
         self.thread_send = threading.Thread(target=self._send_loop)
 
         # Initalize ros subscribers and publishers
-        rospy.init_node('maestroServer')
         self.pub = rospy.Publisher('/auv/devices/modem_received', String, queue_size=10)
         self.sub = rospy.Subscriber("/auv/devices/modem_send", String, self.send_callback)
         if auto_start:
@@ -705,6 +704,7 @@ def manual_coms():
 
 # For testing purposes
 if __name__ == "__main__":
+    rospy.init_node('maestroServer')
     modem = Modem()
     modem.send_msg("this is a test")
     modem.send_msg("blabla")
