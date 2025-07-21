@@ -183,7 +183,7 @@ def main():
     rc.set_absolute_z(target_depth)  # Set initial depth hold
     # Depth hold
 
-    time.sleep(5)  # Allow time for depth hold to stabilize
+    time.sleep(10)  # Allow time for depth hold to stabilize
     rospy.loginfo(f"[Main] Holding depth at Z={target_depth:.2f} m")
 
     # Start station keeping (with velocity integration)
