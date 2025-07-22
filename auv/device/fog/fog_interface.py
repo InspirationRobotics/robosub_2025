@@ -145,8 +145,8 @@ class FOG:
             angle_deg_sec = angle_mv*self.integration_factor
             self.integrated_sum += angle_deg_sec*(time.time() - self.prev_time)
             self.parsed_data["angle_deg"] = self.integrated_sum
-
             self.prev_time = time.time()
+            time.sleep(0.1)
             self.angle_sum = 0
             self.count = 0
             # publish data
