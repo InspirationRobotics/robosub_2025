@@ -42,6 +42,7 @@ class FOG:
         self.integrated_sum = 0
         self.bias = 0
         self.pub_fog = rospy.Publisher("auv/devices/fog", Float64, queue_size=10)
+        self.pub_ang = rospy.Publisher("auv/devices/fogang", Float64, queue_size=10)
 
     def _setupSerial(self, p : str) -> serial.Serial:
         """Make a serial connection to store in self.ser,
@@ -154,8 +155,9 @@ class FOG:
             self.integrated_sum += angle_deg_sec*(time.time() - self.prev_time)
             self.parsed_data["angle_deg"] = self.integrated_sum
             self.pub_fog.publish(self.integrated_sum)
+            self.pub_ang.publish(angle_deg_sec)
             print(self.integrated_sum)
-            time.sleep(0.1)
+            # time.sleep(0.1)
             self.prev_time = time.time()
             self.angle_sum = 0
             self.count = 0
