@@ -2,14 +2,23 @@ import time
 import threading
 import rospy
 from std_msgs.msg import Float64
+
+# use module pyserial (not serial)
+
 import serial
 from auv.utils import deviceHelper
+
+
+# Requires FOG USB to be connected to 
+# lower-right USB port on Jetson to work
+
+fog_port = deviceHelper.dataFromConfig("fog")
 
 class FOG:
 
     """Allows for tracking of angular movement"""
 
-    def __init__(self, fog_port=deviceHelper.dataFromConfig("fog")):
+    def __init__(self, port='/dev/ttyUSB0'):
         """Initialize the serial connection"""
         rospy.init_node("FOG", anonymous=True)
         # Make serial stuff???
@@ -33,7 +42,6 @@ class FOG:
         self.integrated_sum = 0
         self.bias = 0
         self.pub_fog = rospy.Publisher("auv/devices/fog", Float64, queue_size=10)
-        self.pub_ang_vel = rospy.Publisher("auv/devices/fog/ang", Float64, queue_size=10)
 
     def _setupSerial(self, p : str) -> serial.Serial:
         """Make a serial connection to store in self.ser,
@@ -117,7 +125,7 @@ class FOG:
         if not self._handle_checksum(curr_line):
             return
         angle_data = int(curr_line[2], 16) << 16 | int(curr_line[3], 16) << 8 | int(curr_line[1], 16)
-        # Converts to 24 bit signed integer and adds to the sum
+            # Converts to 24 bit signed integer and adds to the sum
         self.cal_sum += self._twos_complement(angle_data)
         self.cal_count += 1
 
@@ -145,13 +153,12 @@ class FOG:
             angle_deg_sec = angle_mv*self.integration_factor
             self.integrated_sum += angle_deg_sec*(time.time() - self.prev_time)
             self.parsed_data["angle_deg"] = self.integrated_sum
-            self.prev_time = time.time()
+            self.pub_fog.publish(self.integrated_sum)
+            print(self.integrated_sum)
             time.sleep(0.1)
+            self.prev_time = time.time()
             self.angle_sum = 0
             self.count = 0
-            # publish data
-            self.publish_reading(self.integrated_sum)
-            self.pub_ang_vel.publish(angle_deg_sec)
 
         # XData
         if packet_count % 2 != 0 and packet_count < 8:
@@ -160,9 +167,6 @@ class FOG:
 
         # Translate the data to the correct units
         self._translate_data()
-
-        time.sleep(0.1)
-        
 
     def _translate_data(self):
         if "temp" in self.data.keys():
@@ -227,7 +231,7 @@ class FOG:
         print("FOG serial port closed.")
 
 if __name__ == "__main__":
-    fog = FOG()
+    fog = FOG(fog_port)
     fog.calibrate()
 
     # --------- Calibration metrics for 60 seconds ------------
@@ -255,11 +259,14 @@ if __name__ == "__main__":
     # fog.stop_read()
     # ---------------------------------------------------------
 
-    rospy.loginfo("Running FOG node")
+    print("Now just running for 30 seconds")
 
-    try:
-        fog.start()
-    except KeyboardInterrupt:
-        fog.stop_read()
-        rospy.loginfo("Stopping read thread")
-        fog.close()
+    fog.start()
+
+    startTime = time.time()
+    for i in range(30):
+        print(i+1)
+        time.sleep(1)
+    fog.stop_read()
+    print("Stopping read thread")
+    fog.close()
