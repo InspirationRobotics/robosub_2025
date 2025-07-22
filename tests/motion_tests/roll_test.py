@@ -12,6 +12,8 @@ rospy.loginfo("Diving down")
 rc.set_absolute_z(0.5)
 time.sleep(5)
 
+rc.set_absolute_roll(90)
+
 
 rospy.loginfo("Reached the end")
 

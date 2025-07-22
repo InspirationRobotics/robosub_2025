@@ -186,7 +186,7 @@ class RobotControl:
                     "z": None,
                     "yaw": (heading_error(heading=self.orientation['yaw'], target=self.desired_point['yaw']) * -1) /180,
                     "pitch": self.desired["pitch"] - self.orientation['pitch'],
-                    "roll": self.desired["roll"] - self.orientation['roll'],
+                    "roll": (self.desired["roll"] - self.orientation['roll'])/180,
                 }
                 # Set the PWM values
                 # Original PID outputs in world frame
