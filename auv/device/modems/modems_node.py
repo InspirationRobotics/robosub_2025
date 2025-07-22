@@ -704,11 +704,10 @@ def manual_coms():
 
 # For testing purposes
 if __name__ == "__main__":
-    rospy.init_node('maestroServer')
     modem = Modem()
-    modem.send_msg("this is a test")
-    modem.send_msg("blabla")
-    modem.send_msg("omg this is insane !!!")
+    #modem.send_msg("this is a test")
+    #modem.send_msg("blabla")
+    #modem.send_msg("omg this is insane !!!")
 
     # led.on_send_msg()
     # led.on_recv_msg()
