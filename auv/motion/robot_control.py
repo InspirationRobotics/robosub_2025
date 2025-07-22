@@ -118,16 +118,16 @@ class RobotControl:
                 output_limits=(-5, 5),   
             ),
             "surge": PID(
-                self.config.get("FORWARD_PID_P", 4.0),
-                self.config.get("FORWARD_PID_I", 0.01),
-                self.config.get("FORWARD_PID_D", 0.1),
+                self.config.get("FORWARD_PID_P", 2),
+                self.config.get("FORWARD_PID_I", 0.05),
+                self.config.get("FORWARD_PID_D", 0.01),
                 setpoint=0,
                 output_limits=(-2, 2),
             ),
             "lateral": PID(
-                self.config.get("LATERAL_PID_P", 4.0),
-                self.config.get("LATERAL_PID_I", 0.01),
-                self.config.get("LATERAL_PID_D", 0.1),
+                self.config.get("LATERAL_PID_P", 2),
+                self.config.get("LATERAL_PID_I", 0.05),
+                self.config.get("LATERAL_PID_D", 0.01),
                 setpoint=0,
                 output_limits=(-2, 2),
             ),
@@ -184,13 +184,14 @@ class RobotControl:
                     "x": self.desired["x"] - self.position['x'],
                     "y": self.desired["y"] - self.position['y'],
                     "z": None,
-                    "yaw": (heading_error(heading=self.orientation['yaw'], target=self.desired_point['yaw']) * -1) /180,
+                    "yaw": 0,
                     "pitch": self.desired["pitch"] - self.orientation['pitch'],
                     "roll": (self.desired["roll"] - self.orientation['roll'])/180,
                 }
                 # Set the PWM values
                 # Original PID outputs in world frame
-                
+                if self.desired_point['yaw'] is not None:
+                    errors['yaw'] =  (heading_error(heading=self.orientation['yaw'], target=self.desired_point['yaw']) * -1) /180
                 lateral_pwm_world = self.PIDs["lateral"](errors["x"])
                 surge_pwm_world   = self.PIDs["surge"](errors["y"])
                 # Set depth PWM value
@@ -241,7 +242,23 @@ class RobotControl:
                     pitch=pitch_pwm,
                     roll=roll_pwm
                 )
-            
+            elif self.mode=="direct":
+                pitch_pwm   = self.direct_input[0]
+                roll_pwm    = self.direct_input[1]
+                depth_pwm   = self.direct_input[2]
+                yaw_pwm     = self.direct_input[3]
+                surge_pwm   = self.direct_input[4]
+                lateral_pwm = self.direct_input[5]
+
+                self.__movement(
+                    lateral=lateral_pwm,
+                    forward=surge_pwm,
+                    vertical=depth_pwm,
+                    yaw=yaw_pwm,
+                    pitch=pitch_pwm,
+                    roll=roll_pwm
+                )
+
             elif self.mode=="depth_hold":
                 
                 # Set depth PWM value
@@ -378,8 +395,11 @@ class RobotControl:
         elif msg=="depth_hold":
             self.mode = msg
             rospy.loginfo("Set to depth hold mode")
+        elif msg=="direct":
+            self.mode = msg
+            rospy.loginfo("Set to direct control mode")
         else:
-            self.mode = "direct"
+            self.mode = "depth_hold"
             rospy.logewarn("Control mode not found")
         
     def set_absolute_z(self, depth):
