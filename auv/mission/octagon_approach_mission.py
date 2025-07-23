@@ -77,7 +77,7 @@ class OctagonApproachMission:
 
             # Do something with the data.
             lateral = self.data["octagon_approach_cv"].get("lateral", None)
-            forward = self.data["octagon_approach_cv"].get("forward", None)
+            forward = self.data["octagon_approach_cv"].get("forward", 2)
             yaw = self.data["octagon_approach_cv"].get("yaw", None)
             vertical = self.data["octagon_approach_cv"].get("vertical", None)
             end = self.data["octagon_approach_cv"].get("end", None)
