@@ -15,7 +15,7 @@ from auv.device import cv_handler # For running mission-specific CV scripts
 from auv.motion import robot_control # For running the motors on the sub
 from auv.utils import arm, disarm
 
-class BinApproachMission:
+class BinsApproachMission:
     cv_files = ["bin_approach_cv"] # CV file to run
 
     def __init__(self, target=None, **config):
@@ -30,7 +30,7 @@ class BinApproachMission:
         self.next_data = {}  # Dictionary to store the newest data from the CV handler; this data will be merged with self.data.
         self.received = False
 
-        self.robot_control = robot_control.RobotControl()
+        self.rc = robot_control.RobotControl()
         self.cv_handler = cv_handler.CVHandler(**self.config)
 
         # Initialize the CV handlers; dummys are used to input a video file instead of the camera stream as data for the CV script to run on
@@ -39,7 +39,7 @@ class BinApproachMission:
 
         self.cv_handler.set_target("bin_approach_cv", target)
         print("[INFO] Bin Approach Mission Init")
-        self.robot_control.set_depth(0.38)
+        self.rc.set_depth(0.38)
     def callback(self, msg):
         """
         Calls back the cv_handler output -- you can have multiple callbacks for multiple CV handlers. Converts the output into JSON format.
@@ -84,10 +84,10 @@ class BinApproachMission:
 
             if end:
                 print("[INFO] Ending Bin Approach CV")
-                self.robot_control.movement(lateral = 0, forward = 0, yaw = 0)
+                self.rc.movement(lateral = 0, forward = 0, yaw = 0)
                 break
             else:
-                self.robot_control.movement(lateral = lateral, forward = forward, yaw = yaw, vertical = vertical)
+                self.rc.movement(lateral = lateral, forward = forward, yaw = yaw, vertical = vertical)
                 # print(forward, lateral, yaw)
       
         print("[INFO] Bin approach mission terminated")
@@ -101,7 +101,7 @@ class BinApproachMission:
             self.cv_handler.stop_cv(file_name)
 
         # Idle the robot
-        self.robot_control.movement(lateral = 0, forward = 0, yaw = 0)
+        self.rc.movement(lateral = 0, forward = 0, yaw = 0)
         print("[INFO] Bin approach mission terminate")
 
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     import time
     from auv.utils import deviceHelper
     from auv.motion import robot_control
-    rospy.init_node("bin_approach_mission", anonymous=True)
+    rospy.init_node("bins_approach_mission", anonymous=True)
 
     config = deviceHelper.variables
     config.update(
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     )
 
     # Create a mission object with arguments
-    mission = BinApproachMission(**config)
+    mission = BinsApproachMission(**config)
 
     # Run the mission
 
