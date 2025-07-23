@@ -141,8 +141,8 @@ class Modem:
         # Initalize ros subscribers and publishers
         rospy.init_node('modem_node')
         self.rate = rospy.Rate(2)  # 2 Hz
-        self.pub = rospy.Publisher('/auv/devices/modem_received', String, queue_size=10)
-        self.sub = rospy.Subscriber("/auv/devices/modem_send", String, self.send_callback)
+        self.pub = rospy.Publisher('/auv/devices/modem/received', String, queue_size=10)
+        self.sub = rospy.Subscriber("/auv/devices/modem/send", String, self.send_callback)
         rospy.loginfo("Modem node initialized")
         if auto_start:
             self.start()
