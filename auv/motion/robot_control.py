@@ -466,7 +466,7 @@ class RobotControl:
         """
         message_to_send = String()
         message_to_send.data = f"{addr}-{movement}-{ack}-{priority}"
-        self.pub_modem(message_to_send)
+        self.pub_modem.publish(message_to_send)
         rospy.loginfo(f"Send {addr}-{movement}-{ack}-{priority} to modem node !")
 
     def set_absolute_yaw(self, yaw:float):
