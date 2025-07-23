@@ -92,9 +92,10 @@ class CV:
             self.end = True
 
         if len(detections) >= 1:
+            print("[DEBUG] bin detected!")
             if len(detections) == 1:
                 for detection in detections:
-                    # print(f"[DEBUG] Detection confidence: {detection.confidence}")
+                    print(f"[DEBUG] Detection confidence: {detection.confidence}")
                     if detection.confidence > 0.65:
                         target_x = (detection.xmin + detection.xmax) / 2
                         target_y = (detection.ymin + detection.ymax) / 2
@@ -119,6 +120,7 @@ class CV:
             self.state = "approach"
 
         if self.state == "search":
+            print("[INFO] Searching")
             if self.start_time == None:
                 self.start_time = time.time()
                 self.last_yaw = 1.0  # Initial direction
@@ -135,8 +137,8 @@ class CV:
                 self.yaw_time_search += 1.5
 
         if self.state == "approach":
-            # print("[DEBUG] Approaching now!")
-            # print(target_x)
+            print("[DEBUG] Approaching now!")
+            print(target_x)
             forward, yaw = self.smart_approach(target_x)
             
 
