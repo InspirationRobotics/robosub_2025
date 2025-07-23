@@ -4,28 +4,41 @@ from auv.motion import robot_control
 from auv.utils import arm, disarm
 
 
-rospy.init_node("roll_test", anonymous=True)
-rc = robot_control.RobotControl(enable_dvl=False)
-
+rospy.init_node("NavTest", anonymous=True)
+rc = robot_control.RobotControl()
+rc.set_control_mode("depth_hold")
 arm.arm()
-time.sleep(3.0)
+rospy.loginfo("Diving down")
+rc.set_absolute_yaw(0)
+rc.set_absolute_z(1.0)
+time.sleep(13)
+rc.set_control_mode("direct")
+rospy.loginfo("doing roll")
+rc.movement(roll=-5)
+time.sleep(1.5)
+rc.movement()
+# rc.movement(vertical=-4)
+# time.sleep(1)
+rc.movement()
+rc.set_control_mode("depth_hold")
+rc.set_absolute_z(1.0)
+rc.set_absolute_yaw(0)
+time.sleep(13)
+rc.set_control_mode("direct")
+rospy.loginfo("doing roll the second time")
+rc.movement(roll=-5)
+time.sleep(1.5)
+rc.movement()
+# rc.movement(vertical=-4)
+# time.sleep(1)
+rc.movement()
+rc.set_control_mode("depth_hold")
+rc.set_absolute_z(1.0)
+rc.set_absolute_yaw(0)
+time.sleep(13)
 
-first_time = time.time()
-while time.time() - first_time < 10:
-    rc.movement(pitch=200)
 
-# first_time = time.time()
-# while time.time() - first_time < 3:
-#     rc.movement(forward = -2)
 
-# first_time = time.time()
-# while time.time() - first_time < 3:
-#     rc.movement(lateral = 2)
-
-# first_time = time.time()
-# while time.time() - first_time < 3:
-#     rc.movement(lateral = -2)
-
-time.sleep(1.0)
+rospy.loginfo("Reached the end")
 
 disarm.disarm()
