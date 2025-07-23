@@ -77,7 +77,7 @@ class RobotControl:
         # Establish thruster and depth publishers
         self.sub_pose       = rospy.Subscriber("/auv/state/pose", PoseStamped, self.pose_callback)  
         self.pub_thrusters  = rospy.Publisher("/mavros/rc/override", mavros_msgs.msg.OverrideRCIn, queue_size=10)
-        self.pub_button     = rospy.Publisher("/mavros/manual_control/send", mavros_msgs.msg.ManualControl, queue_size=10)
+        self.pub_modem     = rospy.Publisher("/auv/devices/modem/send", String, queue_size=10)
 
         # Create variable to store pwm when direct control
         self.direct_input = [0] * 6
@@ -446,6 +446,20 @@ class RobotControl:
             return resp1.message
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
+
+    def send_modem(self, addr:str, movement:str):
+        """
+        Send message to the other sub. Example of expected message: destination Address-Movement-Acknowledgement-Priority. "020-ROLL-1-0"
+        Args:
+            addr (String): destination address
+            movment (String): what movement to perform
+            Ack (int) : Acknowledgement
+            Priority (int) : priority
+        """
+        message_to_send = String()
+        message_to_send.data = f"{addr}-{movement}"
+        self.pub_modem.publish(message_to_send)
+        rospy.loginfo(f"Send {addr}-{movement} to modem node !")
 
     def set_absolute_z(self, depth):
         """

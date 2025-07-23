@@ -10,13 +10,10 @@ import rospy
 from auv.utils import deviceHelper
 from std_msgs.msg import String
 
-class LED:
-        GPIO.cleanup()
 
 class Modem:
     """Simplified modem communication handler without acknowledgments"""
     def __init__(self, auto_start=True):
-        self.led = LED()
         self.__port = deviceHelper.dataFromConfig("modem")
         self.ser = serial.Serial(
             port=self.__port,
@@ -99,7 +96,6 @@ class Modem:
         2. Publish to ROS
         3. Log received message
         """
-        self.led.on_recv_msg()
         self.publish_to_ros(message)
         
         # Log received message
