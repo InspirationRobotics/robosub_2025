@@ -77,7 +77,7 @@ class RobotControl:
         # Establish thruster and depth publishers
         self.sub_pose       = rospy.Subscriber("/auv/state/pose", PoseStamped, self.pose_callback)  
         self.pub_thrusters  = rospy.Publisher("/mavros/rc/override", mavros_msgs.msg.OverrideRCIn, queue_size=10)
-        self.pub_button     = rospy.Publisher("/mavros/manual_control/send", mavros_msgs.msg.ManualControl, queue_size=10)
+        self.pub_modem     = rospy.Publisher("/auv/devices/modem/send", String, queue_size=10)
 
         # Create variable to store pwm when direct control
         self.direct_input = [0] * 6
