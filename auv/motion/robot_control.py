@@ -402,6 +402,51 @@ class RobotControl:
             self.mode = "depth_hold"
             rospy.logewarn("Control mode not found")
         
+    def go_to_heading(self, target):
+        target = (target) % 360
+        print(f"[INFO] Setting heading to {target}")
+        self.prev_error = None
+        while not rospy.is_shutdown():
+
+            error = heading_error(self.orientation['yaw'], target)
+
+            output = self.PIDs["yaw"](-error / 180)
+
+            if abs(error) <= 5:
+                print("[INFO] Heading reached")
+                break
+
+            self.movement(yaw=output)
+            time.sleep(0.1)
+
+        print(f"[INFO] Finished setting heading to {target}")
+            
+    def go_to_depth(self, target):
+        while abs(target - self.position['z']) > 0.2:
+            time.sleep(1)
+        
+    def move_servo(self, service: str):
+        """Operate a servo via the maestro_server file
+        Args:
+            - service (str): The servo to operate. Accepted values:
+                - /auv/device/dropper
+                - /auv/device/torpedo
+                - /auv/device/gripper
+        """
+        if service in ["/auv/device/dropper", "/auv/device/torpedo", "/auv/device/gripper"]:
+            self.service = service
+        else:
+            raise ValueError("Unknown servo service called")
+        
+        rospy.wait_for_service(self.service)
+
+        try:
+            servo_client = rospy.ServiceProxy(self.service, Trigger)
+            resp1 = servo_client()
+            return resp1.message
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+
     def set_absolute_z(self, depth):
         """
         Set the depth of the robot
@@ -434,47 +479,6 @@ class RobotControl:
         # Clear the PID error
         self.PIDs["surge"].reset()
         self.desired_point["y"] = -y
-
-    def go_to_heading(self, target):
-        target = (target) % 360
-        print(f"[INFO] Setting heading to {target}")
-        self.prev_error = None
-        while not rospy.is_shutdown():
-
-            error = heading_error(self.orientation['yaw'], target)
-
-            output = self.PIDs["yaw"](-error / 180)
-
-            if abs(error) <= 5:
-                print("[INFO] Heading reached")
-                break
-
-            self.movement(yaw=output)
-            time.sleep(0.1)
-
-        print(f"[INFO] Finished setting heading to {target}")
-            
-    def move_servo(self, service: str):
-        """Operate a servo via the maestro_server file
-        Args:
-            - service (str): The servo to operate. Accepted values:
-                - /auv/device/dropper
-                - /auv/device/torpedo
-                - /auv/device/gripper
-        """
-        if service in ["/auv/device/dropper", "/auv/device/torpedo", "/auv/device/gripper"]:
-            self.service = service
-        else:
-            raise ValueError("Unknown servo service called")
-        
-        rospy.wait_for_service(self.service)
-
-        try:
-            servo_client = rospy.ServiceProxy(self.service, Trigger)
-            resp1 = servo_client()
-            return resp1.message
-        except rospy.ServiceException as e:
-            print("Service call failed: %s"%e)
 
     def set_absolute_yaw(self, yaw:float):
         """
@@ -544,11 +548,13 @@ class RobotControl:
         Set the heading of the robot relative to the current heading
 
         Args:
-            yaw (float): Relative heading to set the robot to (-2 means left, 2 means right), unit: degrees
+            yaw (float): Relative heading to set the robot to (-90 means CCW, 90 means CW), unit: degrees
         """
         # Clear the PID error
         self.PIDs["yaw"].reset()
         self.desired_point["yaw"] = yaw + self.orientation['yaw']
+        rospy.loginfo(f"Set desire heading to {(yaw + self.orientation['yaw'])%360}")
+
     
     def set_relative_pitch(self, pitch):
         """
