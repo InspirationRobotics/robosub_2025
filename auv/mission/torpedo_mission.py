@@ -64,6 +64,7 @@ class TorpedoMission:
         """
         Run the torpedo mission.
         """
+        rospy.loginfo("Start running")
         while not rospy.is_shutdown():
             try:
                 if not self.received:
@@ -147,12 +148,7 @@ if __name__ == "__main__":
     rospy.init_node("torpedo_mission", anonymous=True)
 
     config = deviceHelper.variables
-    config.update(
-        {
-            # # this dummy video file will be used instead of the camera if uncommented
-            # "cv_dummy": ["/somepath/thisisavideo.mp4"],
-        }
-    )
+
 
     # Create a mission object with arguments
     mission = TorpedoMission(**config)
