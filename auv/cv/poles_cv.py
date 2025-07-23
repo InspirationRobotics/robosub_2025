@@ -121,9 +121,20 @@ class CV:
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
             else:
                 self.start_time = None
-                self.state = "search"
-                print("[INFO] Strafing complete → transitioning to next row")
+                print("[INFO] Strafing complete → transitioning to slaloming")
+        
+        elif self.state == "slaloming":
+            if self.start_time is None:
+                self.start_time = time.time()
+                print("[INFO] Slaloming started") 
+        
+            if time.time() - self.start_time < 6.0:
+                forward = 1.5
+                print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
+            else:
+                self.start_time = None
                 self.rows_completed += 1
+                print(f"[INFO] Slaloming complete → rows completed: {self.rows_completed}")
 
         if self.rows_completed == 3:
             self.end = True
