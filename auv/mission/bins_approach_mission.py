@@ -33,11 +33,7 @@ class BinsApproachMission:
 
         print("[INFO] Bin Approach Mission Init")
 
-        self.rc.set_control_mode('depth_hold')
-        self.rc.set_absolute_z(0.38)
-        self.rc.set_absolute_yaw(0)
-        self.rc.go_to_heading(0)
-        self.rc.activate_heading_control(True)
+
         time.sleep(1)
 
     def callback(self, msg):
@@ -48,6 +44,11 @@ class BinsApproachMission:
 
     def run(self):
         print("[INFO] Bin Approach mission running")
+        self.rc.set_control_mode('depth_hold')
+        self.rc.set_absolute_z(0.5)
+        self.rc.go_to_heading(0)
+        self.rc.set_absolute_yaw(0)
+        self.rc.activate_heading_control(False)
 
         while not rospy.is_shutdown():
             time.sleep(0.01)
@@ -76,6 +77,7 @@ class BinsApproachMission:
                 self.rc.movement(lateral=0, forward=0, yaw=0, vertical=0)
                 break
             else:
+                rospy.loginfo("rc the sub")
                 self.rc.movement(lateral=lateral, forward=forward, yaw=yaw, vertical=vertical)
 
         print("[INFO] Bin approach mission terminated")
