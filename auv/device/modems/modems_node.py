@@ -681,6 +681,7 @@ class Modem:
 
     def start(self):
         """Start the receiving and sending threads"""
+        print("Starting multithreading for modem...")
         self.receive_active = True
         self.sending_active = True
         self.thread_recv.start()
