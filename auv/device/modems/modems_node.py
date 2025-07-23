@@ -91,7 +91,7 @@ class Modem:
             auto_start (bool): Flag indicating whether to automatically start the modem or not.
         """
         self.led = LED()
-        self.__port = deviceHelper.dataFromConfig("modem_port")  # Get the modem port ID from the JSON config file of the sub
+        self.__port = deviceHelper.dataFromConfig("modem")  # Get the modem port ID from the JSON config file of the sub
         # Initialize the serial communication
         self.ser = serial.Serial(
             port=self.__port,
