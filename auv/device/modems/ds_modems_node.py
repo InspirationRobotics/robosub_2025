@@ -87,6 +87,7 @@ class Modem:
         
         self.ser.write(f"${packet}".encode())
         time.sleep(0.1 + (len(packet) * 0.0125))  # Transmission delay
+        rospy.loginfo(f"Sent packet: ${packet}")
 
     # Message Processing ######################################################
     def handle_received_message(self, src_addr, message):
@@ -124,6 +125,7 @@ class Modem:
         while self.receive_active and not rospy.is_shutdown():
             try:
                 if self.ser.in_waiting > 0:
+                    rospy.loginfo("Receiving data from modem...")
                     raw_data = self.ser.readline().decode("utf-8").strip()
                     if raw_data:
                         self.process_raw_packet(raw_data)

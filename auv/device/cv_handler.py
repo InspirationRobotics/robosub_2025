@@ -257,6 +257,7 @@ class _ScriptHandler:
             toSend["model"] = model
         toSend["camera_ID"] = self.camID
         toSend["mode"] = "start"
+        rospy.loginfo(f"[cv_handler] Starting camera stream with ID {self.camID} and model {toSend['model']}")
         data = json.dumps(toSend) # Convert to JSON
         self.pub_cam_select.publish(data) # Publish the camera to activate
 
