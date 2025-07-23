@@ -1,5 +1,5 @@
 """
-Creates modem (intersub communication) functionality with enhanced acknowledgment handling.
+Simplified modem for intersub communication without acknowledgment handling.
 """
 
 import time
@@ -8,7 +8,6 @@ import serial
 import threading
 import rospy
 from auv.utils import deviceHelper
-from auv.utils.deviceHelper import dataFromConfig, variables
 from std_msgs.msg import String
 
 class LED:
@@ -59,10 +58,7 @@ class LED:
         GPIO.cleanup()
 
 class Modem:
-    """Modem communication handler with acknowledgment management"""
-    ACK_TIMEOUT = 30.0  # Seconds before message times out
-    ACK_RETRY_INTERVAL = 1.0  # Seconds between retries
-    
+    """Simplified modem communication handler without acknowledgments"""
     def __init__(self, auto_start=True):
         self.led = LED()
         self.__port = deviceHelper.dataFromConfig("modem")
@@ -78,22 +74,11 @@ class Modem:
         self.parse_msg = {
             "#B": self.parse_broadcast,
             "#U": self.parse_unicast,
-            "#R": self.parse_range,
-            "#T": self.parse_timeout,
         }
         
-        # Message handlers
-        self.recv_callbacks = [self.handle_received_message]
-        self.send_callbacks = [self.log_sent_message]
-        
-        self.data_buffer = ""
-        self.next_ack = 1
-        self.in_transit = []  # [msg, send_time, last_retry, ack, dest, priority]
-        self.received_acks = set()
-        
-        # Modem parameters
-        self.modemAddr = deviceHelper.variables.get("modem_address")
-        self.voltage = None
+        # Message queue
+        self.in_transit = []  # [(message, destination)]
+        self.queue_lock = threading.Lock()
 
         # ROS interface
         rospy.init_node('modem_node')
@@ -119,48 +104,24 @@ class Modem:
     def send_callback(self, msg):
         """
         Handle messages from ROS send topic
-        Format: "DEST_ADDR-MESSAGE-ACK_FLAG-PRIORITY"
-        Example: "020-ROLL-1-0"
+        Format: "DEST_ADDR-MESSAGE"
+        Example: "020-ROLL"
         """
         try:
-            parts = msg.data.split('-')
-            if len(parts) != 4:
+            parts = msg.data.split('-', 1)  # Split into destination and message
+            if len(parts) < 2:
                 raise ValueError("Invalid message format")
                 
             dest_addr = int(parts[0])
             message = parts[1]
-            ack_flag = int(parts[2])
-            priority = int(parts[3])
             
-            self.send_message(
-                message=message,
-                dest_addr=dest_addr,
-                require_ack=bool(ack_flag),
-                priority=priority
-            )
+            with self.queue_lock:
+                self.in_transit.append((message, dest_addr))
+                
         except Exception as e:
             rospy.logerr(f"Message processing failed: {str(e)}")
 
     # Core Modem Operations ####################################################
-    def send_message(self, message, dest_addr=None, require_ack=True, priority=1):
-        """
-        Queue message for transmission with ACK handling
-        Priority 0: Timeout after ACK_TIMEOUT
-        Priority 1: Persistent until delivered
-        """
-        ack_num = self.next_ack if require_ack else None
-        if require_ack:
-            self.next_ack += 1
-            
-        self.in_transit.append([
-            message,
-            time.time(),        # Initial send time
-            0,                  # Last retry time
-            ack_num,            # ACK number
-            dest_addr,          # Destination address
-            priority            # Message priority
-        ])
-        
     def transmit_packet(self, data, dest_addr=None):
         """Transmit raw data packet through modem"""
         prefix = "U" if dest_addr is not None else "B"
@@ -174,76 +135,36 @@ class Modem:
         self.ser.write(f"${packet}".encode())
         time.sleep(0.1 + (len(packet) * 0.0125))  # Transmission delay
 
-    def send_acknowledgment(self, ack_num, dest_addr=None):
-        """Send standalone ACK packet"""
-        self.transmit_packet(f"@{ack_num}", dest_addr)
-
     # Message Processing ######################################################
-    def handle_received_message(self, src_addr, message, received_ack, distance):
+    def handle_received_message(self, src_addr, message):
         """
         Central handler for received messages:
         1. Flash receive LED
-        2. Process embedded ACKs
-        3. Send acknowledgments if required
-        4. Publish to ROS
+        2. Publish to ROS
+        3. Log received message
         """
         self.led.on_recv_msg()
+        self.publish_to_ros(message)
         
-        # Process embedded ACK
-        if received_ack is not None:
-            self.received_acks.add(received_ack)
-            
-        # Send ACK if required
-        if message is not None:
-            self.publish_to_ros(message)
-            
-            # Log received message
-            log_entry = f"[{time.time()}][RECV][src:{src_addr}]"
-            if received_ack is not None:
-                log_entry += f"[ack:{received_ack}]"
-            if distance is not None:
-                log_entry += f"[dist:{distance}]"
-            log_entry += f" {message}" if message else ""
-            
-            with open("underwater_coms_recv.log", "a+") as f:
-                f.write(log_entry + "\n")
+        # Log received message
+        log_entry = f"[{time.time()}][RECV][src:{src_addr}] {message}"
+        with open("underwater_coms_recv.log", "a+") as f:
+            f.write(log_entry + "\n")
 
     # Parsing Methods #########################################################
     def parse_broadcast(self, packet):
         """Parse broadcast message: #B<SRC><LEN><DATA>"""
         src_addr = packet[2:5]
         length = int(packet[5:7])
-        data = packet[7:7+length]
-        
-        # Extract message and ACK
-        parts = data.split('@', 1)
-        message = parts[0]
-        received_ack = int(parts[1]) if len(parts) > 1 else None
-        
-        return src_addr, message, received_ack, None
+        message = packet[7:7+length]
+        return src_addr, message
 
     def parse_unicast(self, packet):
         """Parse unicast message: #U<DEST><LEN><DATA>"""
-        dest_addr = packet[2:5]
+        src_addr = packet[2:5]  # In some protocols this might be destination
         length = int(packet[5:7])
-        data = packet[7:7+length]
-        
-        # Extract message and ACK
-        parts = data.split('@', 1)
-        message = parts[0]
-        received_ack = int(parts[1]) if len(parts) > 1 else None
-        
-        return dest_addr, message, received_ack, None
-
-    def parse_range(self, packet):
-        """Parse range info: #R<SRC>R<DIST>"""
-        src_addr = packet[2:5]
-        distance = int(packet[7:12]) * 1500 * 3.125e-5
-        return src_addr, None, None, distance
-
-    def parse_timeout(self, packet):
-        """Parse timeout notification: #TO"""
-        return None, None, None, None
+        message = packet[7:7+length]
+        return src_addr, message
 
     # Thread Loops ############################################################
     def receive_loop(self):
@@ -263,63 +184,36 @@ class Modem:
         prefix = packet[:2]
         if prefix in self.parse_msg:
             try:
-                result = self.parse_msg[prefix](packet)
-                for callback in self.recv_callbacks:
-                    callback(*result)
+                src_addr, message = self.parse_msg[prefix](packet)
+                self.handle_received_message(src_addr, message)
             except Exception as e:
                 rospy.logerr(f"Packet processing failed: {str(e)}")
 
     def send_loop(self):
-        """Message transmission management loop"""
+        """Message transmission management loop - simplified"""
         while self.sending_active and not rospy.is_shutdown():
-            now = time.time()
-            expired_messages = []
+            # Get messages to send
+            to_send = []
+            with self.queue_lock:
+                to_send = self.in_transit[:]
+                self.in_transit = []
             
-            for idx, packet in enumerate(self.in_transit):
-                msg, send_time, last_retry, ack_num, dest, priority = packet
-                
-                # Handle expired messages
-                if priority == 0 and (now - send_time) > self.ACK_TIMEOUT:
-                    rospy.logwarn(f"Message expired: {msg}")
-                    expired_messages.append(idx)
-                    continue
-                    
-                # Handle retransmission
-                needs_retry = (
-                    ack_num is not None and 
-                    ack_num not in self.received_acks and
-                    (now - last_retry) > self.ACK_RETRY_INTERVAL
-                )
-                
-                if needs_retry:
-                    try:
-                        # Format message with ACK
-                        formatted = f"*{msg}*@{ack_num}" if ack_num else msg
-                        self.transmit_packet(formatted, dest)
-                        self.in_transit[idx][2] = now  # Update last retry time
-                        self.log_sent_message(dest, msg, ack_num)
-                    except Exception as e:
-                        rospy.logerr(f"Transmission failed: {str(e)}")
+            # Send all messages
+            for message, dest in to_send:
+                try:
+                    self.transmit_packet(message, dest)
+                    self.log_sent_message(dest, message)
+                except Exception as e:
+                    rospy.logerr(f"Transmission failed: {str(e)}")
             
-            # Cleanup processed messages
-            self.in_transit = [
-                p for i, p in enumerate(self.in_transit)
-                if i not in expired_messages and 
-                (p[3] is None or p[3] not in self.received_acks)
-            ]
             time.sleep(0.1)
 
     # Logging #################################################################
-    def log_sent_message(self, dest_addr, message, ack_num):
+    def log_sent_message(self, dest_addr, message):
         """Log sent messages to file"""
-        log_entry = f"[{time.time()}][SEND][dst:{dest_addr}]"
-        if ack_num is not None:
-            log_entry += f"[ack:{ack_num}]"
-        log_entry += f" {message}" if message else ""
-        
+        log_entry = f"[{time.time()}][SEND][dst:{dest_addr}] {message}"
         with open("underwater_coms_send.log", "a+") as f:
             f.write(log_entry + "\n")
-        
         self.led.on_send_msg()
 
     # Lifecycle Management ####################################################
@@ -339,8 +233,6 @@ class Modem:
         self.ser.close()
         rospy.loginfo("Modem stopped")
 
-
-
 # Main Execution ##############################################################
 if __name__ == "__main__":
     modem = Modem()
@@ -348,13 +240,3 @@ if __name__ == "__main__":
         modem.start()
     except KeyboardInterrupt:
         modem.stop()
-
-
-
-
-
-
-
-
-
-
