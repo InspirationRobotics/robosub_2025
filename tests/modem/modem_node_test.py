@@ -2,6 +2,7 @@ import time
 import rospy
 from auv.motion.robot_control import RobotControl
 
+rospy.loginfo("Starting modem test script...")
 rospy.init_node("modem_test", anonymous=True)
 
 rc = RobotControl()
