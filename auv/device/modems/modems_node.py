@@ -92,7 +92,7 @@ class Modem:
             auto_start (bool): Flag indicating whether to automatically start the modem or not.
         """
         self.led = LED()
-        self.__port = deviceHelper.variables.get("modem_port")  # Get the modem port ID from the JSON config file of the sub
+        self.__port = deviceHelper.dataFromConfig("modem_port")  # Get the modem port ID from the JSON config file of the sub
         # Initialize the serial communication
         self.ser = serial.Serial(
             port=self.__port,
@@ -144,6 +144,7 @@ class Modem:
         self.rate = rospy.Rate(2)  # 2 Hz
         self.pub = rospy.Publisher('/auv/devices/modem_received', String, queue_size=10)
         self.sub = rospy.Subscriber("/auv/devices/modem_send", String, self.send_callback)
+        rospy.loginfo("Modem node initialized")
         if auto_start:
             self.start()
 
@@ -151,6 +152,7 @@ class Modem:
         tosend = String()
         tosend.data = msg
         self.pub.publish(tosend)
+        rospy.loginfo(f"Published to ROS: {tosend.data}")
 
     def send_callback(self, msg):
         """
@@ -158,6 +160,7 @@ class Modem:
         This function store a message to self.in_transit
         """
         toSend = msg.data
+        rospy.loginfo(f"Received from ROS: {toSend}")
 
         # Example of expected message: destination Address-Movement-Acknowledgement-Priority. "020-ROLL-1-0"
         parts = toSend.strip().split("-")
