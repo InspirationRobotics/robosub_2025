@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-class TorpedoCV:
+class CV:
     def __init__(self):
         self.last_result = None
 
@@ -52,7 +52,7 @@ class TorpedoCV:
 
 
 if __name__ == "__main__":
-    cv = TorpedoCV()
+    cv = CV()
     cap = cv2.VideoCapture(1)
 
     while True:
