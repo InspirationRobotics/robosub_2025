@@ -9,7 +9,6 @@ import threading
 import rospy
 from auv.utils import deviceHelper
 from auv.utils.deviceHelper import dataFromConfig, variables # Configuration of the various devices attached to a sub (either Graey or Onyx)
-from auv.mission.style_mission import StyleMission
 from std_msgs.msg import String
 
 
