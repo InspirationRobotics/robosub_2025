@@ -707,7 +707,7 @@ def manual_coms():
 # For testing purposes
 if __name__ == "__main__":
     modem = Modem()
-    #modem.send_msg("this is a test")
+    modem.send_msg("this is a test")
     #modem.send_msg("blabla")
     #modem.send_msg("omg this is insane !!!")
 
