@@ -166,7 +166,6 @@ class Modem:
         log_entry = f"[{time.time()}][SEND][dst:{dest_addr}] {message}"
         with open("underwater_coms_send.log", "a+") as f:
             f.write(log_entry + "\n")
-        self.led.on_send_msg()
 
     # Lifecycle Management ####################################################
     def start(self):
