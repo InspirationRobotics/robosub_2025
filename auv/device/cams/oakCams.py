@@ -312,6 +312,7 @@ class oakCamera:
         if self.modelSelect(modelName) == None:
             return
         self.kill() # Kill all other models/streams than may be running
+        print(f"Restart camera with model: {modelName}")
         self.start(modelName) # Start the model
 
     def runner(self):
