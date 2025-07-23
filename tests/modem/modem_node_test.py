@@ -1,5 +1,6 @@
 import time
 import rospy
+print("import rc")
 from auv.motion.robot_control import RobotControl
 
 rospy.loginfo("Starting modem test script...")
