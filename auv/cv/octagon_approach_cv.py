@@ -97,7 +97,7 @@ class CV:
                 self.state = None
                 forward = 0
             else:
-                self.end = True
+                self.end = False  # TODO change it back to True
 
         if len(detections) >= 1:
             if len(detections) == 1:
