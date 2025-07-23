@@ -14,7 +14,6 @@ from std_msgs.msg import String
 class Modem:
     """Simplified modem communication handler without acknowledgments"""
     def __init__(self, auto_start=True):
-        self.led = LED()
         self.__port = deviceHelper.dataFromConfig("modem")
         self.ser = serial.Serial(
             port=self.__port,
