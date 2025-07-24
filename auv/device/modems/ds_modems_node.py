@@ -90,7 +90,7 @@ class Modem:
         rospy.loginfo(f"Sent packet: ${packet}")
 
     # Message Processing ######################################################
-    def handle_received_message(self, src_addr, message):
+    def handle_received_message(self, message):
         """
         Central handler for received messages:
         1. Flash receive LED
@@ -100,24 +100,22 @@ class Modem:
         self.publish_to_ros(message)
         
         # Log received message
-        log_entry = f"[{time.time()}][RECV][src:{src_addr}] {message}"
+        log_entry = f"[{time.time()}][RECV] {message}"
         with open("underwater_coms_recv.log", "a+") as f:
             f.write(log_entry + "\n")
 
     # Parsing Methods #########################################################
     def parse_broadcast(self, packet):
         """Parse broadcast message: #B<SRC><LEN><DATA>"""
-        src_addr = packet[2:5]
-        length = int(packet[5:7])
-        message = packet[7:7+length]
-        return src_addr, message
+        length = int(packet[2:4])
+        message = packet[4:4+length]
+        return message
 
     def parse_unicast(self, packet):
-        """Parse unicast message: #U<DEST><LEN><DATA>"""
-        src_addr = packet[2:5]  # In some protocols this might be destination
-        length = int(packet[5:7])
-        message = packet[7:7+length]
-        return src_addr, message
+        """Parse unicast message: #U<LEN><DATA>"""
+        length = int(packet[2:4])
+        message = packet[4:4+length]
+        return message
 
     # Thread Loops ############################################################
     def receive_loop(self):
@@ -139,8 +137,8 @@ class Modem:
         prefix = packet[:2]
         if prefix in self.parse_msg:
             try:
-                src_addr, message = self.parse_msg[prefix](packet)
-                self.handle_received_message(src_addr, message)
+                message = self.parse_msg[prefix](packet)
+                self.handle_received_message(message)
             except Exception as e:
                 rospy.logerr(f"Packet processing failed: {str(e)}")
 
