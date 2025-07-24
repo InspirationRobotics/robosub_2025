@@ -127,6 +127,7 @@ class Modem:
                 if self.ser.in_waiting > 0:
                     rospy.loginfo("Receiving data from modem...")
                     raw_data = self.ser.readline().decode("utf-8").strip()
+                    print(f"Raw Data: {raw_data}")
                     if raw_data:
                         self.process_raw_packet(raw_data)
             except Exception as e:
