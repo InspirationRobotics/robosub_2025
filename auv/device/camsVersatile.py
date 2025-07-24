@@ -58,7 +58,7 @@ def list_devices():
                 ordered_devices[1] = mxid
 
         available_devices = ordered_devices
-
+    rospy.loginfo(f"Available oakD devices: {available_devices}")
     return available_devices
 
     # for device in dai.Device.getAllAvailableDevices():
@@ -332,21 +332,23 @@ preDevices = os.popen("ls /dev/video*").read()  # Find the video devices present
 ogDev = deviceHelper.findCam(usbIDS)            # Find the USB cameras avaliable
 oaks = list_devices()                           # Find the OAK-D cameras avaliable
 oakAmt = len(oaks)                              # Get the number of OAK-D cameras avaliable
-print(oaks)
+print(f"oaks: {oaks}")
 camAmt = len(ogDev)                             # Find the number of USB cameras avaliable
-print(ogDev)
+print(f"usbIds: {ogDev}")
 os.system(f"sudo modprobe v4l2loopback devices={str(camAmt + oakAmt)}")     # Create V4L2 (Video 4 Linux Version 2) virtual devices for each camera (OAK-D and USB)
 postDevices = os.popen("ls /dev/video*").read()                             # Find the new total video devices present (this should be OAK-Ds + USBs + V4L2s)
 diff = difference(preDevices, postDevices)                                  # Find the new video devices present (these are the V4L2 devices)
 if len(diff) == 0:
     print("Failed to detect if any new v4l2loopback devices were made")
     exit(1)
-
+print(f"diff: {diff}")
 # Process the V4L2 devices in numerical reverse order
 for i in range(camAmt + oakAmt - 1, -1, -1):
     newDev.append(diff[i])
 
 newDev.sort(key=num_sort)
+
+print(f"[DEBUG] new devices: {newDev}")
 
 signal.signal(signal.SIGINT, onExit)    # If Ctrl + C is pressed, exit the camera streams
 
