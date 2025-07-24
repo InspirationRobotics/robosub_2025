@@ -55,11 +55,12 @@ class DVLLoiter:
         self.last_pose_time = time.time()
 
         # Initialize integrated position
-        self.position_est = {'x': 0.0, 'y': 0.0, 'z': 0.0}
-        self.velocity = {'vx': 0.0, 'vy': 0.0, 'vz': 0.0}
+        self.position_est = {'x': 0.0, 'y': 0.0}
+        self.velocity = {'vx': 0.0, 'vy': 0.0}
         self.prev_time = None
         self.dvl_error = 0.0
         self.error_integral = [0.0, 0.0, 0.0]
+        self.target_depth = 0.6  # Set desired depth to 0.6m
 
         self._setup_pids()
 
@@ -79,11 +80,18 @@ class DVLLoiter:
         self.pid_y.setpoint = 0.0
 
     def _velocity_callback(self, msg: Vector3Stamped):
+        # Just forward the call to the new function
+        self.process_velocity_msg(msg)
+
+    def process_velocity_msg(self, msg: Vector3Stamped):
+        """
+        Process velocity Vector3Stamped message without changing logic.
+        This function can be called from outside or replaced in callback.
+        """
         current_time = time.time()
 
         vx = msg.vector.x
         vy = msg.vector.y
-        vz = msg.vector.z
 
         # Default DVL error estimate
         dvl_error = 0.0
@@ -102,19 +110,16 @@ class DVLLoiter:
         # Apply error correction if needed
         vx_err = vx + dvl_error
         vy_err = vy + dvl_error
-        vz_err = vz + dvl_error
 
-        self.velocity.update({'vx': vx, 'vy': vy, 'vz': vz})
+        self.velocity.update({'vx': vx, 'vy': vy})
 
         # Integrate position using dead reckoning
         self.position_est['x'] += vx * dt
         self.position_est['y'] += vy * dt
-        self.position_est['z'] += vz * dt
 
         # Optional: accumulate integration error
         self.error_integral[0] += abs(vx - vx_err) * dt
         self.error_integral[1] += abs(vy - vy_err) * dt
-        self.error_integral[2] += abs(vz - vz_err) * dt
 
         # Update RobotControl-used position
         self.rc.position.update(self.position_est)
@@ -179,12 +184,10 @@ def main():
     rospy.loginfo("[Main] RobotControl initialized.")
     
     rc.set_control_mode("depth_hold")
-    target_depth = 0.6  # Set desired depth to 0.6m
-    rc.set_absolute_z(target_depth)  # Set initial depth hold
+    rc.set_absolute_z(self.target_depth)  # Set initial depth hold
     # Depth hold
-
     time.sleep(10)  # Allow time for depth hold to stabilize
-    rospy.loginfo(f"[Main] Holding depth at Z={target_depth:.2f} m")
+    rospy.loginfo(f"[Main] Holding depth at Z={self.target_depth:.2f} m")
 
     # Start station keeping (with velocity integration)
     loiter = DVLLoiter(rc)

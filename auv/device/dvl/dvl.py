@@ -14,7 +14,7 @@ import csv
 from datetime import datetime
 
 import serial
-from geometry_msgs.msg import TwistStamped
+from geometry_msgs.msg import TwistStamped, PoseStamped
 
 from auv.device.dvl import dvl_tcp_parser
 from auv.utils import deviceHelper
@@ -28,6 +28,7 @@ class DVL:
         self.rate = rospy.Rate(10)  # 10 Hz
         
         self.vel_pub = rospy.Publisher('/auv/devices/dvl/velocity', TwistStamped, queue_size=10)
+        self.pos_pub = rospy.Publisher('/auv/devices/dvl/position', PoseStamped, queue_size=10)
         
         self.test = test
         if not self.test:
@@ -69,6 +70,7 @@ class DVL:
         self.error = [0, 0, 0]  # accumulated error
 
         self.vel = [0, 0, 0]  
+        self.pos = [0, 0, 0]  # integrated position
 
         self.is_valid = False
         self.data_available = False
@@ -239,7 +241,7 @@ class DVL:
             self.data_available = ret
             self.rate.sleep()
 
-    def publish_dvl(self, frame_id: str):
+    def publish_vel(self, frame_id: str):
         """Publish DVL data to rostopics
         Args:
             - frame_id (str): Frame ID containing name of AUV"""
@@ -257,6 +259,23 @@ class DVL:
             vel_msg.twist.angular.z = 0.0
 
             self.vel_pub.publish(vel_msg)
+            self.rate.sleep()
+            
+    def publish_pos(self, frame_id: str):
+        """Publish DVL position to rostopics
+        Args:
+            - frame_id (str): Frame ID containing name of AUV"""
+        while not rospy.is_shutdown():
+            now = rospy.Time.now()
+            pos_msg = PoseStamped()
+            pos_msg.header.stamp = now
+            pos_msg.header.frame_id = frame_id
+
+            pos_msg.pose.position.x = self.pos[0]
+            pos_msg.pose.position.y = self.vel[1]
+            pos_msg.pose.position.z = self.vel[2]
+            
+            self.pos_pub.publish(pos_msg)
             self.rate.sleep()
     
     def start(self):
@@ -409,9 +428,9 @@ if __name__ == '__main__':
     try:
         dvl1 = DVL()
         dvl1.start()
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"dvl_log_{timestamp}.csv"
-        csvLog(dvl1, filename)
+        #timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        #filename = f"dvl_log_{timestamp}.csv"
+        #csvLog(dvl1, filename)
         rospy.spin()
     
     except KeyboardInterrupt:
