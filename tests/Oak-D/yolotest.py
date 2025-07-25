@@ -1,19 +1,35 @@
 from ultralytics import YOLO
 import cv2
 
-# Load model (.pt file)
-model = YOLO(r"C:\Users\chase\OneDrive\Desktop\best.pt")  # Replace with your custom model if needed
+# Load the YOLO model
+model = YOLO(r"c:\Users\chase\Downloads\full_model_with_new_octagon_table.pt")  # Your custom model
 
-# Load image
-img = cv2.imread(r"C:\Users\chase\OneDrive\Pictures\Screenshots\Screenshot 2025-07-14 144721.png")  # Replace with your image path
+# Open the default webcam (index 0)
+cap = cv2.VideoCapture(0)
 
-# Run detection
-results = model(img)
+if not cap.isOpened():
+    print("Error: Could not open webcam.")
+    exit()
 
-# Visualize results on image
-annotated = results[0].plot()
+while True:
+    # Read a frame from the webcam
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-# Show result
-cv2.imshow("Detection", annotated)
-cv2.waitKey(0)
+    # Run YOLO detection on the frame
+    results = model(frame)
+
+    # Annotate detections
+    annotated_frame = results[0].plot()
+
+    # Display the annotated frame
+    cv2.imshow("YOLO Detection", annotated_frame)
+
+    # Exit loop on 'q' key
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Release resources
+cap.release()
 cv2.destroyAllWindows()

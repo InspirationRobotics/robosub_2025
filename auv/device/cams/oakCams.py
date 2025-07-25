@@ -172,7 +172,7 @@ class oakCamera:
             # Set the properties of the camera feed (size, resolution, # of channels -- [Interleaved == True is one channel, Interleaved == False is three channels] , pixel color order, FPS)
             camRgb.setPreviewSize(self.IMG_W, self.IMG_H)
             if self.name == "Forward":
-                camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_800_P)
+                camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P) # 800 original
             else:
                 camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
             # camRgb.setIspScale(2, 3)
