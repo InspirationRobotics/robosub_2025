@@ -11,18 +11,23 @@ rospy.init_node("intersub_coms_mission", anonymous=True)
 
 " Set this to true if you are the sending sub/party"
 """"""""""""""""""""""""""""""""
-sending_sub = false
+sending_sub = deviceHelper.variables.get("sub")  # This will be either graey or onyx
 """"""""""""""""""""""""""""""""
 
 rc = RobotControl()
-
+rc.go_to_depth(0.5)
+rc.set_control_mode("depth_hold")
+rc.activate_heading_control(False)
 # On Receiving a message 
 def rec_callback(msg):
     rospy.loginfo(f"Received message: {msg.data}")
     if msg.data == "YAW":
         rospy.loginfo("Attempting to YAW")
-        rc.set_relative_yaw(90)
-        rc.set_relative_yaw(180)
+        rc.go_to_heading(90)
+        rc.go_to_heading(180)
+        rc.go_to_heading(270)
+        rc.go_to_heading(360)
+
 
 # Send a message to test modem functionality
 def send_modem_message():

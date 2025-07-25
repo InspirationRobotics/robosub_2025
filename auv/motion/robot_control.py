@@ -412,7 +412,7 @@ class RobotControl:
 
             output = self.PIDs["yaw"](-error / 180)
 
-            if abs(error) <= 5:
+            if abs(error) <= 3:
                 print("[INFO] Heading reached")
                 break
 
