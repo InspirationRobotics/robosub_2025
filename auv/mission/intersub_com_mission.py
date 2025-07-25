@@ -38,17 +38,7 @@ def send_modem_message():
 
 sub = rospy.Subscriber("/auv/devices/modem/received", String, rec_callback )
 
-#if sending_sub:
-    #rospy.loginfo("This sub is configured to send messages.")
-    #destination = "010"  # Example destination address
-    #send_modem_message()
 
-rospy.loginfo("Spining")
+rospy.loginfo("Spinning")
 rospy.spin()
-#try:
- #   rc.send_modem(addr="020", movement="YAW")
- #   rospy.loginfo(f"Sent message to address 020 with movement YAW")
-#except Exception as e:
-  #  rospy.logerr(f"Failed to initialize modem: {e}")
-  #  modem = None
 

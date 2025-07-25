@@ -422,8 +422,11 @@ class RobotControl:
         print(f"[INFO] Finished setting heading to {target}")
             
     def go_to_depth(self, target):
-        while abs(target - self.position['z']) > 0.2:
-            time.sleep(1)
+        thread = threading.Thread(target=goto)
+
+        def goto():
+            while abs(target - self.position['z']) > 0.1:
+                time.sleep(1)
         
     def move_servo(self, service: str):
         """Operate a servo via the maestro_server file
