@@ -424,6 +424,7 @@ class RobotControl:
     def go_to_depth(self, target):
         def goto():
             while abs(target - self.position['z']) > 0.1:
+                print("[INFO] Going to depth", target)
                 time.sleep(1)
         rospy.loginfo(f"Go to depth: {target}")
         thread = threading.Thread(target=goto)
