@@ -14,7 +14,8 @@ sending_sub = deviceHelper.variables.get("sub")  # This will be either graey or 
 """"""""""""""""""""""""""""""""
 rc = RobotControl()
 rc.set_control_mode("depth_hold")
-rc.go_to_depth(0.5)
+rc.set_absolute_z(0.5)
+time.sleep(10)
 print(f"Reach depth")
 rc.activate_heading_control(False)
 # On Receiving a message 
@@ -26,7 +27,6 @@ def rec_callback(msg):
         rc.go_to_heading(180)
         rc.go_to_heading(270)
         rc.go_to_heading(360)
-
 
 # Send a message to test modem functionality
 def send_modem_message():
