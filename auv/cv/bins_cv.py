@@ -12,7 +12,7 @@ class CV:
     """
 
     camera = "/auv/camera/videoOAKdRawBottom"  # Switches to bottom cam after approach
-    model = "sawfish_bin"  # Will be replaced dynamically depending on mission param
+    model = "everything"  # Will be replaced dynamically depending on mission param
 
     def __init__(self, **config):
         self.config = config
