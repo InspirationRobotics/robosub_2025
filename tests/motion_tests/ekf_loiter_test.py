@@ -49,7 +49,6 @@ class EKFLoiter:
     CONTROL_RATE_HZ = 10
 
     def __init__(self, rc: RobotControl):
-        rospy.init_node("ekf_loiter_pos_and_orientation")
         self.rc = rc
         self.running = True
         self.pose_received = False
@@ -150,23 +149,18 @@ class EKFLoiter:
         self.rc.movement() # all motors to 1500 PWM, stop movement
         rospy.loginfo("[LOITER] Stopped station keeping loop.")
 
-
 def main():
+    rospy.init_node("ekf_loiter_pos_and_orientation")  # MOVE INIT NODE TO MAIN
     rc = RobotControl()
     rospy.loginfo("[Main] RobotControl initialized.")
-    
-    rc.desired_point['z'] = 0.6
-    depth = rc.desired_point['z']
-    rc.set_absolute_z(depth)
-    
-    # Depth hold
-    time.sleep(10)  # Allow time for depth hold to stabilize
-    rospy.loginfo(f"[Main] Holding depth at Z={depth:.2f} m")
 
-    # Start station keeping (with velocity integration)
+    rc.desired_point['z'] = 0.6
+    rc.set_absolute_z(rc.desired_point['z'])
+    time.sleep(10)
+    rospy.loginfo(f"[Main] Holding depth at Z={rc.desired_point['z']:.2f} m")
+
     loiter = EKFLoiter(rc)
 
-    # Run for 5 minutes
     duration_sec = 300
     rospy.loginfo(f"[Main] Running station keeping for {duration_sec} seconds.")
     start_time = time.time()
@@ -174,13 +168,13 @@ def main():
     try:
         while time.time() - start_time < duration_sec and not rospy.is_shutdown():
             time.sleep(1)
-    except KeyboardInterrupt:
-        rospy.loginfo("[Main] Stopping early (keyboard interrupt)")
+    except (KeyboardInterrupt, rospy.ROSInterruptException):
+        rospy.loginfo("[Main] Stopping early (interrupt)")
 
     loiter.stop()
     rc.exit()
-
     rospy.loginfo("[Main] Full system shutdown complete.")
+
 
 
 if __name__ == "__main__":
