@@ -49,6 +49,7 @@ class EKFLoiter:
     CONTROL_RATE_HZ = 10
 
     def __init__(self, rc: RobotControl):
+        rospy.init_node("ekf_loiter_pos_and_orientation")
         self.rc = rc
         self.running = True
         self.pose_received = False
@@ -152,7 +153,6 @@ class EKFLoiter:
 
 def main():
     rc = RobotControl()
-    rospy.init_node("ekf_loiter_pos_and_orientation")
     rospy.loginfo("[Main] RobotControl initialized.")
     
     rc.desired_point['z'] = 0.6
