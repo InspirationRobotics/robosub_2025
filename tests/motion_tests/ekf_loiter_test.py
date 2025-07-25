@@ -153,11 +153,12 @@ def main():
     rospy.init_node("ekf_loiter_pos_and_orientation")  # MOVE INIT NODE TO MAIN
     rc = RobotControl()
     rospy.loginfo("[Main] RobotControl initialized.")
-
-    rc.desired_point['z'] = 0.6
-    rc.set_absolute_z(rc.desired_point['z'])
-    time.sleep(10)
-    rospy.loginfo(f"[Main] Holding depth at Z={rc.desired_point['z']:.2f} m")
+    
+    # rc.set_control_mode("depth_hold")
+    # rc.go_to_depth(0.5)
+    # print(f"Reach depth")
+    # rc.activate_heading_control(False)
+    # time.sleep(5)
 
     loiter = EKFLoiter(rc)
 
