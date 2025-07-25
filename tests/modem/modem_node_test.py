@@ -11,12 +11,12 @@ time.sleep(2)
 rospy.loginfo("Initialized robot control")
 
 # Send message
-for i in range(5):
-    rc.send_modem(addr="020",movement="ROLL")
-    rospy.loginfo(f"Sent message {i+1}")
-    time.sleep(1)
 
-time.sleep(2)
+rc.send_modem(addr="020",movement="ROLL")
+rospy.loginfo(f"Sent message ")
+time.sleep(1)
+
+#time.sleep(2)
 
 rospy.loginfo("Test ended")
 
