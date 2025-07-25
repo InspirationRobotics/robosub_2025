@@ -15,13 +15,16 @@ fly.set_flight_mode("STABILIZE")
 rospy.loginfo("Setting flight mode to STABILIZE")
 
 rc.movement(forward=2)
+rc.set_absolute_yaw(0)
 rc.activate_heading_control(True) # activate heading control
 time.sleep(5)
 rc.movement()
+rospy.loginfo("Reached the end of the first movement")
 
 rc.movement(forward=-2)
 time.sleep(5)
 rc.movement()
+rospy.loginfo("Reached the end of the second movement")
 
 time.sleep(5)
 rospy.loginfo("Reached the end")
