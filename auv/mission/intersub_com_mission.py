@@ -14,8 +14,7 @@ sending_sub = deviceHelper.variables.get("sub")  # This will be either graey or 
 """"""""""""""""""""""""""""""""
 rc = RobotControl()
 rc.set_control_mode("depth_hold")
-rc.set_absolute_z(0.5)
-time.sleep(10)
+rc.go_to_depth(0.5)
 print(f"Reach depth")
 rc.activate_heading_control(False)
 # On Receiving a message 
