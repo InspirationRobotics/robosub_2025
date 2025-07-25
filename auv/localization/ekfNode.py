@@ -4,6 +4,8 @@ import rospy
 import time
 from statistics import mean
 from geometry_msgs.msg import TwistStamped, PoseStamped
+from std_msgs.msg import Float64
+from auv.utils import deviceHelper
 from sensor_msgs.msg import Imu
 from mavros_msgs.msg import Mavlink
 from transforms3d.euler import euler2mat
@@ -64,13 +66,14 @@ class EKF6State:
 class EKFNode:
     def __init__(self):
         rospy.init_node("ekf_6d_node")
+        self.sub = deviceHelper.variables.get("sub")
         self.dt = 1.0 / 50.0  # 50Hz
 
         self.ekf = EKF6State(self.dt)
 
         self.dvl_velocity = np.zeros((3, 1))
         self.imu_acc_data = {"ax": 0, "ay": 0, "az": 0}
-        self.imu_ori_data = {"yaw": 0, "pitch": 0, "roll": 0}
+        self.orientation = {"yaw": 0, "pitch": 0, "roll": 0}
 
         self.depth = None
         self.depth_calib = 0
@@ -80,6 +83,7 @@ class EKFNode:
 
         self.imu_sub = rospy.Subscriber("/auv/devices/vectornav", Imu, self.imu_callback)
         self.dvl_sub = rospy.Subscriber("/auv/devices/dvl/velocity", TwistStamped, self.dvl_callback)
+        self.fog_sub = rospy.Subscriber("/auv/devices/fog", Float64, self.fog_callback)
         self.baro_sub = rospy.Subscriber("/mavlink/from", Mavlink, self.barometer_callback)
 
         self.calibrate_depth()
@@ -94,14 +98,20 @@ class EKFNode:
         Since our IMU outputs orientation as Euler angles (yaw, pitch, roll), and the ROS sensor_msgs/Imu message only supports orientation in quaternion format, I’ve been passing the yaw, pitch, and roll directly into the ZYX fields of the message, and leaving the quaternion w field empty.
         This obviously isn't correct, but I was doing it as a temporary workaround to get a precise rotation matrix — just plugging in the angles without properly converting them to a valid quaternion.
         """
-        self.imu_ori_data['roll'] = msg.orientation.x
-        self.imu_ori_data['pitch'] = (msg.orientation.y + 180) % 360
-        self.imu_ori_data['yaw'] = msg.orientation.z
+        self.orientation['roll'] = msg.orientation.x
+        self.orientation['pitch'] = (msg.orientation.y + 180) % 360
+        if self.sub=="graey":
+            # Only use IMU heading when we don't have FOG
+            self.orientation['yaw'] = msg.orientation.z   
+
+    def fog_callback(self, msg):
+        # Use FOG heading instead of IMU heading
+        self.orientation['yaw'] = msg.data 
 
     def dvl_callback(self, msg):
-        yaw = np.deg2rad(self.imu_ori_data['yaw'])
-        pitch = np.deg2rad(self.imu_ori_data['pitch'])
-        roll = np.deg2rad(self.imu_ori_data['roll'])
+        yaw = np.deg2rad(self.orientation['yaw'])
+        pitch = np.deg2rad(self.orientation['pitch'])
+        roll = np.deg2rad(self.orientation['roll'])
 
         rot_matrix = euler2mat(ai=yaw, aj=pitch, ak=roll, axes='szyx')  # Body-to-world rotation
         self.dvl_velocity = rot_matrix @ np.array([
@@ -136,9 +146,9 @@ class EKFNode:
         pose_msg.pose.position.y = self.ekf.x[1, 0]
         pose_msg.pose.position.z = self.ekf.x[2, 0]
 
-        pose_msg.pose.orientation.x = self.imu_ori_data['roll']
-        pose_msg.pose.orientation.y = self.imu_ori_data['pitch']
-        pose_msg.pose.orientation.z = self.imu_ori_data['yaw']
+        pose_msg.pose.orientation.x = self.orientation['roll']
+        pose_msg.pose.orientation.y = self.orientation['pitch']
+        pose_msg.pose.orientation.z = self.orientation['yaw']
         pose_msg.pose.orientation.w = 1.0
         self.pub.publish(pose_msg)
 

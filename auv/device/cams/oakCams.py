@@ -140,6 +140,7 @@ class oakCamera:
         
         # If the model path is not "raw", a model is being run on the data (hence using a model-based pipeline)
         else:
+            print(f"[INFO] Model path: {self.modelPath}")
             # Find the JSON (config for the model) and blob (model containing the neural network) file associated with the model path
             jsonFile = glob.glob(f"{self.modelPath}*.json")[0]
             blobFile = glob.glob(f"{self.modelPath}*.blob")[0]
