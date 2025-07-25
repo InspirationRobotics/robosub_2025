@@ -1,7 +1,6 @@
 import time
 import rospy
 
-
 from auv.motion.robot_control import RobotControl
 from std_msgs.msg import String
 from auv.utils import deviceHelper
@@ -13,10 +12,10 @@ rospy.init_node("intersub_coms_mission", anonymous=True)
 """"""""""""""""""""""""""""""""
 sending_sub = deviceHelper.variables.get("sub")  # This will be either graey or onyx
 """"""""""""""""""""""""""""""""
-
 rc = RobotControl()
-rc.go_to_depth(0.5)
 rc.set_control_mode("depth_hold")
+rc.go_to_depth(0.5)
+print(f"Reach depth")
 rc.activate_heading_control(False)
 # On Receiving a message 
 def rec_callback(msg):
@@ -44,6 +43,7 @@ sub = rospy.Subscriber("/auv/devices/modem/received", String, rec_callback )
     #destination = "010"  # Example destination address
     #send_modem_message()
 
+rospy.loginfo("Spining")
 rospy.spin()
 #try:
  #   rc.send_modem(addr="020", movement="YAW")
