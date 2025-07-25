@@ -110,6 +110,7 @@ class FOG:
             self.integrated_sum += angle_deg_sec * (current_time - self.prev_time)
             self.parsed_data["angle_deg"] = self.integrated_sum
             
+            # publishing data
             fog_msg = Float64()
             fog_msg.data = (self.integrated_sum+360)%360
             self.pub_fog.publish(fog_msg)
