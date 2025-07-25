@@ -39,7 +39,7 @@ class OctagonApproachMission:
 
         self.cv_handler.set_target("octagon_approach_cv", target)
         print("[INFO] octagon Approach Mission Init")
-        self.robot_control.set_depth(0.38)
+        self.robot_control.set_absolute_z(0.38)
     def callback(self, msg):
         """
         Calls back the cv_handler output -- you can have multiple callbacks for multiple CV handlers. Converts the output into JSON format.
@@ -78,7 +78,7 @@ class OctagonApproachMission:
             # Do something with the data.
             lateral = self.data["octagon_approach_cv"].get("lateral", None)
             forward = self.data["octagon_approach_cv"].get("forward", None)
-            yaw = self.data["octagon_approach_cv"].get("yaw", None)
+            yaw     = self.data["octagon_approach_cv"].get("yaw", None)
             vertical = self.data["octagon_approach_cv"].get("vertical", None)
             end = self.data["octagon_approach_cv"].get("end", None)
 
@@ -97,9 +97,9 @@ class OctagonApproachMission:
         # Surfacing and resubmerging
         for i in range(2):
             if i == False:
-                self.robot_control.set_depth(0.0)
+                self.robot_control.go_to_depth(0.0)
             elif i == True:
-                self.robot_control.set_depth(0.7)
+                self.robot_control.go_to_depth(0.7)
             start_time = time.time()
             while time.time() - start_time < 7:
                 pass
