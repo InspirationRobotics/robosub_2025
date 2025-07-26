@@ -17,7 +17,7 @@ target = "right"
 
 gate_heading = 0 # calibrate beforehand
 
-time.sleep(60)
+# time.sleep(60)
 
 arm.arm()
 
