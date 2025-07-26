@@ -21,6 +21,7 @@ gate_heading = 0 # calibrate beforehand
 
 arm.arm()
 
+rc.set_control_mode('depth_hold')
 rc.set_absolute_z(0.5)
 print("[INFO] Robot armed and set to depth 0.5m")
 
@@ -29,6 +30,8 @@ print("[INFO] Waiting for 3 seconds before proceeding")
 
 # Rotate towards the heading of the gate, move 2 meters forward
 rc.go_to_heading(gate_heading)
+rc.set_absolute_yaw(0)
+rc.activate_heading_control(activate=True)
 print("[INFO] Robot heading set to gate heading")
 
 curr_time = time.time()
