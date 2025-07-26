@@ -1,8 +1,8 @@
 """
-Octagon Approach Mission. The goal is to find the Octagon, and then switch to bottom facing camera to align with the center 
+Torpedo Approach Mission. The goal is to find the torpedo, and then switch to bottom facing camera to align with the center 
 of the platform before surfacing.
 
-NOTE: We could just use DVL to get inside the Octagon range if that works consistently enough.
+NOTE: We could just use DVL to get inside the torpedo range if that works consistently enough.
 """
 
 import json
@@ -15,8 +15,8 @@ from auv.device import cv_handler # For running mission-specific CV scripts
 from auv.motion import robot_control # For running the motors on the sub
 from auv.utils import arm, disarm
 
-class OctagonApproachMission:
-    cv_files = ["octagon_approach_cv"] # CV file to run
+class torpedoApproachMission:
+    cv_files = ["torpedo_approach_cv"] # CV file to run
 
     def __init__(self, target=None, **config):
         """
@@ -37,8 +37,8 @@ class OctagonApproachMission:
         for file_name in self.cv_files:
             self.cv_handler.start_cv(file_name, self.callback)
 
-        self.cv_handler.set_target("octagon_approach_cv", target)
-        print("[INFO] octagon Approach Mission Init")
+        self.cv_handler.set_target("torpedo_approach_cv", target)
+        print("[INFO] torpedo Approach Mission Init")
         self.robot_control.set_control_mode("depth_hold")
         self.robot_control.set_absolute_z(0.38)
         time.sleep(5)
@@ -78,14 +78,14 @@ class OctagonApproachMission:
             self.next_data = {}
 
             # Do something with the data.
-            lateral = self.data["octagon_approach_cv"].get("lateral", None)
-            forward = self.data["octagon_approach_cv"].get("forward", None)
-            yaw     = self.data["octagon_approach_cv"].get("yaw", None)
-            vertical = self.data["octagon_approach_cv"].get("vertical", None)
-            end = self.data["octagon_approach_cv"].get("end", None)
+            lateral = self.data["torpedo_approach_cv"].get("lateral", None)
+            forward = self.data["torpedo_approach_cv"].get("forward", None)
+            yaw     = self.data["torpedo_approach_cv"].get("yaw", None)
+            vertical = self.data["torpedo_approach_cv"].get("vertical", None)
+            end = self.data["torpedo_approach_cv"].get("end", None)
 
             if end:
-                print("[INFO] Ending Octagon Approach CV")
+                print("[INFO] Ending torpedo Approach CV")
                 self.robot_control.movement(lateral = 0, forward = 0, yaw = 0)
                 break
             else:
@@ -105,7 +105,7 @@ class OctagonApproachMission:
         #     while time.time() - start_time < 7:
         #         pass
 
-        print("[INFO] Octagon approach mission terminated")
+        print("[INFO] torpedo approach mission terminated")
 
     def cleanup(self):
         """
@@ -117,7 +117,7 @@ class OctagonApproachMission:
 
         # Idle the robot
         self.robot_control.movement(lateral = 0, forward = 0, yaw = 0)
-        print("[INFO] Octagon approach mission terminate")
+        print("[INFO] torpedo approach mission terminate")
 
 
 if __name__ == "__main__":
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     import time
     from auv.utils import deviceHelper
     from auv.motion import robot_control
-    rospy.init_node("octagon_approach_mission", anonymous=True)
+    rospy.init_node("torpedo_approach_mission", anonymous=True)
 
     config = deviceHelper.variables
     config.update(
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     )
 
     # Create a mission object with arguments
-    mission = OctagonApproachMission(**config)
+    mission = torpedoApproachMission(**config)
 
     # Run the mission
 

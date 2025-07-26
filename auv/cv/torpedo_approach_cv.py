@@ -14,10 +14,6 @@ class CV:
     Octagon Approach CV class. DO NOT change the name of the class, as this will mess up all of the backend files to run the CV scripts.
     """
 
-    # Camera to get the camera stream from.
-    camera = "/auv/camera/videoOAKdRawForward"
-    model = "everything" # Change later once data is collected for the platform
-
     def __init__(self, **config):
         """
         Initialize the CV class. 
@@ -118,10 +114,10 @@ class CV:
 
         detection_confidence = 0.65
         for detection in detections:
-            if detection.label == "octagon":
+            if detection.label == "torpedo_target":
                 if detection.confidence > detection_confidence:
                     self.update_list(1)
-                    print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
+                    print(f"[DEBUG] Detected torpedo with confidence {detection.confidence}")
                     target_x = (detection.xmin + detection.xmax) / 2
                     target_y = (detection.ymin + detection.ymax) / 2
                     detection_confidence = detection.confidence
