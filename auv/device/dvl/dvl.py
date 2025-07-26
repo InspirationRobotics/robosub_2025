@@ -177,10 +177,16 @@ class DVL:
             data["vy"] = int(BS[2]) / 1000
             data["vz"] = int(BS[3]) / 1000
             data["valid"] = BS[4] == "A"
+
+        
+            # apply simple filtering
+            if abs(data["vx"]) > 10 or abs(data["vy"]) > 10 or abs(data["vz"]) > 10:
+                data = None
+
         except:
             print("I failed")
             data = None
-        # print("[DEBUG] Data in read_onyx: ", data)
+            
         return data
 
     def process_packet(self, packet):
