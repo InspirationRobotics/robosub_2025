@@ -22,16 +22,20 @@ gate_heading = 0 # calibrate beforehand
 arm.arm()
 
 rc.set_absolute_z(0.5)
+print("[INFO] Robot armed and set to depth 0.5m")
 
 time.sleep(3)
+print("[INFO] Waiting for 3 seconds before proceeding")
 
 # Rotate towards the heading of the gate, move 2 meters forward
 rc.go_to_heading(gate_heading)
+print("[INFO] Robot heading set to gate heading")
 
 curr_time = time.time()
 
 while time.time() - curr_time < 10:
     rc.movement(forward=2)
+    print("[INFO] Moving forward for 10 seconds")
     
 # Run the poles mission
 poles = poles_mission.PoleSlalomMission(target=target, rc=rc)
