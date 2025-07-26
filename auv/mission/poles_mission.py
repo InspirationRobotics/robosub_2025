@@ -13,19 +13,17 @@ from auv.utils import disarm
 
 class PoleSlalomMission:
     # Name of your red pole CV script file (no .py extension)
-    def __init__(self, target="right", **config):
+    def __init__(self, rc, target="right"):
         """
         Initialize the mission class; configure everything needed in the run function.
         """
         self.cv_files = ["poles_cv"]
-        self.config = config
         self.data = {}
         self.next_data = {}
         self.received = False
         self.target = target
-
-        self.rc = robot_control.RobotControl()
-        self.cv_handler = cv_handler.CVHandler(**self.config)
+        self.rc = rc
+        self.cv_handler = cv_handler.CVHandler()
 
         for file_name in self.cv_files:
             self.cv_handler.start_cv(file_name, self.callback)
@@ -100,19 +98,11 @@ class PoleSlalomMission:
 
 
 if __name__ == "__main__":
+    
     import time
-    from auv.utils import deviceHelper
 
     rospy.init_node("pole_slalom_mission", anonymous=True)
 
-    config = deviceHelper.variables
-    config.update({
-        # "cv_dummy": ["/somepath/test.mp4"],  # Uncomment for offline video testing
-        "strafe_direction": "right",           # or "left"
-        "red_size_threshold": 12000,
-        "forward_duration": 30
-    })
-
-    mission = PoleSlalomMission(**config)
+    mission = PoleSlalomMission(rc=robot_control.RobotControl())
     mission.run()
     mission.cleanup()
