@@ -601,6 +601,7 @@ class RobotControl:
 
     def waypointNav(self,x,y):
         if self.mode=="depth_hold":
+            pre_heading_control = self.heading_control
             self.heading_control = False
             reached = False
             
@@ -624,6 +625,9 @@ class RobotControl:
                     rospy.loginfo(f"yaw pwm: {yaw_pwm}, forward pwm: {surge_pwm}")
                     self.movement(yaw=yaw_pwm,forward=surge_pwm)
                     time.sleep(0.1)
+                
+                # Restore previous heading control
+                self.heading_control = pre_heading_control
             except KeyboardInterrupt as e:
                 reached = True
 
