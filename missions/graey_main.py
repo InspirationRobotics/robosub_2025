@@ -33,9 +33,6 @@ curr_time = time.time()
 while time.time() - curr_time < 10:
     rc.movement(forward=2)
     
-poles_heading = 120
-rc.go_to_heading(poles_heading)
-
 # Run the poles mission
 poles = poles_mission.PoleSlalomMission(target=target, rc=rc)
 poles.run()
@@ -45,8 +42,9 @@ poles.cleanup()
 
 while time.time() - curr_time < 10:
     rc.movement(lateral=2)
-    
-return_heading = 180
+
+current_heading = rc.orientation["yaw"]
+return_heading = current_heading + 180
 rc.go_to_heading(return_heading)
 
 while time.time() - curr_time < 10:
