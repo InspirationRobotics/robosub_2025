@@ -21,7 +21,7 @@ gate_heading = 0 # calibrate beforehand
 
 arm.arm()
 
-rc.set_depth(0.5)
+rc.set_absolute_z(0.5)
 
 time.sleep(3)
 
