@@ -21,7 +21,7 @@ time.sleep(60)
 
 arm.arm()
 
-rc.set_depth(0.65)
+rc.set_depth(0.5)
 
 time.sleep(5)
 
