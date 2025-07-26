@@ -1,108 +1,151 @@
 """
-Torpedo Approach Mission.
-Detects torpedo target and approaches it.
+Torpedo Approach Mission. The goal is to find the torpedo, and then switch to bottom facing camera to align with the center 
+of the platform before surfacing.
+
+NOTE: We could just use DVL to get inside the torpedo range if that works consistently enough.
 """
 
 import json
-import time
+
 import rospy
+import time
 from std_msgs.msg import String
 
-from auv.device import cv_handler
-from auv.motion import robot_control
+from auv.device import cv_handler # For running mission-specific CV scripts
+from auv.motion import robot_control # For running the motors on the sub
 from auv.utils import arm, disarm
 
-
-class TorpedoApproachMission:
-    cv_files = ["torpedo_approach_cv"]
+class torpedoApproachMission:
+    cv_files = ["torpedo_approach_cv"] # CV file to run
 
     def __init__(self, target=None, **config):
+        """
+        Initialize the mission class; here should be all of the things needed in the run function. 
+
+        Args:
+            config: Mission-specific parameters to run the mission.
+        """
         self.config = config
-        self.data = {}
-        self.next_data = {}
+        self.data = {}  # Dictionary to store the data from the CV handler
+        self.next_data = {}  # Dictionary to store the newest data from the CV handler; this data will be merged with self.data.
         self.received = False
 
-        self.rc = robot_control.RobotControl()
+        self.robot_control = robot_control.RobotControl()
         self.cv_handler = cv_handler.CVHandler(**self.config)
 
+        # Initialize the CV handlers; dummys are used to input a video file instead of the camera stream as data for the CV script to run on
         for file_name in self.cv_files:
             self.cv_handler.start_cv(file_name, self.callback)
 
-        if target is not None:
-            self.cv_handler.set_target("torpedo_approach_cv", target)
-
-        print("[INFO] Torpedo Approach Mission Init")
-
-
-        time.sleep(1)
-
+        self.cv_handler.set_target("torpedo_approach_cv", target)
+        print("[INFO] torpedo Approach Mission Init")
+        self.robot_control.set_control_mode("depth_hold")
+        self.robot_control.set_absolute_z(0.38)
+        time.sleep(5)
     def callback(self, msg):
-        file_name = msg._connection_header["topic"].split("/")[-1]
-        data = json.loads(msg.data)
-        self.next_data[file_name] = data
+        """
+        Calls back the cv_handler output -- you can have multiple callbacks for multiple CV handlers. Converts the output into JSON format.
+
+        Args:
+            msg: cv_handler output -- this will be a dictionary of motion commands and potentially the visualized frame as well as servo commands (like the torpedo launcher)
+        """
+        file_name = msg._connection_header["topic"].split("/")[-1] # Get the file name from the topic name
+        data = json.loads(msg.data) # Convert the data to JSON
+        self.next_data[file_name] = data 
         self.received = True
 
+        # print(f"[DEBUG] Received data from {file_name}")
+
     def run(self):
-        print("[INFO] Torpedo Approach mission running")
-        self.rc.set_control_mode('depth_hold')
-        self.rc.set_absolute_z(0.5)
-        self.rc.go_to_heading(0)
-        self.rc.set_absolute_yaw(0)
-        self.rc.activate_heading_control(False)
+        """
+        Here should be all the code required to run the mission.
+        This could be a loop, a finite state machine, etc.
+        """
 
         while not rospy.is_shutdown():
-            time.sleep(0.01)
+            time.sleep(0.05)
             if not self.received:
                 continue
 
+            # Merge self.next_data, which contains the updated CV handler output, with self.data, which contains the previous CV handler output.
+            # self.next_data will be wiped so that it can be updated with the new CV handler output.
             for key in self.next_data.keys():
-                if key in self.data:
-                    self.data[key].update(self.next_data[key])
+                if key in self.data.keys():
+                    self.data[key].update(self.next_data[key]) # Merge the data
                 else:
-                    self.data[key] = self.next_data[key]
+                    self.data[key] = self.next_data[key] # Update the keys if necessary
             self.received = False
             self.next_data = {}
 
-            cv_data = self.data.get("torpedo_approach_cv", {})
-            lateral = cv_data.get("lateral", 0)
-            forward = cv_data.get("forward", 0)
-            yaw = cv_data.get("yaw", 0)
-            vertical = cv_data.get("vertical", 0)
-            end = cv_data.get("end", False)
-
-            print(f"[MOTION] Fwd: {forward}, Lat: {lateral}, Yaw: {yaw}, Vert: {vertical}")
+            # Do something with the data.
+            lateral = self.data["torpedo_approach_cv"].get("lateral", None)
+            forward = self.data["torpedo_approach_cv"].get("forward", None)
+            yaw     = self.data["torpedo_approach_cv"].get("yaw", None)
+            vertical = self.data["torpedo_approach_cv"].get("vertical", None)
+            end = self.data["torpedo_approach_cv"].get("end", None)
 
             if end:
-                print("[INFO] Ending Torpedo Approach CV")
-                self.rc.movement(lateral=0, forward=0, yaw=0, vertical=0)
+                print("[INFO] Ending torpedo Approach CV")
+                self.robot_control.movement(lateral = 0, forward = 0, yaw = 0)
                 break
             else:
-                rospy.loginfo("rc the sub")
-                self.rc.movement(lateral=lateral, forward=forward, yaw=yaw, vertical=vertical)
+                self.robot_control.movement(lateral = lateral, forward = forward, yaw = yaw, vertical = vertical)
+                # print(forward, lateral, yaw)
 
-        print("[INFO] Torpedo approach mission terminated")
+
+        # Surfacing and resubmerging
+        # for i in range(2):
+        #     if i == False:
+        #         self.robot_control.set_absolute_z(0.0)
+        #         time.sleep(7)
+        #     elif i == True:
+        #         self.robot_control.set_absolute_z(0.7)
+        #         time.sleep(7)
+        #     start_time = time.time()
+        #     while time.time() - start_time < 7:
+        #         pass
+
+        print("[INFO] torpedo approach mission terminated")
 
     def cleanup(self):
+        """
+        Here should be all the code required after the run function.
+        This could be cleanup, saving data, closing files, etc.
+        """
         for file_name in self.cv_files:
             self.cv_handler.stop_cv(file_name)
 
-        self.rc.movement(lateral=0, forward=0, yaw=0, vertical=0)
-        print("[INFO] Torpedo approach mission terminated")
+        # Idle the robot
+        self.robot_control.movement(lateral = 0, forward = 0, yaw = 0)
+        print("[INFO] torpedo approach mission terminate")
 
 
 if __name__ == "__main__":
+    # This is the code that will be executed if you run this file directly
+    # It is here for testing purposes
+    # you can run this file independently using: "python -m auv.mission.template_mission"
+    # You can also import it in a mission file outside of the package
+    import time
     from auv.utils import deviceHelper
-
+    from auv.motion import robot_control
     rospy.init_node("torpedo_approach_mission", anonymous=True)
 
     config = deviceHelper.variables
-    config.update({
-        # "cv_dummy": ["/somepath/thisisavideo.mp4"],
-    })
+    config.update(
+        {
+            # # this dummy video file will be used instead of the camera if uncommented
+            # "cv_dummy": ["/somepath/thisisavideo.mp4"],
+        }
+    )
 
-    mission = TorpedoApproachMission(**config)
+    # Create a mission object with arguments
+    mission = torpedoApproachMission(**config)
+
+    # Run the mission
 
     arm.arm()
+
     mission.run()
     mission.cleanup()
+
     disarm.disarm()

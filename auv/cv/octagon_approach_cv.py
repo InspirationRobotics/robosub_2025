@@ -7,6 +7,7 @@ import time
 import cv2
 import numpy as np
 import time
+import queue
 
 class CV:
     """
@@ -25,6 +26,9 @@ class CV:
         Args:
             config: Dictionary that contains the configuration of the devices on the sub.
         """
+        # Camera to get the camera stream from.
+        self.camera = "/auv/camera/videoOAKdRawForward"
+        self.model = "everything" # Change later once data is collected for the platform
 
         self.config = config
         self.shape = (640, 480)
@@ -42,16 +46,28 @@ class CV:
         self.end = False
         self.prev_time = time.time()
         
+        self.detection_list = [] # Queue to store the detections(bool) from the ML model
         print("[INFO] Octagon Approach CV Initialization")
 
+    def update_list(self, value):
+        """
+        Update the detection list with the new value.
+
+        Args:
+            value: The value to update the detection list with.
+        """
+        if len(self.detection_list) >= 10:
+            self.detection_list.pop(0)
+        self.detection_list.append(value)
+    
     def smart_approach(self, detection_x):
         """Function to properly yaw and move forward"""
         forward = 0
         # Yaw cannot go below 0.5
         if detection_x < self.x_midpoint - self.tolerance:
-            yaw = -0.75
-        elif detection_x > self.x_midpoint + self.tolerance:
             yaw = 0.75
+        elif detection_x > self.x_midpoint + self.tolerance:
+            yaw = -0.75
         else:
             yaw = 0
             forward = 2.0
@@ -92,36 +108,27 @@ class CV:
         if len(detections) == 0 and self.prev_detected == False:
             self.state = "search"
         
-        if len(detections) == 0 and self.prev_detected == True:
+        if len(detections) == 0 and self.prev_detected == True and sum(self.detection_list) < 5:
             if time.time() - self.prev_time < 2:
                 self.state = None
                 forward = 0
             else:
                 self.end = True
 
-        if len(detections) >= 1:
-            if len(detections) == 1:
-                for detection in detections:
-                    print(f"[DEBUG] Detection confidence: {detection.confidence}")
-                    if detection.confidence > 0.65:
-                        target_x = (detection.xmin + detection.xmax) / 2
-                        target_y = (detection.ymin + detection.ymax) / 2
-                    # Might need to do something in an elif or else here
-                    else:
-                        target_x = None
-                
-            elif len(detections) > 1:
-                # Target the detection with the highest confidence. The detection targeted
-                # doesn't matter since this is a localization script, not a mission script
 
-                # Increased required confidence to 0.65 to account for multiple false positives without
-                # true positive
-                detection_confidence = 0.65
-                for detection in detections:
-                    if detection.confidence > detection_confidence and detection.confidence > 0.65:
-                        target_x = (detection.xmin + detection.xmax) / 2
-                        target_y = (detection.ymin + detection.ymax) / 2
-                        detection_confidence = detection.confidence
+        detection_confidence = 0.65
+        for detection in detections:
+            if detection.label == "octagon":
+                if detection.confidence > detection_confidence:
+                    self.update_list(1)
+                    print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
+                    target_x = (detection.xmin + detection.xmax) / 2
+                    target_y = (detection.ymin + detection.ymax) / 2
+                    detection_confidence = detection.confidence
+        else:
+            self.update_list(0)
+            target_x = None
+            target_y = None
 
         if target_x is None:
             self.state = "search"
@@ -139,6 +146,5 @@ class CV:
             forward, yaw = self.smart_approach(target_x)
             self.prev_time = time.time()
             
-
         # Continuously return motion commands, the state of the mission, and the visualized frame.
         return {"lateral": lateral, "forward": forward, "yaw": yaw, "vertical" : vertical, "end": self.end}, frame

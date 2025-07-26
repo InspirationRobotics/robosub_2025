@@ -1,20 +1,18 @@
 """
-Torpedo CV. Detects torpedo target and approaches it.
+Octagon Approach CV. Finds the octagon, and approaches the octagon until it can no longer see it.
 """
 
-# Import what you need from within the package.
+import time
 
+import cv2
 import numpy as np
 import time
+import queue
 
 class CV:
     """
-    Template CV class. DO NOT change the name of the class, as this will mess up all of the backend files to run the CV scripts.
+    Octagon Approach CV class. DO NOT change the name of the class, as this will mess up all of the backend files to run the CV scripts.
     """
-
-    # Camera to get the camera stream from.
-    camera = "/auv/camera/videoOAKdRawForward" 
-    model = "everything"
 
     def __init__(self, **config):
         """
@@ -24,18 +22,55 @@ class CV:
         Args:
             config: Dictionary that contains the configuration of the devices on the sub.
         """
-        self.shape = (640, 480)
-        self.x_midpoint = 320
-        self.config = config
-        self.state = "search"
-        self.end = False
-        self.tolerance = 40 # How centered the object should be in px
-        self.start_time = None
+        # Camera to get the camera stream from.
+        self.camera = "/auv/camera/videoOAKdRawForward"
+        self.model = "everything" # Change later once data is collected for the platform
 
-        print("[INFO] Torpedo CV init")
+        self.config = config
+        self.shape = (640, 480)
+        self.x_midpoint = self.shape[0]/2
+        self.y_midpoint = self.shape[1]/2
+
+        self.tolerance = 120 # Pixels
+
+        self.prev_detected = False
+        self.state = None
+
+        self.start_time = None
+        self.last_yaw = 0
+        self.yaw_time_search = 2
+        self.end = False
+        self.prev_time = time.time()
+        
+        self.detection_list = [] # Queue to store the detections(bool) from the ML model
+        print("[INFO] Octagon Approach CV Initialization")
+
+    def update_list(self, value):
+        """
+        Update the detection list with the new value.
+
+        Args:
+            value: The value to update the detection list with.
+        """
+        if len(self.detection_list) >= 10:
+            self.detection_list.pop(0)
+        self.detection_list.append(value)
+    
+    def smart_approach(self, detection_x):
+        """Function to properly yaw and move forward"""
+        forward = 0
+        # Yaw cannot go below 0.5
+        if detection_x < self.x_midpoint - self.tolerance:
+            yaw = 0.75
+        elif detection_x > self.x_midpoint + self.tolerance:
+            yaw = -0.75
+        else:
+            yaw = 0
+            forward = 2.0
+
+        return forward, yaw
 
     def run(self, frame, target, detections):
-       
         """
         Run the CV script.
 
@@ -50,26 +85,62 @@ class CV:
         Returns:
             dictionary, visualized frame: {motion commands/flags for servos and other indication flags}, visualized frame
         """
-         
+
         forward = 0
         lateral = 0
-        vertical = 0
         yaw = 0
-        
-        if self.state == "search":
-            for det in detections:
-                if "torpedo_target" in det.label and det.confidence > 0.5:
-                    print("[INFO] Torpedo target detected, moving towards it")
-                    
-                    if self.start_time is None:
-                        self.start_time = time.time()
-                        print("[INFO] Approaching started")
+        vertical = 0
 
-                    if time.time() - self.start_time < 8.0:
-                        forward = 1.0  # Move forward towards the target
-                        print(f"[INFO] Moving forward for ({time.time() - self.start_time:.2f}s)")                
-                else:
-                    yaw = 1.0 # Rotate to search for the torpedo target
-                    
+        target_x = None
+        target_y = None
+
+        # Find the bin if no detection is found
+        # Align with the bin and move forward (through strafe should be fine)
+        # If we have lost sight of the bin, then end
+
+        # So we do not get a NoneType error
+        if detections is None:
+            detections = []
+        if len(detections) == 0 and self.prev_detected == False:
+            self.state = "search"
+        
+        if len(detections) == 0 and self.prev_detected == True and sum(self.detection_list) < 5:
+            if time.time() - self.prev_time < 2:
+                self.state = None
+                forward = 0
+            else:
+                self.end = True
+
+
+        detection_confidence = 0.65
+        for detection in detections:
+            if detection.label == "torpedo_target":
+                if detection.confidence > detection_confidence:
+                    self.update_list(1)
+                    print(f"[DEBUG] Detected torpedo with confidence {detection.confidence}")
+                    target_x = (detection.xmin + detection.xmax) / 2
+                    target_y = (detection.ymin + detection.ymax) / 2
+                    detection_confidence = detection.confidence
+        else:
+            self.update_list(0)
+            target_x = None
+            target_y = None
+
+        if target_x is None:
+            self.state = "search"
+        elif target_x is not None and target_y is not None:
+            self.prev_detected = True
+            self.state = "approach"
+
+        if self.state == "search":
+            # Scrap search grid in favor of circular search
+            yaw = 1
+
+        if self.state == "approach":
+            print("[DEBUG] Approaching now!")
+            print(target_x)
+            forward, yaw = self.smart_approach(target_x)
+            self.prev_time = time.time()
+            
         # Continuously return motion commands, the state of the mission, and the visualized frame.
-        return {"yaw": yaw, "lateral": lateral, "forward": forward, "vertical": vertical, "end": self.end}, frame
+        return {"lateral": lateral, "forward": forward, "yaw": yaw, "vertical" : vertical, "end": self.end}, frame
