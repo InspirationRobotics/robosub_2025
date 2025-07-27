@@ -135,12 +135,12 @@ class CV:
             self.update_list(0)
             target_x = None
             target_y = None
-            self.state = "search"
-            
+                        
             
 
 
         if self.state == "search":
+            print("[DEBUG] Searching")
             # Scrap search grid in favor of circular search
             yaw = 1
 
