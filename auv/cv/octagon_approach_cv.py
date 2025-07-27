@@ -117,6 +117,8 @@ class CV:
                 self.end = True
 
 
+        print("Reached detection block")
+
         detection_confidence = 0.45
         for detection in detections:
             if detection.label == "octagon":
@@ -137,12 +139,17 @@ class CV:
             
             
 
+
         if self.state == "search":
             # Scrap search grid in favor of circular search
             yaw = 1
 
         if self.state == "approach":
             print("[DEBUG] Approaching now!")
+            # if we had detection but lost it
+            if self.prev_detected and self.state=="approach" and target_x is None:
+                target_x = self.x_midpoint
+            
             print(target_x)
             forward, yaw = self.smart_approach(target_x)
             self.prev_time = time.time()
