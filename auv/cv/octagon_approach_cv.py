@@ -121,20 +121,19 @@ class CV:
             if detection.label == "octagon":
                 if detection.confidence > detection_confidence:
                     self.update_list(1)
-                    print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
                     target_x = (detection.xmin + detection.xmax) / 2
                     target_y = (detection.ymin + detection.ymax) / 2
                     detection_confidence = detection.confidence
+                    self.prev_detected = True
+                    self.state = "approach"
+                    print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
         else:
             self.update_list(0)
             target_x = None
             target_y = None
-
-        if target_x is None:
             self.state = "search"
-        elif target_x is not None and target_y is not None:
-            self.prev_detected = True
-            self.state = "approach"
+            
+            
 
         if self.state == "search":
             # Scrap search grid in favor of circular search

@@ -283,7 +283,7 @@ class RobotControl:
                     surge_pwm   = self.direct_input[4]
                     lateral_pwm = self.direct_input[5]
 
-                rospy.loginfo(f"Depth hold: {depth_pwm}, Yaw: {yaw_pwm}, Pitch: {pitch_pwm}, Roll: {roll_pwm}, Surge: {surge_pwm}, Lateral: {lateral_pwm}")
+                # rospy.loginfo(f"Depth hold: {depth_pwm}, Yaw: {yaw_pwm}, Pitch: {pitch_pwm}, Roll: {roll_pwm}, Surge: {surge_pwm}, Lateral: {lateral_pwm}")
                 self.__movement(
                     lateral=lateral_pwm,
                     forward=surge_pwm,
