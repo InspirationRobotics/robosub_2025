@@ -19,18 +19,17 @@ gate_heading = 0 # calibrate beforehand
 
 # time.sleep(60)
 
-arm.arm()
-
 rc.set_control_mode('depth_hold')
+arm.arm()
 rc.set_absolute_z(0.5)
 print("[INFO] Robot armed and set to depth 0.5m")
 
-time.sleep(3)
-print("[INFO] Waiting for 3 seconds before proceeding")
+time.sleep(5)
+print("[INFO] Waiting for 5 seconds before proceeding")
 
 # Rotate towards the heading of the gate, move 2 meters forward
 rc.go_to_heading(gate_heading)
-rc.set_absolute_yaw(0)
+rc.set_absolute_yaw(gate_heading)
 rc.activate_heading_control(activate=True)
 print("[INFO] Robot heading set to gate heading")
 
@@ -45,7 +44,7 @@ poles = poles_mission.PoleSlalomMission(target=target, rc=rc)
 poles.run()
 poles.cleanup()
 
-# gitReturning back through the gate
+# Returning back through the gate
 
 while time.time() - curr_time < 10:
     rc.movement(lateral=2)
