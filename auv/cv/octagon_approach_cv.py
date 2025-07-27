@@ -127,7 +127,7 @@ class CV:
                     detection_confidence = detection.confidence
                     self.prev_detected = True
                     self.state = "approach"
-                    print(f"set state to {self.state}")
+                    print(f"[DEBUG] target_x is {target_x}")
                     print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
         else:
             self.update_list(0)
@@ -145,7 +145,7 @@ class CV:
         if self.state == "approach":
             print("[DEBUG] Approaching now!")
             # if we had detection but lost it
-            if self.prev_detected and self.state=="approach" and target_x is None:
+            if self.prev_detected and target_x is None:
                 target_x = self.x_midpoint
             
             print(target_x)
