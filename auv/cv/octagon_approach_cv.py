@@ -38,40 +38,30 @@ class CV:
         self.tolerance = 120 # Pixels
 
         self.prev_detected = False
-        self.state = None
+        self.state = "search"
 
-        self.start_time = None
         self.last_yaw = 0
-        self.yaw_time_search = 2
+        self.yaw_time_search = 10
+        self.search_counter = 1
+        self.search_stage_one = None # store time
+        self.search_stage_two = None # store time
         self.end = False
         self.prev_time = time.time()
         
-        self.detection_list = [] # Queue to store the detections(bool) from the ML model
         print("[INFO] Octagon Approach CV Initialization")
-
-    def update_list(self, value):
-        """
-        Update the detection list with the new value.
-
-        Args:
-            value: The value to update the detection list with.
-        """
-        if len(self.detection_list) >= 60:
-            self.detection_list.pop(0)
-        self.detection_list.append(value)
     
-    def smart_approach(self, detection_x):
+    def smart_approach(self, offset):
         """Function to properly yaw and move forward"""
         forward = 0
-        # Yaw cannot go below 0.5
-        if detection_x < self.x_midpoint - self.tolerance:
-            yaw = 0.75
-        elif detection_x > self.x_midpoint + self.tolerance:
-            yaw = -0.75
-        else:
+        yaw = 0
+        if offset is None or abs(offset) < self.tolerance:
             yaw = 0
             forward = 2.0
-
+        elif offset > 0:
+            yaw = 0.75
+        elif offset < 0:
+            yaw = -0.75
+        
         return forward, yaw
 
     def run(self, frame, target, detections):
@@ -98,49 +88,62 @@ class CV:
         target_x = None
         target_y = None
 
-        # Find the bin if no detection is found
-        # Align with the bin and move forward (through strafe should be fine)
-        # If we have lost sight of the bin, then end
-
-        # So we do not get a NoneType error
+        # Extract octagon detection
         if detections is None:
             detections = []
         if len(detections) == 0 and self.prev_detected == False:
             self.state = "search"
         
-        if len(detections) == 0 and self.prev_detected == True and (sum(self.detection_list)/len(self.detection_list)) < 0.5:
-            if time.time() - self.prev_time < 2:
-                self.state = None
-                forward = 0
-            else:
-                print(f"[DEBUG] Ending with prev detected: {self.prev_detected}, detection list: {self.detection_list}")
-                self.end = True
 
+        detected_list = []
+        detection_confidence = 0.65
+        for det in detections:
+            if det.label == "octagon":
+                if det.confidence > detection_confidence:
+                    detected_list.append(det)
 
-        detection_confidence = 0.45
-        for detection in detections:
-            if detection.label == "octagon":
-                if detection.confidence > detection_confidence:
-                    self.update_list(1)
-                    target_x = (detection.xmin + detection.xmax) / 2
-                    target_y = (detection.ymin + detection.ymax) / 2
-                    detection_confidence = detection.confidence
-                    self.prev_detected = True
-                    self.state = "approach"
-                    print(f"[DEBUG] target_x is {target_x}")
-                    print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
-            else:
-                self.update_list(0)
-                target_x = None
-                target_y = None
-                        
-            
+        # select the highest confidence octagon deteciton if multiple
+        if len(detected_list)==0:
+            offset = None
+        elif len(detected_list)==1:
+            detection = detected_list[0]
+            target_x = (detection.xmin + detection.xmax) / 2
+            target_y = (detection.ymin + detection.ymax) / 2
+            offset = target_x - self.x_midpoint
+            detection_confidence = detection.confidence
+            self.prev_detected = True
+            self.state = "approach"
+            print(f"[DEBUG] target_x is {target_x}")
+            print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
+        else:  # when there are more than one octagon detection
+            # Select the detection with the highest confidence
+            detection = max(detected_list, key=lambda det: det.confidence)
+            target_x = (detection.xmin + detection.xmax) / 2
+            target_y = (detection.ymin + detection.ymax) / 2
+            offset = target_x - self.x_midpoint
+            detection_confidence = detection.confidence
+            self.prev_detected = True
+            self.state = "approach"
+            print(f"[DEBUG] Multiple octagons detected. Using highest confidence detection: {detection_confidence}")
+            print(f"[DEBUG] target_x is {target_x}, target_y is {target_y}")
 
 
         if self.state == "search":
             print("[DEBUG] Searching")
-            # Scrap search grid in favor of circular search
-            yaw = 1
+            if self.search_counter<2:
+                if self.search_stage_one is None:
+                    self.search_stage_one = time.time()
+                if time.time()-self.search_stage_one > 3:
+                    self.search_counter += 1
+                    self.search_stage_one = time.time()
+                if self.search_counter%2==1:
+                    yaw = 1
+                else:
+                    yaw = -1
+            else:
+                if self.search_stage_two is None:
+                    self.search_stage_two = time.time()
+                yaw = 1
 
         if self.state == "approach":
             print("[DEBUG] Approaching now!")
@@ -152,5 +155,15 @@ class CV:
             forward, yaw = self.smart_approach(target_x)
             self.prev_time = time.time()
             
+        # Check Ending 
+        if self.state=="search" and self.search_stage_two is not None and time.time()-self.search_stage_two > 30:
+           # when we went through stage one and time out for 30 seconds
+           print(f"[DEBUG] time out in searching")
+           self.end = True
+
+        if self.state=="appraoch" and (offset is None) and self.prev_detected == True:
+            if time.time() - self.prev_time > 3:
+                print(f"[DEBUG] Ending with prev detected: {self.prev_detected}, detection list: {self.detection_list}")
+                self.end = True
         # Continuously return motion commands, the state of the mission, and the visualized frame.
         return {"lateral": lateral, "forward": forward, "yaw": yaw, "vertical" : vertical, "end": self.end}, frame

@@ -95,6 +95,7 @@ class OctagonApproachMission:
 
 
         # Surfacing and resubmerging
+        # rospy.loginfo(f"Surfacing and resubmerging")
         # for i in range(2):
         #     if i == False:
         #         self.robot_control.set_absolute_z(0.0)
