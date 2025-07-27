@@ -107,6 +107,7 @@ class CV:
         if len(detected_list)==0:
             offset = None
         elif len(detected_list)==1:
+            self.prev_time = time.time()
             detection = detected_list[0]
             target_x = (detection.xmin + detection.xmax) / 2
             target_y = (detection.ymin + detection.ymax) / 2
@@ -118,6 +119,7 @@ class CV:
             print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
         else:  # when there are more than one octagon detection
             # Select the detection with the highest confidence
+            self.prev_time = time.time()
             detection = max(detected_list, key=lambda det: det.confidence)
             target_x = (detection.xmin + detection.xmax) / 2
             target_y = (detection.ymin + detection.ymax) / 2
@@ -134,7 +136,7 @@ class CV:
                 print("[DEBUG] Searching in stage 1")
                 if self.search_stage_one is None:
                     self.search_stage_one = time.time()
-                if time.time()-self.search_stage_one > 3:
+                if time.time()-self.search_stage_one > 5:
                     self.search_counter += 1
                     self.search_stage_one = time.time()
                 if self.search_counter%2==1:
@@ -151,7 +153,6 @@ class CV:
             print("[DEBUG] Approaching now!")
             print(f"[INFO] offset is {offset}")
             forward, yaw = self.smart_approach(offset)
-            self.prev_time = time.time()
             
         # Check Ending 
         if self.state=="search" and self.search_stage_two is not None and time.time()-self.search_stage_two > 30:
@@ -160,7 +161,7 @@ class CV:
            self.end = True
 
         if self.state=="appraoch" and (offset is None) and self.prev_detected == True:
-            if time.time() - self.prev_time > 3:
+            if time.time() - self.prev_time > 2:
                 print(f"[DEBUG] Ending with prev detected: {self.prev_detected}, detection list: {self.detection_list}")
                 self.end = True
         # Continuously return motion commands, the state of the mission, and the visualized frame.
