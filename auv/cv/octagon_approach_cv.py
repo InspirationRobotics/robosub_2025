@@ -127,6 +127,7 @@ class CV:
                     detection_confidence = detection.confidence
                     self.prev_detected = True
                     self.state = "approach"
+                    print(f"set state to {self.state}")
                     print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
         else:
             self.update_list(0)
