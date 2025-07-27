@@ -56,7 +56,7 @@ class CV:
         Args:
             value: The value to update the detection list with.
         """
-        if len(self.detection_list) >= 10:
+        if len(self.detection_list) >= 60:
             self.detection_list.pop(0)
         self.detection_list.append(value)
     
@@ -109,14 +109,15 @@ class CV:
             self.state = "search"
         
         if len(detections) == 0 and self.prev_detected == True and sum(self.detection_list) < 5:
-            if time.time() - self.prev_time < 2:
+            if time.time() - self.prev_time < 5:
                 self.state = None
                 forward = 0
             else:
+                print(f"[DEBUG] Ending with prev detected: {self.prev_detected}, detection list: {self.detection_list}")
                 self.end = True
 
 
-        detection_confidence = 0.65
+        detection_confidence = 0.45
         for detection in detections:
             if detection.label == "octagon":
                 if detection.confidence > detection_confidence:
