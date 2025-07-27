@@ -108,7 +108,7 @@ class CV:
         if len(detections) == 0 and self.prev_detected == False:
             self.state = "search"
         
-        if len(detections) == 0 and self.prev_detected == True and sum(self.detection_list) < 30:
+        if len(detections) == 0 and self.prev_detected == True and (sum(self.detection_list)/len(self.detection_list)) < 0.5:
             if time.time() - self.prev_time < 2:
                 self.state = None
                 forward = 0
