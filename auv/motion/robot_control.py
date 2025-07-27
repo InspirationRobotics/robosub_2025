@@ -283,6 +283,7 @@ class RobotControl:
                     surge_pwm   = self.direct_input[4]
                     lateral_pwm = self.direct_input[5]
 
+                # rospy.loginfo(f"Depth hold: {depth_pwm}, Yaw: {yaw_pwm}, Pitch: {pitch_pwm}, Roll: {roll_pwm}, Surge: {surge_pwm}, Lateral: {lateral_pwm}")
                 self.__movement(
                     lateral=lateral_pwm,
                     forward=surge_pwm,
@@ -402,6 +403,9 @@ class RobotControl:
             self.mode = "depth_hold"
             rospy.logewarn("Control mode not found")
         
+    def get_heading(self) -> float:
+        return self.orientation['yaw']
+
     def go_to_heading(self, target):
         target = (target) % 360
         print(f"[INFO] Setting heading to {target}")
@@ -410,7 +414,7 @@ class RobotControl:
 
             error = heading_error(self.orientation['yaw'], target)
 
-            output = self.PIDs["yaw"](-error / 180)
+            output = min(self.PIDs["yaw"](-error / 180),0.5) # make sure the output is greater than 0.5 for the thrusters to even move
 
             if abs(error) <= 3:
                 print("[INFO] Heading reached")
@@ -422,12 +426,13 @@ class RobotControl:
         print(f"[INFO] Finished setting heading to {target}")
             
     def go_to_depth(self, target):
-        rospy.loginfo(f"Go to depth: {target}")
+        def goto():
+            self.set_absolute_z(target)
+            while abs(target - self.position['z']) > 0.1:
+                rospy.loginfo("Going to depth", target)
+                time.sleep(1)
         thread = threading.Thread(target=goto)
         thread.start()
-        def goto():
-            while abs(target - self.position['z']) > 0.1:
-                time.sleep(1)
         
     def move_servo(self, service: str):
         """Operate a servo via the maestro_server file
@@ -573,7 +578,6 @@ class RobotControl:
         self.desired_point["yaw"] = yaw + self.orientation['yaw']
         rospy.loginfo(f"Set desire heading to {(yaw + self.orientation['yaw'])%360}")
 
-    
     def set_relative_pitch(self, pitch):
         """
         Set the heading of the robot relative to the current heading
@@ -598,6 +602,7 @@ class RobotControl:
 
     def waypointNav(self,x,y):
         if self.mode=="depth_hold":
+            pre_heading_control = self.heading_control
             self.heading_control = False
             reached = False
             
@@ -615,12 +620,15 @@ class RobotControl:
                     target_heading  = get_heading_from_coords(dx,dy)
                     yaw_error = heading_error(current_heading, target_heading)
                     yaw_pwm = self.PIDs["yaw"]( - yaw_error / 180)
-                    surge_pwm = max(min(D/5.0,1) * 1.5,0.5)
+                    surge_pwm = max(min(D/5.0,1) * 3,0.5)
 
                     rospy.loginfo(f"distance away: {D}")
                     rospy.loginfo(f"yaw pwm: {yaw_pwm}, forward pwm: {surge_pwm}")
                     self.movement(yaw=yaw_pwm,forward=surge_pwm)
                     time.sleep(0.1)
+                
+                # Restore previous heading control
+                self.heading_control = pre_heading_control
             except KeyboardInterrupt as e:
                 reached = True
 

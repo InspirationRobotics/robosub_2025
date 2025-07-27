@@ -338,7 +338,6 @@ class oakCamera:
                     dataToSend = {} # Dictionary for holding the detections data
 
                     for i, detection in enumerate(detections):
-                        print("[DEBUG] detected!")
                         # Denormalize bounding boxes around the detections
                         x1 = int(detection.xmin * self.IMG_W)
                         x2 = int(detection.xmax * self.IMG_W)

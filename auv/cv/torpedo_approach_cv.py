@@ -14,10 +14,6 @@ class CV:
     Octagon Approach CV class. DO NOT change the name of the class, as this will mess up all of the backend files to run the CV scripts.
     """
 
-    # Camera to get the camera stream from.
-    camera = "/auv/camera/videoOAKdRawForward"
-    model = "everything" # Change later once data is collected for the platform
-
     def __init__(self, **config):
         """
         Initialize the CV class. 
@@ -56,7 +52,7 @@ class CV:
         Args:
             value: The value to update the detection list with.
         """
-        if len(self.detection_list) >= 60:
+        if len(self.detection_list) >= 10:
             self.detection_list.pop(0)
         self.detection_list.append(value)
     
@@ -108,46 +104,40 @@ class CV:
         if len(detections) == 0 and self.prev_detected == False:
             self.state = "search"
         
-        if len(detections) == 0 and self.prev_detected == True and (sum(self.detection_list)/len(self.detection_list)) < 0.5:
+        if len(detections) == 0 and self.prev_detected == True and sum(self.detection_list) < 5:
             if time.time() - self.prev_time < 2:
                 self.state = None
                 forward = 0
             else:
-                print(f"[DEBUG] Ending with prev detected: {self.prev_detected}, detection list: {self.detection_list}")
                 self.end = True
 
 
-        detection_confidence = 0.45
+        detection_confidence = 0.65
         for detection in detections:
-            if detection.label == "octagon":
+            if detection.label == "torpedo_target":
                 if detection.confidence > detection_confidence:
                     self.update_list(1)
+                    print(f"[DEBUG] Detected torpedo with confidence {detection.confidence}")
                     target_x = (detection.xmin + detection.xmax) / 2
                     target_y = (detection.ymin + detection.ymax) / 2
                     detection_confidence = detection.confidence
-                    self.prev_detected = True
-                    self.state = "approach"
-                    print(f"[DEBUG] target_x is {target_x}")
-                    print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
-            else:
-                self.update_list(0)
-                target_x = None
-                target_y = None
-                        
-            
+        else:
+            self.update_list(0)
+            target_x = None
+            target_y = None
 
+        if target_x is None:
+            self.state = "search"
+        elif target_x is not None and target_y is not None:
+            self.prev_detected = True
+            self.state = "approach"
 
         if self.state == "search":
-            print("[DEBUG] Searching")
             # Scrap search grid in favor of circular search
             yaw = 1
 
         if self.state == "approach":
             print("[DEBUG] Approaching now!")
-            # if we had detection but lost it
-            if self.prev_detected and target_x is None:
-                target_x = self.x_midpoint
-            
             print(target_x)
             forward, yaw = self.smart_approach(target_x)
             self.prev_time = time.time()

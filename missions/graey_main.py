@@ -5,78 +5,58 @@ To create a sequential order of missions for Graey to follow.
 import rospy
 import time
 
-from auv.mission import style_mission, buoy_mission, octagon_approach_mission
+from auv.mission import poles_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
 rospy.init_node("Graey", anonymous = True)
 
-rc = robot_control.RobotControl(enable_dvl=False)
+rc = robot_control.RobotControl()
 
-target = "Red"
-gate_heading = 220
+target = "right"
 
-time.sleep(60)
+gate_heading = 0 # calibrate beforehand
+
+# time.sleep(60)
 
 arm.arm()
 
-rc.set_depth(0.65)
+rc.set_control_mode('depth_hold')
+rc.set_absolute_z(0.5)
+print("[INFO] Robot armed and set to depth 0.5m")
 
-time.sleep(5)
+time.sleep(3)
+print("[INFO] Waiting for 3 seconds before proceeding")
 
 # Rotate towards the heading of the gate, move 2 meters forward
-rc.set_heading(gate_heading)
+rc.go_to_heading(gate_heading)
+rc.set_absolute_yaw(0)
+rc.activate_heading_control(activate=True)
+print("[INFO] Robot heading set to gate heading")
 
 curr_time = time.time()
 
-while time.time() - curr_time < 40:
+while time.time() - curr_time < 10:
     rc.movement(forward=2)
-
-
-# Run the style mission
-style = style_mission.StyleMission()
-style.run()
-style.cleanup()
-
-rc.set_heading(gate_heading + 35)
-curr_time = time.time()
-while time.time() - curr_time < 5:
-    rc.movement(forward=2)
-
-rc.set_heading(gate_heading - 70)
-
-# # curr_time = time.time()
-# # while time.time() - curr_time < 7:
-#     rc.movement(forward=2)
-
-# Run the buoy mission
-buoy = buoy_mission.BuoyMission(target)
-buoy.run()
-buoy.cleanup()
-rc.set_heading(gate_heading + 35)
-# Get to the octagon, our model is short range only
-
-curr_time = time.time()
-
-while time.time() - curr_time < 20:
-    rc.movement(forward=2.5)
-
-
-
-
-for i in range(3):
-    rc.set_heading(gate_heading + 35)
-    curr_time = time.time()
+    print("[INFO] Moving forward for 10 seconds")
     
-    while time.time() - curr_time < 20:
-        rc.movement(lateral=2.5)
+# Run the poles mission
+poles = poles_mission.PoleSlalomMission(target=target, rc=rc)
+poles.run()
+poles.cleanup()
 
+# gitReturning back through the gate
 
-# Octagon mission
-octagon = octagon_approach_mission.OctagonApproachMission()
-octagon.run()
-octagon.cleanup()
+while time.time() - curr_time < 10:
+    rc.movement(lateral=2)
 
-time.sleep(1.0)
+current_heading = rc.orientation["yaw"]
+return_heading = current_heading + 180
+rc.go_to_heading(return_heading)
+
+while time.time() - curr_time < 10:
+    rc.movement(forward=2)
+
+disarm.disarm()
 
 print("[INFO] Mission run terminate")
