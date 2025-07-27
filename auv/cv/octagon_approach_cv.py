@@ -108,16 +108,14 @@ class CV:
         if len(detections) == 0 and self.prev_detected == False:
             self.state = "search"
         
-        if len(detections) == 0 and self.prev_detected == True and sum(self.detection_list) < 5:
-            if time.time() - self.prev_time < 5:
+        if len(detections) == 0 and self.prev_detected == True and sum(self.detection_list) < 30:
+            if time.time() - self.prev_time < 2:
                 self.state = None
                 forward = 0
             else:
                 print(f"[DEBUG] Ending with prev detected: {self.prev_detected}, detection list: {self.detection_list}")
                 self.end = True
 
-
-        print("Reached detection block")
 
         detection_confidence = 0.45
         for detection in detections:
