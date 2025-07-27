@@ -103,6 +103,7 @@ class CV:
                     detected_list.append(det)
 
         # select the highest confidence octagon deteciton if multiple
+        offset = None
         if len(detected_list)==0:
             offset = None
         elif len(detected_list)==1:
@@ -129,8 +130,8 @@ class CV:
 
 
         if self.state == "search":
-            print("[DEBUG] Searching")
             if self.search_counter<2:
+                print("[DEBUG] Searching in stage 1")
                 if self.search_stage_one is None:
                     self.search_stage_one = time.time()
                 if time.time()-self.search_stage_one > 3:
@@ -142,17 +143,14 @@ class CV:
                     yaw = -1
             else:
                 if self.search_stage_two is None:
+                    print(f"[DEBUG] Searching in stage two")
                     self.search_stage_two = time.time()
                 yaw = 1
 
         if self.state == "approach":
             print("[DEBUG] Approaching now!")
-            # if we had detection but lost it
-            if self.prev_detected and target_x is None:
-                target_x = self.x_midpoint
-            
-            print(target_x)
-            forward, yaw = self.smart_approach(target_x)
+            print(f"[INFO] offset is {offset}")
+            forward, yaw = self.smart_approach(offset)
             self.prev_time = time.time()
             
         # Check Ending 
