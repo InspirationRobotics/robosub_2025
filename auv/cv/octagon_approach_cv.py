@@ -129,10 +129,10 @@ class CV:
                     self.state = "approach"
                     print(f"[DEBUG] target_x is {target_x}")
                     print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
-        else:
-            self.update_list(0)
-            target_x = None
-            target_y = None
+            else:
+                self.update_list(0)
+                target_x = None
+                target_y = None
                         
             
 
