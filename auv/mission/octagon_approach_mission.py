@@ -84,13 +84,12 @@ class OctagonApproachMission:
 
             if end:
                 print("[INFO] Ending Octagon Approach CV")
-                self.robot_control.movement(lateral = 0, forward = 0, yaw = 0)
+                self.robot_control.movement()
                 break
             else:
-                self.robot_control.movement(lateral = lateral, forward = forward, yaw = yaw, vertical = vertical)
-                # print(forward, lateral, yaw)
+                self.robot_control.movement(lateral = lateral, forward = forward, yaw = yaw)
 
-
+        time.sleep(2)
         # Surfacing and resubmerging
         rospy.loginfo(f"Surfacing and resubmerging")
         for i in range(2):
