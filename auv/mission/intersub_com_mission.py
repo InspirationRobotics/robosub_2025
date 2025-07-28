@@ -5,66 +5,76 @@ from auv.motion.robot_control import RobotControl
 from std_msgs.msg import String
 from auv.utils import deviceHelper
 
-rospy.loginfo("Starting modem test script...")
-rospy.init_node("intersub_coms_mission", anonymous=True)
-rc = RobotControl()
 
 
-" Set this to true if you are the sending sub/party"
-""""""""""""""""""""""""""""""""
-#sending_sub = deviceHelper.variables.get("sub")  # This will be either graey or onyx
-sending_sub = True  # Set to True for sending sub, False for receiving sub
-""""""""""""""""""""""""""""""""
-" Will change the above logic to reduce human error in case both are set to true or false"
+class intersubComMission:
+    def __init__(self, robotControl=None):
+        self.rc = robotControl
+        self.sub = deviceHelper.variables.get('sub')
+        sub = rospy.Subscriber("/auv/devices/modem/received", String, self.rec_callback)
 
-# Send a message to test modem functionality
-def send_modem_message():
-    try: 
-        rc.send_modem(addr=destination_addr, movement="YAW")
-        rospy.loginfo("Sent message to address 020 with movement YAW")
-        time.sleep(1)
-    except Exception as e:
-        rospy.logerr(f"Failed to send modem message: {e}")
+    # Send a message to test modem functionality
+    def send_modem_message(self, dest_addr, move):
+        try: 
+            self.rc.send_modem(addr=dest_addr, movement=move)
+            rospy.loginfo("Sent message to address 020 with movement YAW")
+            time.sleep(1)
+        except Exception as e:
+            rospy.logerr(f"Failed to send modem message: {e}")
 
-# On Receiving a message 
-def rec_callback(msg):
-    rospy.loginfo(f"Received message: {msg.data}")
-    if msg.data == "YAW":
-        rospy.loginfo("Attempting to YAW")
-        rc.go_to_heading(90)
-        rc.go_to_heading(180)
-        rc.go_to_heading(270)
-        rc.go_to_heading(360)
+    # On Receiving a message 
+    def rec_callback(self,msg):
+        rospy.loginfo(f"Received message: {msg.data}")
+        if msg.data == "YAW":
+            rospy.loginfo("Attempting to YAW")
+            self.rc.go_to_heading(90)
+            self.rc.go_to_heading(180)
+            self.rc.go_to_heading(270)
+            self.rc.go_to_heading(360)
+        if msg.data == "ROLL":
+            self.rc.go_to_depth(1.3)
+            self.rc.set_control_mode = "MANUAL"
+            self.rc.movement(roll=5)
+            time.sleep(3)  # fine tune this value for Graey
+            self.rc.movement()
 
+    def start(self):
+        # go to desire position
+        self.rc.set_control_mode("depth_hold")
+        self.rc.go_to_depth(0.5)
+        rospy.loginfo(f"{current_sub} Reach depth")
+        self.rc.activate_heading_control(False)
 
+        current_sub = self.sub  # This will be either graey or onyx
+        if current_sub == "Graey":
+            destination_addr = "020"
 
-
-current_sub = deviceHelper.variables.get("sub")  # This will be either graey or onyx
-if current_sub == "Graey":
-    destination_addr = "020"
-elif current_sub == "Onyx":
-    destination_addr = "010"
-else:
-    rospy.logerr("Unknown sub type, cannot determine destination address.")
-    destination_addr = None
-
-rc.set_control_mode(f"{current_sub} depth_hold")
-rc.go_to_depth(0.5)
-print(f"{current_sub} Reach depth")
-rc.activate_heading_control(False)
-
-try: 
-    if sending_sub:
-        rospy.loginfo("This is the sending sub, preparing to send messages.")
-        # Send a message to test modem functionality
-        send_modem_message()
-
-except Exception as e:
-    rospy.logerr(f"Error in sending message: {e}")
+        elif current_sub == "Onyx":
+            destination_addr = "010"
+            rospy.loginfo("Sending message to Graey")
+            self.send_modem_message(dest_addr=destination_addr, move="YAW")
 
 
-sub = rospy.Subscriber("/auv/devices/modem/received", String, rec_callback )
 
-rospy.loginfo("Spinning")
-rospy.spin()
+
+
+
+
+
+
+
+
+start_time = time.time()
+rospy.loginfo("waiting")
+for i in range(180):
+    rospy.loginfo(f"{i} second has passed")
+    time.sleep(1)
+
+if __name__=="__main__":
+        
+    rospy.loginfo("Starting modem test script...")
+    rospy.init_node("intersub_coms_mission", anonymous=True)
+    rc = RobotControl()
+
+    mission = intersubComMission(robotControl=rc)
 

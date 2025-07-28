@@ -23,6 +23,7 @@ import geometry_msgs.msg
 from auv.motion.utils import get_distance, get_heading_from_coords, heading_error, rotate_vector, inv_rotate_vector, get_norm
 from auv.utils import deviceHelper # Get the configuration of the devices plugged into the sub(thrusters, camera, etc.)
 from auv.utils import arm, disarm
+from auv.utils import fly
 from auv.device.dvl import dvl # DVL class that enables position estimation
 from auv.device.fog import fog_interface as fog
 
@@ -403,6 +404,9 @@ class RobotControl:
             self.mode = "depth_hold"
             rospy.logewarn("Control mode not found")
         
+    def set_flight_mode(self, mode:String):
+        fly.set_flight_mode(mode)
+    
     def get_heading(self) -> float:
         return self.orientation['yaw']
 

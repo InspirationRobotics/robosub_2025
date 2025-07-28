@@ -42,10 +42,14 @@ class CV:
 
         self.last_yaw = 0
         self.yaw_time_search = 10
-        self.search_counter = 1
+        self.adjust_search_time = None
+        self.search_counter = 0
         self.search_stage_one = None # store time
         self.search_stage_two = None # store time
+        self.stage_two_end = False
+        self.adjust_count = 0
         self.end = False
+        self.prev_offset = None
         self.prev_time = time.time()
         
         print("[INFO] Octagon Approach CV Initialization")
@@ -63,6 +67,7 @@ class CV:
             yaw = -0.8
         
         return forward, yaw
+
 
     def run(self, frame, target, detections):
         """
@@ -114,6 +119,7 @@ class CV:
             target_y = (detection.ymin + detection.ymax) / 2
             offset = target_x - self.x_midpoint
             self.prev_detected = True
+            self.prev_offset = offset
             self.state = "approach"
             print(f"[DEBUG] target_x is {target_x}")
         else:  # when there are more than one octagon detection
@@ -125,13 +131,14 @@ class CV:
             offset = target_x - self.x_midpoint
             detection_confidence = detection.confidence
             self.prev_detected = True
+            self.prev_offset = offset
             self.state = "approach"
             print(f"[DEBUG] Multiple octagons detected. Using highest confidence detection: {detection_confidence}")
             print(f"[DEBUG] target_x is {target_x}, target_y is {target_y}")
 
 
         if self.state == "search":
-            if self.search_counter<2:
+            if self.search_counter<=2:
                 if self.search_stage_one is None:
                     print("[DEBUG] Searching in stage 1")
                     self.search_stage_one = time.time()
@@ -147,22 +154,39 @@ class CV:
                 if self.search_stage_two is None:
                     print(f"[DEBUG] Searching in stage two")
                     self.search_stage_two = time.time()
-                yaw = 1
+                
+                if self.prev_offset is None:
+                    yaw = 1
+                elif self.prev_offset > 0 :
+                    yaw= 1
+                elif self.prev_offset < 0:
+                    yaw = -1
 
         if self.state == "approach":
+            if not self.stage_two_end:
+                self.stage_two_end = True
             print("[DEBUG] Approaching now!")
             print(f"[INFO] offset is {offset}")
             forward, yaw = self.smart_approach(offset)
             
-        # Check Ending 
-        if self.state=="search" and self.search_stage_two is not None and time.time()-self.search_stage_two > 30:
+        # Check Ending and second search
+        if self.state=="search" and self.search_stage_two is not None and time.time()-self.search_stage_two > 30 and self.stage_two_end:
            # when we went through stage one and time out for 30 seconds
            print(f"[DEBUG] time out in searching")
            self.end = True
 
+        if self.state=="search" and self.prev_detected:
+            if time.time() - self.adjust_search_time > 15:
+                self.end = True
+
         if self.state=="approach" and (offset is None) and self.prev_detected == True:
             if time.time() - self.prev_time > 2:
-                print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
-                self.end = True
+                if self.adjust_count <3:  # adjust to search again
+                    self.state = "search"
+                    self.adjust_search_time = time.time()
+
+                else:
+                    print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
+                    self.end = True
         # Continuously return motion commands, the state of the mission, and the visualized frame.
         return {"lateral": lateral, "forward": forward, "yaw": yaw, "vertical" : vertical, "end": self.end}, frame

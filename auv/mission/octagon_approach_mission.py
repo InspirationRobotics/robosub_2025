@@ -18,7 +18,7 @@ from auv.utils import arm, disarm
 class OctagonApproachMission:
     cv_files = ["octagon_approach_cv"] # CV file to run
 
-    def __init__(self, target=None, **config):
+    def __init__(self, target=None, rc=None, **config):
         """
         Initialize the mission class; here should be all of the things needed in the run function. 
 
@@ -30,7 +30,7 @@ class OctagonApproachMission:
         self.next_data = {}  # Dictionary to store the newest data from the CV handler; this data will be merged with self.data.
         self.received = False
 
-        self.robot_control = robot_control.RobotControl()
+        self.robot_control = rc
         self.cv_handler = cv_handler.CVHandler(**self.config)
 
         # Initialize the CV handlers; dummys are used to input a video file instead of the camera stream as data for the CV script to run on
@@ -130,21 +130,16 @@ if __name__ == "__main__":
     import time
     from auv.utils import deviceHelper
     from auv.motion import robot_control
+
     rospy.init_node("octagon_approach_mission", anonymous=True)
+    robotControl = robot_control()
 
     config = deviceHelper.variables
-    config.update(
-        {
-            # # this dummy video file will be used instead of the camera if uncommented
-            # "cv_dummy": ["/somepath/thisisavideo.mp4"],
-        }
-    )
 
     # Create a mission object with arguments
-    mission = OctagonApproachMission(**config)
+    mission = OctagonApproachMission(rc=robotControl**config)
 
     # Run the mission
-
     arm.arm()
 
     mission.run()

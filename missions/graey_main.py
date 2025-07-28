@@ -4,47 +4,66 @@ To create a sequential order of missions for Graey to follow.
 
 import rospy
 import time
-
+from auv.utils import deviceHelper
 from auv.mission import poles_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
+"""INITIALIZE"""
 rospy.init_node("Graey", anonymous = True)
-
 rc = robot_control.RobotControl()
-
 target = "right"
-
 gate_heading = 0 # calibrate beforehand
-
-# time.sleep(60)
-
 rc.set_control_mode('depth_hold')
-arm.arm()
 rc.set_absolute_z(0.5)
-print("[INFO] Robot armed and set to depth 0.5m")
+arm.arm()
+rospy.loginfo("Robot armed and set to depth 0.5m")
+time.sleep(8)
+rospy.loginfo("Waiting for 5 seconds before proceeding")
+config = deviceHelper.variables
 
-time.sleep(5)
-print("[INFO] Waiting for 5 seconds before proceeding")
 
-# Rotate towards the heading of the gate, move 2 meters forward
-rc.go_to_heading(gate_heading)
-rc.set_absolute_yaw(gate_heading)
-rc.activate_heading_control(activate=True)
-print("[INFO] Robot heading set to gate heading")
 
-time.sleep(3)
+"""GATE MISSION"""
+try:
+    # Rotate towards the heading of the gate, move 2 meters forward
+    rc.go_to_heading(gate_heading)
+    rc.set_absolute_yaw(gate_heading)
+    rc.activate_heading_control(activate=True)
+    rospy.loginfo("Robot heading set to gate heading")
 
-curr_time = time.time()
+    time.sleep(3)
 
-while time.time() - curr_time < 10:
-    rc.movement(forward=2)
-    print("[INFO] Moving forward for 10 seconds")
-    
-# # Run the poles mission
-# poles = poles_mission.PoleSlalomMission(target=target, rc=rc)
-# poles.run()
-# poles.cleanup()
+    # going through the Gat
+    curr_time = time.time()
+
+    rospy.loginfo("Moving forward for 10 seconds")
+    while time.time() - curr_time < 10:
+        rc.movement(forward=2)
+
+    rc.movement() # stop moving forward
+except KeyboardInterrupt as e:
+    rospy.logwarn("Skipping current mission")
+except Exception as e:
+    rospy.logerr("ERROR OCCUR IN GATE MISSION")
+    rospy.logerr(e)
+
+"""STYLE MISSION - YAW"""
+try:
+    pass
+except Exception as e:
+    rospy.logerr("ERROR OCCUR IN STYLE MISSION")
+    rospy.logerr(e)
+
+"""POLES MISSION"""
+try: 
+    # Run the poles mission
+    poles = poles_mission.PoleSlalomMission(target=target, rc=rc,**config)
+    poles.run()
+    poles.cleanup()
+except Exception as e:
+    rospy.logerr("ERROR OCCUR IN POLES MISSION")
+    rospy.logerr(e)
 
 # # Returning back through the gate
 
@@ -61,3 +80,6 @@ while time.time() - curr_time < 10:
 # disarm.disarm()
 
 # print("[INFO] Mission run terminate")
+
+
+rc.exit()
