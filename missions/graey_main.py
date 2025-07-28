@@ -18,8 +18,8 @@ rc.set_control_mode('depth_hold')
 rc.set_absolute_z(0.5)
 arm.arm()
 rospy.loginfo("Robot armed and set to depth 0.5m")
-time.sleep(8)
-rospy.loginfo("Waiting for 8 seconds before proceeding")
+time.sleep(5)
+rospy.loginfo("Waiting for 5 seconds before proceeding")
 config = deviceHelper.variables
 
 
@@ -36,9 +36,9 @@ try:
     # going through the Gat
     curr_time = time.time()
 
-    rospy.loginfo("Moving forward for 10 seconds")
+    rospy.loginfo("Moving forward for 14 seconds")
     rc.movement(forward=2)
-    time.sleep(10)
+    time.sleep(14)
     rc.movement() # stop moving forward
 except KeyboardInterrupt as e:
     rospy.logwarn("Skipping current mission")
