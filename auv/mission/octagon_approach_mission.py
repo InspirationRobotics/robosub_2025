@@ -41,8 +41,9 @@ class OctagonApproachMission:
         print("[INFO] octagon Approach Mission Init")
         self.robot_control.set_control_mode("depth_hold")
         self.robot_control.set_absolute_z(0.4)
+        # self.robot_control.go_to_depth(0.4)
         self.robot_control.activate_heading_control(False)
-        time.sleep(10)
+        time.sleep(15)
     def callback(self, msg):
         """
         Calls back the cv_handler output -- you can have multiple callbacks for multiple CV handlers. Converts the output into JSON format.
@@ -119,7 +120,7 @@ class OctagonApproachMission:
 
         # Idle the robot
         self.robot_control.movement(lateral = 0, forward = 0, yaw = 0)
-        print("[INFO] Octagon approach mission terminate")
+        print("[INFO] Octagon approach mission terminated")
 
 
 if __name__ == "__main__":
@@ -132,12 +133,12 @@ if __name__ == "__main__":
     from auv.motion import robot_control
 
     rospy.init_node("octagon_approach_mission", anonymous=True)
-    robotControl = robot_control()
+    robotControl = robot_control.RobotControl()
 
     config = deviceHelper.variables
 
     # Create a mission object with arguments
-    mission = OctagonApproachMission(rc=robotControl**config)
+    mission = OctagonApproachMission(rc=robotControl, **config)
 
     # Run the mission
     arm.arm()

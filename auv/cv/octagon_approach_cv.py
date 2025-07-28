@@ -181,8 +181,10 @@ class CV:
 
         if self.state=="approach" and (offset is None) and self.prev_detected == True:
             if time.time() - self.prev_time > 2:
-                if self.adjust_count <3:  # adjust to search again
+                if self.adjust_count <2:  # adjust to search again
+                    print(f"[DEBUG] adjust and search")
                     self.state = "search"
+                    self.adjust_count += 1
                     self.adjust_search_time = time.time()
 
                 else:

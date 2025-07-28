@@ -37,9 +37,8 @@ try:
     curr_time = time.time()
 
     rospy.loginfo("Moving forward for 10 seconds")
-    while time.time() - curr_time < 10:
-        rc.movement(forward=2)
-
+    rc.movement(forward=2)
+    time.sleep(10)
     rc.movement() # stop moving forward
 except KeyboardInterrupt as e:
     rospy.logwarn("Skipping current mission")
