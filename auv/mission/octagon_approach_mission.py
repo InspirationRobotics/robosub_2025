@@ -147,3 +147,4 @@ if __name__ == "__main__":
     mission.cleanup()
 
     disarm.disarm()
+    robotControl.exit()
