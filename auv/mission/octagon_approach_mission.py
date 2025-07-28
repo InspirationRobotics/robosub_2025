@@ -40,7 +40,7 @@ class OctagonApproachMission:
         self.cv_handler.set_target("octagon_approach_cv", target)
         print("[INFO] octagon Approach Mission Init")
         self.robot_control.set_control_mode("depth_hold")
-        self.robot_control.set_absolute_z(0.38)
+        self.robot_control.set_absolute_z(0.5)
         self.robot_control.activate_heading_control(False)
         time.sleep(5)
     def callback(self, msg):

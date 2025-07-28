@@ -99,6 +99,7 @@ class CV:
         detection_confidence = 0.65
         for det in detections:
             if det.label == "octagon":
+                print(f"[DEBUG] Detected {det.label} with confidence {det.confidence}")
                 if det.confidence > detection_confidence:
                     detected_list.append(det)
 
@@ -112,11 +113,9 @@ class CV:
             target_x = (detection.xmin + detection.xmax) / 2
             target_y = (detection.ymin + detection.ymax) / 2
             offset = target_x - self.x_midpoint
-            detection_confidence = detection.confidence
             self.prev_detected = True
             self.state = "approach"
             print(f"[DEBUG] target_x is {target_x}")
-            print(f"[DEBUG] Detected octagon with confidence {detection.confidence}")
         else:  # when there are more than one octagon detection
             # Select the detection with the highest confidence
             self.prev_time = time.time()
@@ -133,10 +132,11 @@ class CV:
 
         if self.state == "search":
             if self.search_counter<2:
-                print("[DEBUG] Searching in stage 1")
                 if self.search_stage_one is None:
+                    print("[DEBUG] Searching in stage 1")
                     self.search_stage_one = time.time()
                 if time.time()-self.search_stage_one > 5:
+                    print(f"[DEBUG] Searching in stage one, counter is {self.search_counter}")
                     self.search_counter += 1
                     self.search_stage_one = time.time()
                 if self.search_counter%2==1:
@@ -160,9 +160,9 @@ class CV:
            print(f"[DEBUG] time out in searching")
            self.end = True
 
-        if self.state=="appraoch" and (offset is None) and self.prev_detected == True:
+        if self.state=="approach" and (offset is None) and self.prev_detected == True:
             if time.time() - self.prev_time > 2:
-                print(f"[DEBUG] Ending with prev detected: {self.prev_detected}, detection list: {self.detection_list}")
+                print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
                 self.end = True
         # Continuously return motion commands, the state of the mission, and the visualized frame.
         return {"lateral": lateral, "forward": forward, "yaw": yaw, "vertical" : vertical, "end": self.end}, frame
