@@ -39,11 +39,7 @@ class OctagonApproachMission:
 
         self.cv_handler.set_target("octagon_approach_cv", target)
         print("[INFO] octagon Approach Mission Init")
-        self.robot_control.set_control_mode("depth_hold")
-        self.robot_control.set_absolute_z(0.4)
-        # self.robot_control.go_to_depth(0.4)
-        self.robot_control.activate_heading_control(False)
-        time.sleep(15)
+
     def callback(self, msg):
         """
         Calls back the cv_handler output -- you can have multiple callbacks for multiple CV handlers. Converts the output into JSON format.
@@ -96,17 +92,15 @@ class OctagonApproachMission:
 
 
         # Surfacing and resubmerging
-        # rospy.loginfo(f"Surfacing and resubmerging")
-        # for i in range(2):
-        #     if i == False:
-        #         self.robot_control.set_absolute_z(0.0)
-        #         time.sleep(7)
-        #     elif i == True:
-        #         self.robot_control.set_absolute_z(0.7)
-        #         time.sleep(7)
-        #     start_time = time.time()
-        #     while time.time() - start_time < 7:
-        #         pass
+        rospy.loginfo(f"Surfacing and resubmerging")
+        for i in range(2):
+            if i == False:
+                self.robot_control.set_absolute_z(0.0)
+                time.sleep(7)
+            elif i == True:
+                self.robot_control.set_absolute_z(0.7)
+                time.sleep(7)
+
 
         print("[INFO] Octagon approach mission terminated")
 
