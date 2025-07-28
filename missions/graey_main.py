@@ -59,6 +59,7 @@ except Exception as e:
 """POLES MISSION"""
 try: 
     # Run the poles mission
+    rospy.loginfo("Start of poles mission...")
     poles = poles_mission.PoleSlalomMission(target=target, rc=rc,**config)
     poles.run()
     poles.cleanup()
