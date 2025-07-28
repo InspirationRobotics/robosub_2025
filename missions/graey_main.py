@@ -12,14 +12,13 @@ from auv.utils import arm, disarm, deviceHelper
 """INITIALIZE"""
 rospy.init_node("Graey", anonymous = True)
 rc = robot_control.RobotControl()
-target = "right"
-gate_heading = 0 # calibrate beforehand
 rc.set_control_mode('depth_hold')
 rc.set_absolute_z(0.5)
-arm.arm()
 rospy.loginfo("Robot armed and set to depth 0.5m")
-time.sleep(5)
 rospy.loginfo("Waiting for 5 seconds before proceeding")
+time.sleep(5)
+target = "right"
+gate_heading = 0 # calibrate beforehand
 config = deviceHelper.variables
 
 
@@ -38,7 +37,7 @@ try:
 
     rospy.loginfo("Moving forward for 14 seconds")
     rc.movement(forward=2)
-    time.sleep(14)
+    time.sleep(10)
     rc.movement() # stop moving forward
 except KeyboardInterrupt as e:
     rospy.logwarn("Skipping current mission")
@@ -106,6 +105,7 @@ except Exception as e:
     rospy.logerr("ERROR OCCUR IN GOING BACK THROUGH GATE WP")
     rospy.logerr(e)
 
+disarm.disarm()
 rc.exit()
 
 # current_heading = rc.orientation["yaw"]

@@ -44,7 +44,7 @@ class PoleSlalomMission:
         """
         Run the pole slalom mission loop.
         """
-        print("[INFO] Pole Slalom mission running")
+        rospy.loginfo("Pole Slalom mission running")
         
         while not rospy.is_shutdown():
             if not self.received:
