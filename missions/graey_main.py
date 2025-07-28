@@ -33,29 +33,31 @@ rc.set_absolute_yaw(gate_heading)
 rc.activate_heading_control(activate=True)
 print("[INFO] Robot heading set to gate heading")
 
+time.sleep(3)
+
 curr_time = time.time()
 
 while time.time() - curr_time < 10:
     rc.movement(forward=2)
     print("[INFO] Moving forward for 10 seconds")
     
-# Run the poles mission
-poles = poles_mission.PoleSlalomMission(target=target, rc=rc)
-poles.run()
-poles.cleanup()
+# # Run the poles mission
+# poles = poles_mission.PoleSlalomMission(target=target, rc=rc)
+# poles.run()
+# poles.cleanup()
 
-# Returning back through the gate
+# # Returning back through the gate
 
-while time.time() - curr_time < 10:
-    rc.movement(lateral=2)
+# while time.time() - curr_time < 10:
+#     rc.movement(lateral=2)
 
-current_heading = rc.orientation["yaw"]
-return_heading = current_heading + 180
-rc.go_to_heading(return_heading)
+# current_heading = rc.orientation["yaw"]
+# return_heading = current_heading + 180
+# rc.go_to_heading(return_heading)
 
-while time.time() - curr_time < 10:
-    rc.movement(forward=2)
+# while time.time() - curr_time < 10:
+#     rc.movement(forward=2)
 
-disarm.disarm()
+# disarm.disarm()
 
-print("[INFO] Mission run terminate")
+# print("[INFO] Mission run terminate")
