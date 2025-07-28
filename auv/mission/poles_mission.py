@@ -45,7 +45,7 @@ class PoleSlalomMission:
         Run the pole slalom mission loop.
         """
         rospy.loginfo("Pole Slalom mission running")
-        
+
         while not rospy.is_shutdown():
             if not self.received:
                 time.sleep(0.01)
@@ -62,7 +62,7 @@ class PoleSlalomMission:
 
             cv_data = self.data.get("poles_cv", {})
             lateral = cv_data.get("lateral", 0)
-            forward = cv_data.get("forward", 0)
+            forward = 2
             yaw = cv_data.get("yaw", 0)
             end = cv_data.get("end", False)
 
@@ -70,7 +70,7 @@ class PoleSlalomMission:
 
             if end:
                 print("[INFO] Pole slalom mission complete.")
-                self.rc.movement(lateral=0, forward=0)
+                self.rc.movement()
                 break
             else:
                 self.rc.movement(lateral=lateral, forward=forward, yaw=yaw)
