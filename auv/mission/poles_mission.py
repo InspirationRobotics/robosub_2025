@@ -5,6 +5,7 @@ Mission file for red pole slalom
 import json
 import rospy
 from std_msgs.msg import String
+import time
 
 from auv.device import cv_handler  # For running mission-specific CV scripts
 from auv.motion import robot_control  # For running the motors on the sub
@@ -36,7 +37,7 @@ class PoleSlalomMission:
         data = json.loads(msg.data)
         self.next_data[file_name] = data
         self.received = True
-        print(f"[DEBUG] Received data from {file_name}")
+        # print(f"[DEBUG] Received ddatafrom {file_name}")
 
     def run(self):
         """
