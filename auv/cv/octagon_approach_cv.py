@@ -58,9 +58,9 @@ class CV:
             yaw = 0
             forward = 2.0
         elif offset > 0:
-            yaw = 0.75
+            yaw = 0.8
         elif offset < 0:
-            yaw = -0.75
+            yaw = -0.8
         
         return forward, yaw
 

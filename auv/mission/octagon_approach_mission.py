@@ -40,9 +40,9 @@ class OctagonApproachMission:
         self.cv_handler.set_target("octagon_approach_cv", target)
         print("[INFO] octagon Approach Mission Init")
         self.robot_control.set_control_mode("depth_hold")
-        self.robot_control.set_absolute_z(0.5)
+        self.robot_control.set_absolute_z(0.4)
         self.robot_control.activate_heading_control(False)
-        time.sleep(5)
+        time.sleep(10)
     def callback(self, msg):
         """
         Calls back the cv_handler output -- you can have multiple callbacks for multiple CV handlers. Converts the output into JSON format.
