@@ -19,9 +19,8 @@ rc.set_absolute_z(0.5)
 arm.arm()
 rospy.loginfo("Robot armed and set to depth 0.5m")
 time.sleep(8)
-rospy.loginfo("Waiting for 5 seconds before proceeding")
+rospy.loginfo("Waiting for 8 seconds before proceeding")
 config = deviceHelper.variables
-
 
 
 """GATE MISSION"""
@@ -47,12 +46,14 @@ except KeyboardInterrupt as e:
 except Exception as e:
     rospy.logerr("ERROR OCCUR IN GATE MISSION")
     rospy.logerr(e)
-
-"""STYLE MISSION - YAW"""
+    
+"""WP TO POLES"""
 try:
-    pass
+    rospy.loginfo("Moving forward for 5 seconds")
+    while time.time() - curr_time < 5:
+        rc.movement(forward=2)
 except Exception as e:
-    rospy.logerr("ERROR OCCUR IN STYLE MISSION")
+    rospy.logerr("ERROR OCCUR IN WP TO POLES")
     rospy.logerr(e)
 
 """POLES MISSION"""
@@ -64,11 +65,48 @@ try:
 except Exception as e:
     rospy.logerr("ERROR OCCUR IN POLES MISSION")
     rospy.logerr(e)
+    
+"""LATERAL WP"""
+try:
+    rospy.loginfo("Moving lateral for 5 seconds")
+    while time.time() - curr_time < 5:
+        rc.movement(lateral=2)
+except Exception as e:
+    rospy.logerr("ERROR OCCUR IN LATERAL WP")
+    rospy.logerr(e)
+    
+""" BACK TO GATE WP"""
+try:
+    rospy.loginfo("Moving backward for 10 seconds")
+    while time.time() - curr_time < 10:
+        rc.movement(forward=-2)
+except Exception as e:
+    rospy.logerr("ERROR OCCUR IN BACK TO GATE WP")
+    rospy.logerr(e)
+    
+"""MODEMS + ROLL"""
 
-# # Returning back through the gate
+# Placeholder for modem communication logic
 
-# while time.time() - curr_time < 10:
-#     rc.movement(lateral=2)
+"""ALIGNING WITH GATE WP"""
+try:
+    rospy.loginfo("Moving right for 5 seconds")
+    while time.time() - curr_time < 5:
+        rc.movement(lateral=2)
+except Exception as e:
+    rospy.logerr("ERROR OCCUR IN ALIGNING WITH GATE WP")
+    rospy.logerr(e)
+    
+"""GOING BACK THROUGH GATE"""
+try:
+    rospy.loginfo("Moving backward for 5 seconds")
+    while time.time() - curr_time < 5:
+        rc.movement(forward=-2)
+except Exception as e:
+    rospy.logerr("ERROR OCCUR IN GOING BACK THROUGH GATE WP")
+    rospy.logerr(e)
+
+rc.exit()
 
 # current_heading = rc.orientation["yaw"]
 # return_heading = current_heading + 180
@@ -81,5 +119,3 @@ except Exception as e:
 
 # print("[INFO] Mission run terminate")
 
-
-rc.exit()

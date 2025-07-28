@@ -5,13 +5,11 @@ from auv.motion.robot_control import RobotControl
 from std_msgs.msg import String
 from auv.utils import deviceHelper
 
-
-
 class intersubComMission:
     def __init__(self, robotControl=None):
         self.rc = robotControl
         self.sub = deviceHelper.variables.get('sub')
-        sub = rospy.Subscriber("/auv/devices/modem/received", String, self.rec_callback)
+        self.sub_modem = rospy.Subscriber("/auv/devices/modem/received", String, self.rec_callback)
 
     # Send a message to test modem functionality
     def send_modem_message(self, dest_addr, move):
@@ -46,13 +44,17 @@ class intersubComMission:
         self.rc.activate_heading_control(False)
 
         current_sub = self.sub  # This will be either graey or onyx
-        if current_sub == "Graey":
+        if current_sub == "graey":
             destination_addr = "020"
-
-        elif current_sub == "Onyx":
+            for i in range(90):
+                # if graey recieves the roll messages, accuate it yaw
+                pass
+        elif current_sub == "onyx":
             destination_addr = "010"
             rospy.loginfo("Sending message to Graey")
-            self.send_modem_message(dest_addr=destination_addr, move="YAW")
+            self.send_modem_message(dest_addr=destination_addr, move="ROLL")
+            
+            # one onyx has sent the message 5 times, it can stop sending
 
 
 
