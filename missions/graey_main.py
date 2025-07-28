@@ -36,8 +36,8 @@ try:
     # going through the Gat
     curr_time = time.time()
 
-    rospy.loginfo("Moving forward for 13 seconds")
-    while time.time() - curr_time < 13:
+    rospy.loginfo("Moving forward for 18 seconds")
+    while time.time() - curr_time < 18:
         rc.movement(forward=2)
 
     rc.movement() # stop moving forward

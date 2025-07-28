@@ -47,7 +47,7 @@ class PoleSlalomMission:
         print("[INFO] Pole Slalom mission running")
         
         # configuring robot control modes and headings
-        self.rc.set_control_mode('depth_hold')
+        # self.rc.set_control_mode('depth_hold')
         self.rc.set_absolute_z(0.5)
         self.rc.go_to_heading(0)
         time.sleep(1)
