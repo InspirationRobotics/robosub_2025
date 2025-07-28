@@ -36,8 +36,8 @@ try:
     # going through the Gat
     curr_time = time.time()
 
-    rospy.loginfo("Moving forward for 18 seconds")
-    while time.time() - curr_time < 18:
+    rospy.loginfo("Moving forward for 10 seconds")
+    while time.time() - curr_time < 10:
         rc.movement(forward=2)
 
     rc.movement() # stop moving forward
@@ -47,14 +47,14 @@ except Exception as e:
     rospy.logerr("ERROR OCCUR IN GATE MISSION")
     rospy.logerr(e)
     
-"""WP TO POLES"""
-try:
-    rospy.loginfo("Moving forward for 5 seconds")
-    while time.time() - curr_time < 5:
-        rc.movement(forward=2)
-except Exception as e:
-    rospy.logerr("ERROR OCCUR IN WP TO POLES")
-    rospy.logerr(e)
+# """WP TO POLES"""
+# try:
+#     rospy.loginfo("Moving forward for 5 seconds")
+#     while time.time() - curr_time < 5:
+#         rc.movement(forward=2)
+# except Exception as e:
+#     rospy.logerr("ERROR OCCUR IN WP TO POLES")
+#     rospy.logerr(e)
 
 """POLES MISSION"""
 try: 
