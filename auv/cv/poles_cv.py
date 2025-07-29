@@ -116,8 +116,8 @@ class CV:
                 self.start_time = time.time()
                 print("[INFO] Strafing started")
 
-            if time.time() - self.start_time < 2.5: #4.0
-                lateral = 1.5
+            if time.time() - self.start_time < 3.0: #4.0
+                lateral = -1.5
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
             else:
                 self.start_time = None
