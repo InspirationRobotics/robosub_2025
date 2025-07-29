@@ -14,7 +14,7 @@ from auv.utils import disarm
 
 class PoleSlalomMission:
     # Name of your red pole CV script file (no .py extension)
-    def __init__(self, rc, target="right",**config):
+    def __init__(self, rc, target="left",**config):
         """
         Initialize the mission class; configure everything needed in the run function.
         """
