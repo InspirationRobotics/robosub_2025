@@ -14,7 +14,7 @@ from auv.utils import disarm
 
 class PoleSlalomMission:
     # Name of your red pole CV script file (no .py extension)
-    def __init__(self, rc, target="right",**config):
+    def __init__(self, rc, target="left",**config):
         """
         Initialize the mission class; configure everything needed in the run function.
         """
@@ -62,7 +62,7 @@ class PoleSlalomMission:
 
             cv_data = self.data.get("poles_cv", {})
             lateral = cv_data.get("lateral", 0)
-            forward = 1.5
+            forward = 1.0
             yaw = cv_data.get("yaw", 0)
             end = cv_data.get("end", False)
 

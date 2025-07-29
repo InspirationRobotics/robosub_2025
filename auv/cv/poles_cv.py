@@ -21,6 +21,7 @@ class CV:
         self.state = "search"
         self.end = False
         self.start_time = None
+        self.search_start_time = None
         self.rows_completed = 0
 
         print("[INFO] Pole Center & Approach CV initialized")
@@ -79,6 +80,16 @@ class CV:
         if self.state == "search":
             if detection["status"]:
                 self.state = "centering"
+            
+            elif self.search_start_time is None and self.rows_completed == 2:
+                self.search_start_time = time.time()
+                print(f"[INFO] Search time began: ({time.time() - self.start_time:.2f}s)")
+
+            if time.time() - self.search_start_time < 7.0:
+                forward = 0.9
+                self.end = True
+                print("[INFO] Completed slalom through poles → ending")
+            
             else:
                 print("[INFO] Searching: No red pole detected")
 
