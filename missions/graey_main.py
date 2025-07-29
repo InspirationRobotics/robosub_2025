@@ -25,14 +25,14 @@ config = deviceHelper.variables
 """GATE MISSION"""
 try:
     # Rotate towards the heading of the gate, move 2 meters forward
-    # rc.activate_heading_control(activate=True)
-    # rc.set_absolute_yaw(gate_heading)
-    # rospy.sleep(5)
-    # rospy.loginfo("Robot heading set to gate heading")
+    rc.activate_heading_control(activate=True)
+    rc.set_absolute_yaw(gate_heading)
+    rospy.sleep(5)
+    rospy.loginfo("Robot heading set to gate heading")
 
     time.sleep(3)
 
-    # going through the Gat
+    # going through the Gate
     curr_time = time.time()
 
     rospy.loginfo("Moving forward for 6 seconds")
