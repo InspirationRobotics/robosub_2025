@@ -32,16 +32,16 @@ except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
     rospy.logerr(e)
 
-"""POST-GATE STABILIZATION"""
+"""POST-GATE / PRE-OCTAGON STABILIZATION"""
 try:
-    rospy.loginfo("Stabilizing after gate traversal")
-    rc.movement()  # zero all motion
-    rc.activate_heading_control(activate=False)   # release yaw lock
-    # rc.set_control_mode('depth_hold')
-    rc.set_absolute_z(0.5)
-    # rospy.sleep(2)
+    rospy.loginfo("Stabilizing before octagon search")
+    rc.movement()                          # zero surge & sway
+    rc.activate_heading_control(False)     # release yaw lock
+    rc.set_control_mode('depth_hold')      # (re)enter depth hold
+    rc.set_absolute_z(0.5)                 # reset integrator
+    rospy.sleep(2)                         # let it settle
 except Exception as e:
-    rospy.logerr("ERROR DURING POST-GATE STABILIZATION")
+    rospy.logerr("STABILIZATION ERROR")
     rospy.logerr(e)
 
 """OCTAGON MISSION"""
