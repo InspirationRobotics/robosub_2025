@@ -25,7 +25,7 @@ class DVL:
     
     def __init__(self, autostart=True, test=False):
         rospy.init_node("dvl", anonymous=True)
-        self.rate = rospy.Rate(10)  # 10 Hz
+        self.rate = rospy.Rate(20)  # 10 Hz
         
         self.vel_pub = rospy.Publisher('/auv/devices/dvl/velocity', TwistStamped, queue_size=10)
         
