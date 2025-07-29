@@ -656,6 +656,7 @@ class RobotControl:
     
     
 if __name__=="__main__":
+    """Testing robot control funcitons"""
     import rospy
     import time
     from auv.motion import robot_control
@@ -667,22 +668,22 @@ if __name__=="__main__":
     rc.set_control_mode("depth_hold")
     rospy.loginfo("Diving down")
     rc.set_absolute_z(0.4)
+    current_heading = rc.orientation['yaw']
+    rc.set_absolute_yaw(current_heading)
+    rc.activate_heading_control(True)
+    time.sleep(10)
+
+    rospy.loginfo("Moving forward")
+    rc.movement(forward=2)
+    time.sleep(8)
+    rc.movement()
+
+    rospy.loginfo("Moving backward")
+    rc.movement(forward=-2)
     time.sleep(5)
-    # rospy.loginfo("Set heading control to 0")
-    # rc.go_to_heading(0)
-
-    rospy.loginfo("yaw clock wise and set depth hold")
-    rc.set_control_mode("depth_hold")
-    rc.movement(yaw=1)
-    time.sleep(10)
-
-    rospy.loginfo("yaw counter clock wise and set absolute z")
-    rc.set_absolute_z(0.5)
-    rc.movement(yaw=-1)
-    time.sleep(10)
-
+    rc.movement()
 
 
     rospy.loginfo("Reached the end")
-
     disarm.disarm()
+    rc.exit()
