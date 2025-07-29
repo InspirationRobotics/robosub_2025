@@ -132,9 +132,10 @@ class CV:
             if time.time() - self.start_time < 3.0: #6.0
                 forward = 1.5
                 print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
-                self.rows_completed += 1
             else:
                 self.start_time = None
+                self.rows_completed += 1
+                self.state = "search"
                 print(f"[INFO] Slaloming complete → rows completed: {self.rows_completed}")
 
         if self.rows_completed == 3:
