@@ -165,12 +165,13 @@ class CV:
         if self.state == "approach":
             if not self.stage_two_end:
                 self.stage_two_end = True
+                self.search_stage_two=time.time()
             print("[DEBUG] Approaching now!")
             print(f"[INFO] offset is {offset}")
             forward, yaw = self.smart_approach(offset)
             
         # Check Ending and second search
-        if self.state=="search" and self.search_stage_two is not None and time.time()-self.search_stage_two > 30 and self.stage_two_end:
+        if self.state=="search" and self.search_stage_two is not None and time.time()-self.search_stage_two > 30:
            # when we went through stage one and time out for 30 seconds
            print(f"[DEBUG] time out in searching")
            self.end = True

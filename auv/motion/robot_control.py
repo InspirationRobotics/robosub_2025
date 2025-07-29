@@ -658,8 +658,32 @@ class RobotControl:
 
     
     
+if __name__=="__main__":
+    import rospy
+    import time
+    from auv.motion import robot_control
+    from auv.utils import arm, disarm
+
+
+    rospy.init_node("control_test", anonymous=True)
+    rc = robot_control.RobotControl()
+    rc.set_control_mode("depth_hold")
+    rospy.loginfo("Diving down")
+    rc.set_absolute_z(0.4)
+    time.sleep(5)
+    rospy.loginfo("Set heading control to 0")
+    rc.go_to_heading(0)
+
+
+    rc.movement(yaw=1)
+
+    time.sleep(10)
+
+    rc.movement(yaw=-1)
+    time.sleep(10)
 
 
 
+    rospy.loginfo("Reached the end")
 
-    
+    disarm.disarm()

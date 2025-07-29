@@ -27,10 +27,22 @@ rospy.loginfo("Finish initialization")
 try:
     rc.movement(forward=2)
     time.sleep(3)
+    rc.movement()
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
     rospy.logerr(e)
 
+# """POST-GATE STABILIZATION"""
+# try:
+#     rospy.loginfo("Stabilizing after gate traversal")
+#     rc.movement()  # zero all motion
+#     rc.activate_heading_control(activate=False)   # release yaw lock
+#     rc.set_control_mode('depth_hold')
+#     rc.set_absolute_z(0.5)
+#     rospy.sleep(2)
+# except Exception as e:
+#     rospy.logerr("ERROR DURING POST-GATE STABILIZATION")
+#     rospy.logerr(e)
 
 """OCTAGON MISSION"""
 try:
