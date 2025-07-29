@@ -15,8 +15,8 @@ rc = robot_control.RobotControl()
 rc.set_control_mode('depth_hold')
 rc.set_absolute_z(0.5)
 rospy.loginfo("Robot armed and set to depth 0.5m")
-rospy.loginfo("Waiting for 5 seconds before proceeding")
-time.sleep(5)
+rospy.loginfo("Waiting for 7 seconds before proceeding")
+time.sleep(7)
 target = "right"
 gate_heading = 0 # calibrate beforehand
 config = deviceHelper.variables
@@ -25,19 +25,20 @@ config = deviceHelper.variables
 """GATE MISSION"""
 try:
     # Rotate towards the heading of the gate, move 2 meters forward
+    current_heading = rc.orientation["yaw"]
     rc.activate_heading_control(activate=True)
-    rc.set_absolute_yaw(gate_heading)
+    rc.set_absolute_yaw(current_heading)
     rospy.sleep(5)
     rospy.loginfo("Robot heading set to gate heading")
 
     time.sleep(3)
 
-    # going through the Gat
+    # going through the Gate
     curr_time = time.time()
 
-    rospy.loginfo("Moving forward for 11 seconds")
+    rospy.loginfo("Moving forward for 6 seconds")
     rc.movement(forward=2)
-    time.sleep(11)
+    time.sleep(6)
     rc.movement() # stop moving forward
 except KeyboardInterrupt as e:
     rospy.logwarn("Skipping current mission")
