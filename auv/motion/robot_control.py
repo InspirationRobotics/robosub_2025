@@ -390,19 +390,19 @@ class RobotControl:
                         - "direct" for direct thruster control
         """
         self.reset()
-        
-        if msg=="pid":
-            self.mode = msg
-            rospy.loginfo("Set to pid control mode")
-        elif msg=="depth_hold":
-            self.mode = msg
-            rospy.loginfo("Set to depth hold mode")
-        elif msg=="direct":
-            self.mode = msg
-            rospy.loginfo("Set to direct control mode")
-        else:
-            self.mode = "depth_hold"
-            rospy.logewarn("Control mode not found")
+        with self.lock:
+            if msg=="pid":
+                self.mode = msg
+                rospy.loginfo("Set to pid control mode")
+            elif msg=="depth_hold":
+                self.mode = msg
+                rospy.loginfo("Set to depth hold mode")
+            elif msg=="direct":
+                self.mode = msg
+                rospy.loginfo("Set to direct control mode")
+            else:
+                self.mode = "depth_hold"
+                rospy.logewarn("Control mode not found")
         
     def set_flight_mode(self, mode:String):
         fly.set_flight_mode(mode)
