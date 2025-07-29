@@ -673,14 +673,14 @@ if __name__=="__main__":
     rc.activate_heading_control(True)
     time.sleep(10)
 
-    rospy.loginfo("Moving forward")
-    rc.movement(forward=2)
-    time.sleep(8)
+    rospy.loginfo("Moving right")
+    rc.movement(lateral=2)
+    time.sleep(5)
     rc.movement()
 
-    rospy.loginfo("Moving backward")
-    rc.movement(forward=-2)
-    time.sleep(5)
+    rospy.loginfo("Moving left")
+    rc.movement(lateral=-2)
+    time.sleep(4)
     rc.movement()
 
 
