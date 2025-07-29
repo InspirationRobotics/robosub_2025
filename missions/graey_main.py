@@ -15,8 +15,8 @@ rc = robot_control.RobotControl()
 rc.set_control_mode('depth_hold')
 rc.set_absolute_z(0.5)
 rospy.loginfo("Robot armed and set to depth 0.5m")
-rospy.loginfo("Waiting for 5 seconds before proceeding")
-time.sleep(5)
+rospy.loginfo("Waiting for 7 seconds before proceeding")
+time.sleep(7)
 target = "right"
 gate_heading = 0 # calibrate beforehand
 config = deviceHelper.variables
