@@ -259,7 +259,6 @@ class RobotControl:
                     pitch=pitch_pwm,
                     roll=roll_pwm
                 )
-
             elif self.mode=="depth_hold":
                 
                 # Set depth PWM value
@@ -389,9 +388,9 @@ class RobotControl:
                         - "pid" for PID control
                         - "direct" for direct thruster control
         """
-        self.reset()
         with self.lock:
             if msg=="pid":
+                self.reset()
                 self.mode = msg
                 rospy.loginfo("Set to pid control mode")
             elif msg=="depth_hold":
