@@ -35,9 +35,9 @@ try:
     # going through the Gat
     curr_time = time.time()
 
-    rospy.loginfo("Moving forward for 11 seconds")
+    rospy.loginfo("Moving forward for 3 seconds")
     rc.movement(forward=2)
-    time.sleep(11)
+    time.sleep(3)
     rc.movement() # stop moving forward
 except KeyboardInterrupt as e:
     rospy.logwarn("Skipping current mission")
