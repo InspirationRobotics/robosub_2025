@@ -669,14 +669,16 @@ if __name__=="__main__":
     rospy.loginfo("Diving down")
     rc.set_absolute_z(0.4)
     time.sleep(5)
-    rospy.loginfo("Set heading control to 0")
-    rc.go_to_heading(0)
+    # rospy.loginfo("Set heading control to 0")
+    # rc.go_to_heading(0)
 
-
+    rospy.loginfo("yaw clock wise and set depth hold")
+    rc.set_control_mode("depth_hold")
     rc.movement(yaw=1)
-
     time.sleep(10)
 
+    rospy.loginfo("yaw counter clock wise and set absolute z")
+    rc.set_absolute_z(0.5)
     rc.movement(yaw=-1)
     time.sleep(10)
 
