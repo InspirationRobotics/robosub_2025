@@ -122,6 +122,7 @@ class CV:
             else:
                 self.start_time = None
                 print("[INFO] Strafing complete → transitioning to slaloming")
+                self.state = "slaloming"
         
         elif self.state == "slaloming":
             if self.start_time is None:
