@@ -478,8 +478,6 @@ class RobotControl:
         Args:
             depth (float): Depth to set the robot to
         """
-        # Clear the PID error
-        self.PIDs["depth"].reset()
         self.PIDs["depth"].setpoint = depth
     
     def set_absolute_x(self, x):

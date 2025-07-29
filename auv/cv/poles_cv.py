@@ -121,6 +121,7 @@ class CV:
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
             else:
                 self.start_time = None
+                self.state = "slaloming"
                 print("[INFO] Strafing complete → transitioning to slaloming")
         
         elif self.state == "slaloming":
