@@ -46,7 +46,8 @@ except Exception as e:
 
 """OCTAGON MISSION"""
 try:
-    octagon = octagon_approach_mission.OctagonApproachMission(rc=rc, **config)
+    octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
+    time.sleep(2)
     octagon.run()
     octagon.cleanup()
 except Exception as e:
