@@ -36,9 +36,9 @@ try:
     # going through the Gate
     curr_time = time.time()
 
-    rospy.loginfo("Moving forward for 6 seconds")
+    rospy.loginfo("Moving forward for 8 seconds")
     rc.movement(forward=2)
-    time.sleep(6)
+    time.sleep(8)
     rc.movement() # stop moving forward
 except KeyboardInterrupt as e:
     rospy.logwarn("Skipping current mission")
