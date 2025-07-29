@@ -36,9 +36,9 @@ try:
     # going through the Gate
     curr_time = time.time()
 
-    rospy.loginfo("Moving forward for 6 seconds")
+    rospy.loginfo("Moving forward for 8 seconds")
     rc.movement(forward=2)
-    time.sleep(6)
+    time.sleep(8)
     rc.movement() # stop moving forward
 except KeyboardInterrupt as e:
     rospy.logwarn("Skipping current mission")
@@ -69,17 +69,17 @@ except Exception as e:
 """LATERAL WP"""
 try:
     rospy.loginfo("Moving lateral for 5 seconds")
-    while time.time() - curr_time < 5:
-        rc.movement(lateral=2)
+    rc.movement(lateral=2)
+    time.sleep(5)
 except Exception as e:
     rospy.logerr("ERROR OCCUR IN LATERAL WP")
     rospy.logerr(e)
     
 """ BACK TO GATE WP"""
 try:
-    rospy.loginfo("Moving backward for 10 seconds")
-    while time.time() - curr_time < 10:
-        rc.movement(forward=-2)
+    rospy.loginfo("Moving backward for 15 seconds")
+    rc.movement(forward=-2)
+    time.sleep(15)
 except Exception as e:
     rospy.logerr("ERROR OCCUR IN BACK TO GATE WP")
     rospy.logerr(e)
@@ -91,8 +91,8 @@ except Exception as e:
 """ALIGNING WITH GATE WP"""
 try:
     rospy.loginfo("Moving right for 5 seconds")
-    while time.time() - curr_time < 5:
-        rc.movement(lateral=2)
+    rc.movement(lateral=2)
+    time.sleep(5)
 except Exception as e:
     rospy.logerr("ERROR OCCUR IN ALIGNING WITH GATE WP")
     rospy.logerr(e)
@@ -100,8 +100,8 @@ except Exception as e:
 """GOING BACK THROUGH GATE"""
 try:
     rospy.loginfo("Moving backward for 5 seconds")
-    while time.time() - curr_time < 5:
-        rc.movement(forward=-2)
+    rc.movement(forward=-2)
+    time.sleep(5)
 except Exception as e:
     rospy.logerr("ERROR OCCUR IN GOING BACK THROUGH GATE WP")
     rospy.logerr(e)

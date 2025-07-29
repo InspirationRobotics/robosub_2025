@@ -116,8 +116,8 @@ class CV:
                 self.start_time = time.time()
                 print("[INFO] Strafing started")
 
-            if time.time() - self.start_time < 2.5: #4.0
-                lateral = 1.5
+            if time.time() - self.start_time < 3.0: #4.0
+                lateral = -1.5
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
             else:
                 self.start_time = None
@@ -145,9 +145,13 @@ class CV:
         return forward, lateral, yaw, vertical
 
     def run(self, raw_frame, target, detections):
-    # Crop right half only in strafing state
+    # # Crop right half only in strafing state
+    #     if self.state == "strafing":
+    #         raw_frame = raw_frame[:, 320:]
+            
+    # Crop left half only in strafing state
         if self.state == "strafing":
-            raw_frame = raw_frame[:, 320:]
+            raw_frame = raw_frame[:, :320]
 
         detection, red_mask_clean = self.detect_red_pole(raw_frame)
         forward, lateral, yaw, vertical = self.movement_calculation(detection)
