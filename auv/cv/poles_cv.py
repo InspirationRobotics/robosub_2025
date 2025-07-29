@@ -81,7 +81,7 @@ class CV:
             if detection["status"]:
                 self.state = "centering"
             
-            elif self.search_start_time is None:
+            elif self.search_start_time is None and self.rows_completed == 2:
                 self.search_start_time = time.time()
                 print(f"[INFO] Search time began: ({time.time() - self.start_time:.2f}s)")
 
