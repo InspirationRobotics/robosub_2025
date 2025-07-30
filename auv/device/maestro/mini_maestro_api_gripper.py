@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
 
     maestro.set_pwm(0, 1136)  # Move servo on channel 0
-    print("marker 1 dropped")
+    print("claw 1 dropped")
     time.sleep(2) # adjust this number for the amount of time
 
 
