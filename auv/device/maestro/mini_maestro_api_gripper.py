@@ -43,7 +43,7 @@ if __name__ == "__main__":
     # TODO use devicehelper for dynamic port loading
     maestro = MiniMaestro(port="/dev/ttyACM2")
    
-    maestro.set_pwm(0, 1765)  # Move servo on channel 0
+    maestro.set_pwm(0, 1500)  # Move servo on channel 0
     time.sleep(1)
 
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     time.sleep(2) # adjust this number for the amount of time
 
 
-    maestro.set_pwm(0, 1900) # Move servo on channel 0
+    maestro.set_pwm(0, 1300) # Move servo on channel 0
     print("marker 2 dropped")
     time.sleep(1)
 
