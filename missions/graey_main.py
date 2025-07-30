@@ -30,7 +30,7 @@ try:
     # 1. Using absolute heading, this require recalibration each run
     # 2. Using relative heading, this require hard code the angle
     rc.activate_heading_control(activate=True)
-    rc.set_absolute_yaw(current_heading) # this is hard coded angle
+    rc.set_absolute_yaw(current_heading + 90) # this is hard coded angle
     rospy.sleep(8)
     rospy.loginfo("Robot heading set to gate heading")
 
