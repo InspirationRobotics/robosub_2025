@@ -9,7 +9,7 @@ from reaching the Octagon mission).
 import rospy
 import time
 
-from auv.mission import octagon_approach_mission
+from auv.mission import octagon_approach_mission, intersub_com_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
@@ -69,6 +69,15 @@ except Exception as e:
 
 time.sleep(1.0)
 
+
+"""MODEMS + ROLL"""
+try:
+    intersubMission = intersub_com_mission.intersubComMission(robotControl=rc)
+    intersubMission.run()
+    rospy.loginfo("FINISHED INTERSUB COMMUNICATION")
+except Exception as e:
+    rospy.logerr("ERROR DURING MODEM MISSION")
+    rospy.logerr(e)
 print("[INFO] Mission run terminate")
 disarm.disarm()
 rc.exit()
