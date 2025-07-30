@@ -5,7 +5,7 @@ To create a sequential order of missions for Graey to follow.
 import rospy
 import time
 from auv.utils import deviceHelper
-from auv.mission import poles_mission
+from auv.mission import poles_mission, intersub_com_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
@@ -26,15 +26,13 @@ config = deviceHelper.variables
 try:
     # Rotate towards the heading of the gate, move 2 meters forward
     current_heading = rc.orientation["yaw"]
+    # TODO two ways of doing coin toss
+    # 1. Using absolute heading, this require recalibration each run
+    # 2. Using relative heading, this require hard code the angle
     rc.activate_heading_control(activate=True)
-    rc.set_absolute_yaw(current_heading)
-    rospy.sleep(5)
+    rc.set_absolute_yaw(current_heading + 90) # this is hard coded angle
+    rospy.sleep(8)
     rospy.loginfo("Robot heading set to gate heading")
-
-    time.sleep(3)
-
-    # going through the Gate
-    curr_time = time.time()
 
     rospy.loginfo("Moving forward for 8 seconds")
     rc.movement(forward=2)
@@ -46,14 +44,16 @@ except Exception as e:
     rospy.logerr("ERROR OCCUR IN GATE MISSION")
     rospy.logerr(e)
     
-# """WP TO POLES"""
-# try:
-#     rospy.loginfo("Moving forward for 5 seconds")
-#     while time.time() - curr_time < 5:
-#         rc.movement(forward=2)
-# except Exception as e:
-#     rospy.logerr("ERROR OCCUR IN WP TO POLES")
-#     rospy.logerr(e)
+"""WP TO POLES"""
+try:
+    # TODO consider the gate has an angle with the poles
+    rospy.loginfo("Moving forward for 5 seconds")
+    rc.movement(forward=2)
+    time.sleep(3)
+    rc.movement()
+except Exception as e:
+    rospy.logerr("ERROR OCCUR IN WP TO POLES")
+    rospy.logerr(e)
 
 """POLES MISSION"""
 try: 
@@ -85,9 +85,13 @@ except Exception as e:
     rospy.logerr(e)
     
 """MODEMS + ROLL"""
-
-# Placeholder for modem communication logic
-
+try:
+    intersubMission = intersub_com_mission.intersubComMission(robotControl=rc)
+    intersubMission.run()
+    rospy.loginfo("FINISHED INTERSUB COMMUNICATION")
+except Exception as e:
+    rospy.logerr("ERROR DURING MODEM MISSION")
+    rospy.logerr(e)
 """ALIGNING WITH GATE WP"""
 try:
     rospy.loginfo("Moving right for 5 seconds")
@@ -109,14 +113,4 @@ except Exception as e:
 disarm.disarm()
 rc.exit()
 
-# current_heading = rc.orientation["yaw"]
-# return_heading = current_heading + 180
-# rc.go_to_heading(return_heading)
-
-# while time.time() - curr_time < 10:
-#     rc.movement(forward=2)
-
-# disarm.disarm()
-
-# print("[INFO] Mission run terminate")
 

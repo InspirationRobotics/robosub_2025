@@ -25,24 +25,35 @@ rospy.loginfo("Finish initialization")
 
 """GATE MISSION"""
 try:
+    # TODO utilize heading control to move through the gate and go to the next waypoint
     rc.movement(forward=2)
     time.sleep(3)
     rc.movement()
+
+    rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
     rospy.logerr(e)
 
-"""POST-GATE / PRE-OCTAGON STABILIZATION"""
+"""BIN MISSION"""
 try:
-    rospy.loginfo("Stabilizing before octagon search")
-    rc.movement()                          # zero surge & sway
-    rc.activate_heading_control(False)     # release yaw lock
-    rc.set_control_mode('depth_hold')      # (re)enter depth hold
-    rc.set_absolute_z(0.5)                 # reset integrator
-    rospy.sleep(2)                         # let it settle
+    pass
+    rospy.loginfo("BIN MISSION FINISHED")
+
 except Exception as e:
-    rospy.logerr("STABILIZATION ERROR")
+    rospy.logerr("ERROR DOING BIN MISSION")
     rospy.logerr(e)
+    pass
+
+"""TORPEDO MISSION"""
+try:
+    pass
+    rospy.loginfo("TORPEDO MISSION FINISHED")
+except Exception as e:
+    rospy.logerr("ERROR DOING TORPEDO MISSION")
+    rospy.logerr(e)
+    pass
+
 
 """OCTAGON MISSION"""
 try:
@@ -50,6 +61,7 @@ try:
     time.sleep(2)
     octagon.run()
     octagon.cleanup()
+    rospy.loginfo("OCTAGON MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING OCTAGON MISSION")
     rospy.logerr(e)
