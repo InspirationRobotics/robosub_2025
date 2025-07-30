@@ -78,7 +78,7 @@ class MaestroServer:
 
 
     def gripperCallback(self, request):
-        rospy.loginfo("picking up item")
+        rospy.loginfo("picking up 1 item")
        
         if not self.has_picked_item:
             self.maestro.set_pwm(*self.gripper_state["opening"])
