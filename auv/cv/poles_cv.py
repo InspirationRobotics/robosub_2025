@@ -81,15 +81,14 @@ class CV:
             if detection["status"]:
                 self.state = "centering"
             
-            elif self.search_start_time is None and self.rows_completed == 1:
-                self.search_start_time = time.time()
-                print(f"[INFO] Search time began: ({time.time() - self.start_time:.2f}s)")
+        elif self.search_start_time is None and self.rows_completed == 1:
+            self.search_start_time = time.time()
+            print(f"[INFO] Search time began: ({time.time() - self.start_time:.2f}s)")
 
-            if time.time() - self.search_start_time < 7.0:
+            if self.search_start_time is not None and time.time() - self.search_start_time < 7.0:
                 forward = 0.9
                 self.end = True
                 print("[INFO] Completed slalom through poles → ending")
-            
             else:
                 print("[INFO] Searching: No red pole detected")
 
@@ -169,7 +168,7 @@ class CV:
 
         # Visualization
         frame = raw_frame.copy()
-        if detection["status"]:
+        if detection["status"] and detection["xmin"] is not None and detection["xmax"] is not None:
             x1, y1 = detection["xmin"], detection["ymin"]
             x2, y2 = detection["xmax"], detection["ymax"]
             pole_x_center = int((x1 + x2) / 2)
