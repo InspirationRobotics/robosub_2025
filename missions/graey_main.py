@@ -25,12 +25,12 @@ config = deviceHelper.variables
 """GATE MISSION"""
 try:
     # Rotate towards the heading of the gate, move 2 meters forward
-    current_heading = rc.orientation["yaw"]
+    # current_heading = rc.orientation["yaw"]
     # TODO two ways of doing coin toss
     # 1. Using absolute heading, this require recalibration each run
     # 2. Using relative heading, this require hard code the angle
     rc.activate_heading_control(activate=True)
-    rc.set_absolute_yaw(current_heading + 90) # this is hard coded angle
+    rc.set_absolute_yaw(gate_heading) # this is hard coded angle
     rospy.sleep(8)
     rospy.loginfo("Robot heading set to gate heading")
 
