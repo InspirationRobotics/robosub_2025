@@ -26,9 +26,11 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, shutdown_handler)  # Handles kill/termination
 
     try:
-        # test_servo("/auv/device/gripper")
-      #  rospy.sleep(2)
-        test_servo("/auv/device/dropper")
+        test_servo("/auv/device/gripper")
+        rospy.sleep(2)
+        test_servo("/auv/device/gripper")
+        rospy.sleep(2)
+        """test_servo("/auv/device/dropper")
         rospy.sleep(2)
         test_servo('/auv/device/dropper')
         rospy.sleep(2)
@@ -39,7 +41,7 @@ if __name__ == "__main__":
         test_servo("/auv/device/torpedo")
         rospy.sleep(2)
         test_servo("/auv/device/torpedo")
-        rospy.sleep(2)
+        rospy.sleep(2)"""
         # Keep node alive until shutdown
         while not rospy.is_shutdown():
             rospy.sleep(0.1)
