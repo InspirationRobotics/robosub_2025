@@ -93,7 +93,11 @@ class MaestroServer:
             self.maestro.set_pwm(*self.gripper_state["static"])
             self.has_picked_item = False
             self.has_released_item = False
-
+ 
+        return TriggerResponse(
+            success=True,
+            message="The claw picked the item up!"
+        )
 
     def torpedoCallback(self, request):
         rospy.loginfo("launching torpedo")
