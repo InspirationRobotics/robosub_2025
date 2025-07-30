@@ -19,7 +19,7 @@ class MaestroServer:
 
         self.torpedo_state = {"firing_first": (2, 1800), "firing_second": (2, 1000), "reload_required": (2,2300)}
         self.dropper_state = {"beginning_position": (1,1765), "dropping_first": (1, 1136), "dropping_second": (1,750), "beginning_position": (1,1765)}
-        self.gripper_state = {"static": (0, 1500), "opening": (0, 2500), "closing": (0, 1000)}
+        self.gripper_state = {"static": (0, 1500), "opening": (0, 1700), "closing": (0, 1200)}
 
         self.has_launched_torpedo = False
         self.has_reloaded_torpedo = False
