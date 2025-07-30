@@ -59,10 +59,21 @@ class MaestroServer:
             self.has_picked_item = False
             self.has_released_item = False
 
+        """self.maestro.set_pwm(0,1765)  # Move servo on channel 0
+        time.sleep(1.0)
+        self.maestro.set_pwm(0,1136)  # Move servo on channel 0
+        print("marker 1 dropped")
+        time.sleep(2.0) # adjust this number for the amount of time
+        self.maestro.set_pwm(0,750) # Move servo on channel 0
+        print("marker 2 dropped")
+        time.sleep(1.0)
+        self.maestro.set_pwm(0,1765)  # Move servo on channel 0
+        time.sleep(1)
+        """
 
         return TriggerResponse(
             success=True,
-            message="code complete!"
+            message="The markers are dropped!"
         )
 
 

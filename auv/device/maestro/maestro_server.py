@@ -19,13 +19,16 @@ class MaestroServer:
 
         self.torpedo_state = {"firing_first": (2, 1800), "firing_second": (2, 1000), "reload_required": (2,2300)}
         self.dropper_state = {"beginning_position": (1,1765), "dropping_first": (1, 1136), "dropping_second": (1,750), "beginning_position": (1,1765)}
-        self.gripper_state = {"static": (0, 1500), "opening": (0, 2500), "closing": (0, 1000)}
+        self.gripper_state = {"static": (0, 1500), "opening": (0, 1550), "closing": (0, 1450)}
 
         self.has_launched_torpedo = False
         self.has_reloaded_torpedo = False
 
         self.has_dropped1_marker = False
         self.has_dropped2_marker = False
+
+        self.has_picked_item = False
+        self.has_released_item = False
 
         self.dropperService = rospy.Service('/auv/device/dropper', Trigger, self.dropperCallback)
         self.gripperService = rospy.Service('/auv/device/gripper', Trigger, self.gripperCallback)
@@ -91,11 +94,6 @@ class MaestroServer:
             self.has_picked_item = False
             self.has_released_item = False
 
-
-        return TriggerResponse(
-            success=True,
-            message="code complete!"
-        )
 
     def torpedoCallback(self, request):
         rospy.loginfo("launching torpedo")
