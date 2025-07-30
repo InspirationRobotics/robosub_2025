@@ -44,16 +44,16 @@ except Exception as e:
     rospy.logerr("ERROR OCCUR IN GATE MISSION")
     rospy.logerr(e)
     
-# """WP TO POLES"""
-# try:
-#     # TODO consider the gate has an angle with the poles
-#     rospy.loginfo("Moving forward for 5 seconds")
-#     rc.movement(forward=2)
-#     time.sleep(3)
-#     rc.movement()
-# except Exception as e:
-#     rospy.logerr("ERROR OCCUR IN WP TO POLES")
-#     rospy.logerr(e)
+"""WP TO POLES"""
+try:
+    # TODO consider the gate has an angle with the poles
+    rospy.loginfo("Moving right for 6 seconds")
+    rc.movement(lateral=2)
+    time.sleep(6)
+    rc.movement()
+except Exception as e:
+    rospy.logerr("ERROR OCCUR IN WP TO POLES")
+    rospy.logerr(e)
 
 """POLES MISSION"""
 try: 
