@@ -24,50 +24,50 @@ time.sleep(10)
 rospy.loginfo("Finish initialization")
 
 """GATE MISSION"""
-try:
+#try:
     # TODO utilize heading control to move through the gate and go to the next waypoint
-    rc.movement(forward=2)
-    time.sleep(3)
-    rc.movement()
+    #rc.movement(forward=2)
+   # time.sleep(3)
+   # rc.movement()
 
-    rospy.loginfo("GATE MISSION FINISHED")
-except Exception as e:
-    rospy.logerr("ERROR DOING GATE MISSION")
-    rospy.logerr(e)
+   # rospy.loginfo("GATE MISSION FINISHED")
+#except Exception as e:
+    #rospy.logerr("ERROR DOING GATE MISSION")
+    #rospy.logerr(e)
 
 """BIN MISSION"""
-try:
-    pass
-    rospy.loginfo("BIN MISSION FINISHED")
-
-except Exception as e:
-    rospy.logerr("ERROR DOING BIN MISSION")
-    rospy.logerr(e)
-    pass
+#try:
+#    pass
+#    rospy.loginfo("BIN MISSION FINISHED")
+#
+#except Exception as e:
+#    rospy.logerr("ERROR DOING BIN MISSION")
+#    rospy.logerr(e)
+#    pass
 
 """TORPEDO MISSION"""
-try:
-    pass
-    rospy.loginfo("TORPEDO MISSION FINISHED")
-except Exception as e:
-    rospy.logerr("ERROR DOING TORPEDO MISSION")
-    rospy.logerr(e)
-    pass
+#try:
+#    pass
+#    rospy.loginfo("TORPEDO MISSION FINISHED")
+#except Exception as e:
+#    rospy.logerr("ERROR DOING TORPEDO MISSION")
+#    rospy.logerr(e)
+#    pass
 
 
 """OCTAGON MISSION"""
-try:
-    octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
-    time.sleep(2)
-    octagon.run()
-    octagon.cleanup()
-    rospy.loginfo("OCTAGON MISSION FINISHED")
-except Exception as e:
-    rospy.logerr("ERROR DOING OCTAGON MISSION")
-    rospy.logerr(e)
-    octagon.cleanup()
-
-time.sleep(1.0)
+#try:
+#    octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
+#    time.sleep(2)
+#    octagon.run()
+#    octagon.cleanup()
+#    rospy.loginfo("OCTAGON MISSION FINISHED")
+#except Exception as e:
+#    rospy.logerr("ERROR DOING OCTAGON MISSION")
+#    rospy.logerr(e)
+#    octagon.cleanup()
+#
+#time.sleep(1.0)
 
 
 """MODEMS + ROLL"""

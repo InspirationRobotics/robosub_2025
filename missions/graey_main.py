@@ -23,26 +23,26 @@ config = deviceHelper.variables
 
 
 """GATE MISSION"""
-try:
-    # Rotate towards the heading of the gate, move 2 meters forward
-    # current_heading = rc.orientation["yaw"]
-    # TODO two ways of doing coin toss
-    # 1. Using absolute heading, this require recalibration each run
-    # 2. Using relative heading, this require hard code the angle
-    rc.activate_heading_control(activate=True)
-    rc.set_absolute_yaw(gate_heading) # this is hard coded angle
-    rospy.sleep(8)
-    rospy.loginfo("Robot heading set to gate heading")
-
-    rospy.loginfo("Moving forward for 8 seconds")
-    rc.movement(forward=2)
-    time.sleep(8)
-    rc.movement() # stop moving forward
-except KeyboardInterrupt as e:
-    rospy.logwarn("Skipping current mission")
-except Exception as e:
-    rospy.logerr("ERROR OCCUR IN GATE MISSION")
-    rospy.logerr(e)
+#try:
+#    # Rotate towards the heading of the gate, move 2 meters forward
+#    # current_heading = rc.orientation["yaw"]
+#    # TODO two ways of doing coin toss
+#    # 1. Using absolute heading, this require recalibration each run
+#    # 2. Using relative heading, this require hard code the angle
+#    rc.activate_heading_control(activate=True)
+#    rc.set_absolute_yaw(gate_heading) # this is hard coded angle
+#    rospy.sleep(8)
+#    rospy.loginfo("Robot heading set to gate heading")
+#
+#    rospy.loginfo("Moving forward for 8 seconds")
+#    rc.movement(forward=2)
+#    time.sleep(8)
+#    rc.movement() # stop moving forward
+#except KeyboardInterrupt as e:
+#    rospy.logwarn("Skipping current mission")
+#except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN GATE MISSION")
+#    rospy.logerr(e)
     
 # """WP TO POLES"""
 # try:
@@ -56,33 +56,33 @@ except Exception as e:
 #     rospy.logerr(e)
 
 """POLES MISSION"""
-try: 
-    # Run the poles mission
-    rospy.loginfo("Start of poles mission...")
-    poles = poles_mission.PoleSlalomMission(target=target, rc=rc,**config)
-    poles.run()
-    poles.cleanup()
-except Exception as e:
-    rospy.logerr("ERROR OCCUR IN POLES MISSION")
-    rospy.logerr(e)
+#try: 
+#    # Run the poles mission
+#    rospy.loginfo("Start of poles mission...")
+#    poles = poles_mission.PoleSlalomMission(target=target, rc=rc,**config)
+#    poles.run()
+#    poles.cleanup()
+#except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN POLES MISSION")
+#    rospy.logerr(e)
     
 """LATERAL WP"""
-try:
-    rospy.loginfo("Moving lateral for 2 seconds")
-    rc.movement(lateral=2)
-    time.sleep(2)
-except Exception as e:
-    rospy.logerr("ERROR OCCUR IN LATERAL WP")
-    rospy.logerr(e)
+#try:
+#    rospy.loginfo("Moving lateral for 2 seconds")
+#    rc.movement(lateral=2)
+#    time.sleep(2)
+#except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN LATERAL WP")
+#    rospy.logerr(e)
     
 """ BACK TO GATE WP"""
-try:
-    rospy.loginfo("Moving backward for 8 seconds")
-    rc.movement(forward=-2)
-    time.sleep(8)
-except Exception as e:
-    rospy.logerr("ERROR OCCUR IN BACK TO GATE WP")
-    rospy.logerr(e)
+#try:
+#    rospy.loginfo("Moving backward for 8 seconds")
+#    rc.movement(forward=-2)
+#    time.sleep(8)
+#except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN BACK TO GATE WP")
+#    rospy.logerr(e)
     
 """MODEMS + ROLL"""
 try:
@@ -92,23 +92,24 @@ try:
 except Exception as e:
     rospy.logerr("ERROR DURING MODEM MISSION")
     rospy.logerr(e)
-"""ALIGNING WITH GATE WP"""
-try:
-    rospy.loginfo("Moving right for 5 seconds")
-    rc.movement(lateral=2)
-    time.sleep(5)
-except Exception as e:
-    rospy.logerr("ERROR OCCUR IN ALIGNING WITH GATE WP")
-    rospy.logerr(e)
+    
+#"""ALIGNING WITH GATE WP"""
+#try:
+#    rospy.loginfo("Moving right for 5 seconds")
+#    rc.movement(lateral=2)
+#    time.sleep(5)
+#except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN ALIGNING WITH GATE WP")
+#    rospy.logerr(e)
     
 """GOING BACK THROUGH GATE"""
-try:
-    rospy.loginfo("Moving backward for 5 seconds")
-    rc.movement(forward=-2)
-    time.sleep(5)
-except Exception as e:
-    rospy.logerr("ERROR OCCUR IN GOING BACK THROUGH GATE WP")
-    rospy.logerr(e)
+#try:
+#    rospy.loginfo("Moving backward for 5 seconds")
+#    rc.movement(forward=-2)
+#    time.sleep(5)
+#except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN GOING BACK THROUGH GATE WP")
+#    rospy.logerr(e)
 
 disarm.disarm()
 rc.exit()
