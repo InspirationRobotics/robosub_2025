@@ -53,13 +53,13 @@ class intersubComMission:
             self.end = True
 
     def run(self):
+        current_sub = self.sub  # This will be either graey or onyx
         # go to desire position
         self.rc.set_control_mode("depth_hold")
         self.rc.go_to_depth(0.5)
         rospy.loginfo(f"{current_sub} Reach depth")
         self.rc.activate_heading_control(False)
 
-        current_sub = self.sub  # This will be either graey or onyx
         if current_sub == "graey":
 
             destination_addr = "020"
