@@ -6,20 +6,26 @@ from auv.utils import arm, disarm
 
 rospy.init_node("MotionTest", anonymous=True)
 rc = robot_control.RobotControl()
-rc.set_control_mode('direct')
-
-
+rc.set_control_mode("depth_hold")
 arm.arm()
-time.sleep(3.0)
-print("[INFO]This is the start")
-
-rc.movement(forward=3)
+rospy.loginfo("Diving down")
+rc.set_absolute_z(0.5)
 time.sleep(5)
+rospy.loginfo("Set heading control to 0")
+rc.go_to_heading(0)
 
-rc.movement(forward=-3)
+
+rc.set_absolute_yaw(0)
+rc.activate_heading_control(True) # activate heading control
+
+rc.movement(forward=2)
 time.sleep(5)
+rc.movement()
 
+#rc.movement(lateral=2)
+#time.sleep(5)
+#rc.movement()
 
-print("Reached the end")
+rospy.loginfo("Reached the end")
 
 disarm.disarm()
