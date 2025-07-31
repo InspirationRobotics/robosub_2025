@@ -64,7 +64,7 @@ class intersubComMission:
 
             destination_addr = "020"
             time_counter = 0
-            while not rospy.is_shutdown and not self.end:
+            while not self.end:
                 if time_counter>=120:
                     self.end=True
                 time.sleep(1)
