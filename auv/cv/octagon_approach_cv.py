@@ -170,13 +170,14 @@ class CV:
             print(f"[INFO] offset is {offset}")
             forward, yaw = self.smart_approach(offset)
             
-        # Check Ending and second search
-        if self.state=="search" and self.search_stage_two is not None and time.time()-self.search_stage_two > 30:
-           # when we went through stage one and time out for 30 seconds
+        # Check Ending
+        if self.state=="search" and self.prev_detected is None and self.search_stage_two is not None and time.time()-self.search_stage_two > 30:
+           # when we had went through stage one and time out for 30 seconds
            print(f"[DEBUG] time out in searching")
            self.end = True
 
-        if self.state=="search" and self.prev_detected:
+        # handle adjust search
+        if self.state=="search" and self.prev_detected: # you are in adjust search mode when you had detection but in search mode again
             if time.time() - self.adjust_search_time > 15:
                 self.end = True
 
