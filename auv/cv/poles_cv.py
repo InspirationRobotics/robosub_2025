@@ -85,7 +85,7 @@ class CV:
             self.search_start_time = time.time()
             print(f"[INFO] Search time began: ({time.time() - self.start_time:.2f}s)")
 
-            if self.search_start_time is not None and time.time() - self.search_start_time < 7.0:
+            if self.search_start_time is not None and time.time() - self.search_start_time < 3.0:
                 forward = 0.9
                 self.end = True
                 print("[INFO] Completed slalom through poles → ending")
