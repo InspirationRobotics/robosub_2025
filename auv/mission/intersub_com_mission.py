@@ -32,7 +32,7 @@ class intersubComMission:
 
     # On Receiving a message 
     def rec_callback(self,msg):
-        if self.sub=="graey":  # callback function when receiving a message from onyx
+        if not self.end and self.sub=="graey":  # callback function when receiving a message from onyx
             rospy.loginfo(f"Received message: {msg.data}")
             if msg.data == "YAW":
                 rospy.loginfo("Attempting to YAW")
@@ -41,25 +41,24 @@ class intersubComMission:
                 self.rc.go_to_heading(270)
                 self.rc.go_to_heading(360)
             if msg.data == "ROLL":
-                self.rc.set_control_mode("direct")
-                self.rc.set_absolute_z(1)
+                self.rc.set_absolute_z(0.8)
                 time.sleep(10)
-                self.rc.set_flight_mode("MANUAL")
+                self.rc.set_flight_mode("ACRO")
+                self.rc.set_control_mode("direct")
                 self.rc.movement(roll=5)
-                time.sleep(3)  # fine tune this value for Graey
+                time.sleep(4)  # fine tune this value for Graey
                 self.rc.movement()
                 self.rc.set_control_mode("depth_hold")
-                self.rc.set_flight_mode("STABILIZE")
+                # self.rc.set_flight_mode("STABILIZE")
             self.end = True
 
     def run(self):
         current_sub = self.sub  # This will be either graey or onyx
         # go to desire position
         self.rc.set_control_mode("depth_hold")
-        self.rc.go_to_depth(0.5)
-        rospy.loginfo(f"{current_sub} Reach depth")
+        self.rc.set_absolute_z(0.5)
         self.rc.activate_heading_control(False)
-
+        time.sleep(3)
         if current_sub == "graey":
 
             destination_addr = "020"
@@ -67,8 +66,16 @@ class intersubComMission:
             while not self.end:
                 if time_counter>=120:
                     self.end=True
+                    rospy.loginfo("Time out, mission terminated")
                 time.sleep(1)
                 time_counter += 1
+                rospy.loginfo(f"Waited for {time_counter} seconds")
+
+            # stabilizing the sub after rolling / mission terminated
+            rospy.loginfo("Stabilizing the sub...")
+            self.rc.set_absolute_z(0.5)
+            time.sleep(10)
+            self.rc.set_flight_mode("STABILIZE")
 
 
         elif current_sub == "onyx":
@@ -93,6 +100,7 @@ if __name__=="__main__":
     rospy.loginfo("Starting modem test script...")
     rospy.init_node("intersub_coms_mission", anonymous=True)
     rc = RobotControl()
-
+    rc.set_control_mode("depth_hold")
     mission = intersubComMission(robotControl=rc)
-
+    mission.run()
+    rc.exit()
