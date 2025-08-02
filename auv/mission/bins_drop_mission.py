@@ -14,7 +14,7 @@ from auv.utils import arm, disarm
 
 
 class BinsMission:
-    cv_files = ["bins_cv"]
+    cv_files = ["bin_drop_cv"]
 
     def __init__(self, target=None, **config):
         self.config = config
@@ -43,13 +43,9 @@ class BinsMission:
         self.received = True
 
     def run(self):
-        print("[INFO] Bins mission running")
-        self.rc.set_control_mode('depth_hold')
-        self.rc.set_absolute_z(0.5)
-        self.rc.go_to_heading(0)
-        self.rc.set_absolute_yaw(0)
-        self.rc.activate_heading_control(False)
+        print("[INFO] Bin drop mission running")
 
+        drop = False
         while not rospy.is_shutdown():
             time.sleep(0.01)
             if not self.received:
@@ -69,13 +65,15 @@ class BinsMission:
             yaw = cv_data.get("yaw", 0)
             vertical = cv_data.get("vertical", 0)
             end = cv_data.get("end", False)
+            drop = cv_data.get("drop", False)
 
             print(f"[MOTION] Fwd: {forward}, Lat: {lateral}, Yaw: {yaw}, Vert: {vertical}")
 
             if end:
                 print("[INFO] Ending Bins CV")
                 self.rc.movement(lateral=0, forward=0, yaw=0, vertical=0)
-                self.rc.move_servo("/auv/device/dropper")
+                if drop:
+                    self.rc.move_servo("/auv/device/dropper")
                 break
             else:
                 rospy.loginfo("rc the sub")

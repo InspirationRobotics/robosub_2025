@@ -44,14 +44,9 @@ class BinsApproachMission:
 
     def run(self):
         print("[INFO] Bin Approach mission running")
-        self.rc.set_control_mode('depth_hold')
-        self.rc.set_absolute_z(0.5)
-        self.rc.go_to_heading(0)
-        self.rc.set_absolute_yaw(0)
-        self.rc.activate_heading_control(False)
 
         while not rospy.is_shutdown():
-            time.sleep(0.01)
+            time.sleep(0.05)
             if not self.received:
                 continue
 
@@ -74,10 +69,9 @@ class BinsApproachMission:
 
             if end:
                 print("[INFO] Ending Bin Approach CV")
-                self.rc.movement(lateral=0, forward=0, yaw=0, vertical=0)
+                self.rc.movement()
                 break
             else:
-                rospy.loginfo("rc the sub")
                 self.rc.movement(lateral=lateral, forward=forward, yaw=yaw, vertical=vertical)
 
         print("[INFO] Bin approach mission terminated")
@@ -86,7 +80,7 @@ class BinsApproachMission:
         for file_name in self.cv_files:
             self.cv_handler.stop_cv(file_name)
 
-        self.rc.movement(lateral=0, forward=0, yaw=0, vertical=0)
+        self.rc.movement()
         print("[INFO] Bin approach mission terminated")
 
 

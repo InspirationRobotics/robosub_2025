@@ -1,11 +1,13 @@
 """
-Bn Approach CV. Finds the bin, and approaches the bin until it is either big enough or can no longer see it.
+Bin Approach CV. Finds the Bin, and approaches the Bin until it can no longer see it.
 """
 
 import time
 
 import cv2
 import numpy as np
+import time
+import queue
 
 class CV:
     """
@@ -14,7 +16,7 @@ class CV:
 
     # Camera to get the camera stream from.
     camera = "/auv/camera/videoOAKdRawForward"
-    model = "everything" 
+    model = "everything" # Change later once data is collected for the platform
 
     def __init__(self, **config):
         """
@@ -24,6 +26,9 @@ class CV:
         Args:
             config: Dictionary that contains the configuration of the devices on the sub.
         """
+        # Camera to get the camera stream from.
+        self.camera = "/auv/camera/videoOAKdRawForward"
+        self.model = "everything" # Change later once data is collected for the platform
 
         self.config = config
         self.shape = (640, 480)
@@ -33,29 +38,36 @@ class CV:
         self.tolerance = 120 # Pixels
 
         self.prev_detected = False
-        self.state = None
+        self.state = "search"
 
-        self.start_time = None
         self.last_yaw = 0
-        self.yaw_time_search = 2
+        self.yaw_time_search = 10
+        self.adjust_search_time = None
+        self.search_counter = 0
+        self.search_stage_one = None # store time
+        self.search_stage_two = None # store time
+        self.stage_two_end = False
+        self.adjust_count = 0
         self.end = False
+        self.prev_offset = None
+        self.prev_time = time.time()
         
-
         print("[INFO] Bin Approach CV Initialization")
-
-    def smart_approach(self, detection_x):
+    
+    def smart_approach(self, offset):
         """Function to properly yaw and move forward"""
         forward = 0
-        # Yaw cannot go below 0.5
-        if detection_x < self.x_midpoint - self.tolerance:
-            yaw = -1.0
-        elif detection_x > self.x_midpoint + self.tolerance:
-            yaw = 1.0
-        else:
+        yaw = 0
+        if offset is None or abs(offset) < self.tolerance:
             yaw = 0
-            forward = 1
-
+            forward = 2.0
+        elif offset > 0:
+            yaw = 0.8
+        elif offset < 0:
+            yaw = -0.8
+        
         return forward, yaw
+
 
     def run(self, frame, target, detections):
         """
@@ -81,66 +93,104 @@ class CV:
         target_x = None
         target_y = None
 
-        # Find the bin if no detection is found
-        # Align with the bin and move forward (through strafe should be fine)
-        # If we have lost sight of the bin, then end
-
+        # Extract Bin detection
+        if detections is None:
+            detections = []
         if len(detections) == 0 and self.prev_detected == False:
             self.state = "search"
         
-        if len(detections) == 0 and self.prev_detected == True:
-            self.end = True
 
-        if len(detections) >= 1:
-            print("[DEBUG] bin detected!")
-            if len(detections) == 1:
-                for detection in detections:
-                    print(f"[DEBUG] Detection confidence: {detection.confidence}")
-                    if detection.confidence > 0.65:
-                        target_x = (detection.xmin + detection.xmax) / 2
-                        target_y = (detection.ymin + detection.ymax) / 2
-                    # Might need to do something in an elif or else here
-                    else:
-                        target_x = None
-                
-            elif len(detections) > 1:
-                # Target the detection with the highest confidence. The detection targeted
-                # doesn't matter since this is a localization script, not a mission script
-                detection_confidence = 0
-                for detection in detections:
-                    if detection.confidence > detection_confidence and detection.confidence > 0.65:
-                        target_x = (detection.xmin + detection.xmax) / 2
-                        target_y = (detection.ymin + detection.ymax) / 2
-                        detection_confidence = detection.confidence
+        detected_list = []
+        detection_confidence = 0.65
+        for det in detections:
+            if "bin" in det.label:
+                print(f"[DEBUG] Detected {det.label} with confidence {det.confidence}")
+                if det.confidence > detection_confidence:
+                    detected_list.append(det)
 
-        if target_x is None:
-            self.state = "search"
-        elif target_x is not None and target_y is not None:
+        # select the highest confidence Bin deteciton if multiple
+        offset = None
+        if len(detected_list)==0:
+            offset = None
+        elif len(detected_list)==1:
+            self.prev_time = time.time()
+            detection = detected_list[0]
+            target_x = (detection.xmin + detection.xmax) / 2
+            target_y = (detection.ymin + detection.ymax) / 2
+            offset = target_x - self.x_midpoint
             self.prev_detected = True
+            self.prev_offset = offset
             self.state = "approach"
+            print(f"[DEBUG] target_x is {target_x}")
+        else:  # when there are more than one Bin detection
+            # Select the detection with the highest confidence
+            self.prev_time = time.time()
+            detection = max(detected_list, key=lambda det: det.confidence)
+            target_x = (detection.xmin + detection.xmax) / 2
+            target_y = (detection.ymin + detection.ymax) / 2
+            offset = target_x - self.x_midpoint
+            detection_confidence = detection.confidence
+            self.prev_detected = True
+            self.prev_offset = offset
+            self.state = "approach"
+            print(f"[DEBUG] Multiple Bins detected. Using highest confidence detection: {detection_confidence}")
+            print(f"[DEBUG] target_x is {target_x}, target_y is {target_y}")
+
 
         if self.state == "search":
-            print("[INFO] Searching")
-            if self.start_time == None:
-                self.start_time = time.time()
-                self.last_yaw = 1.0  # Initial direction
-
-            elapsed_time = time.time() - self.start_time
-
-            if elapsed_time < self.yaw_time_search:
-                yaw = self.last_yaw
+            if self.search_counter<=2:
+                if self.search_stage_one is None:
+                    print("[DEBUG] Searching in stage 1")
+                    self.search_stage_one = time.time()
+                if time.time()-self.search_stage_one > 5:
+                    print(f"[DEBUG] Searching in stage one, counter is {self.search_counter}")
+                    self.search_counter += 1
+                    self.search_stage_one = time.time()
+                if self.search_counter%2==1:
+                    yaw = 1
+                else:
+                    yaw = -1
             else:
-                # Switch direction and reset timer
-                self.last_yaw = -self.last_yaw
-                self.start_time = time.time()
-                yaw = self.last_yaw
-                self.yaw_time_search += 1.5
+                if self.search_stage_two is None:
+                    print(f"[DEBUG] Searching in stage two")
+                    self.search_stage_two = time.time()
+                
+                if self.prev_offset is None:
+                    yaw = 1
+                elif self.prev_offset > 0 :
+                    yaw= 1
+                elif self.prev_offset < 0:
+                    yaw = -1
 
         if self.state == "approach":
+            if not self.stage_two_end:
+                self.stage_two_end = True
+                self.search_stage_two=time.time()
             print("[DEBUG] Approaching now!")
-            print(target_x)
-            forward, yaw = self.smart_approach(target_x)
+            print(f"[INFO] offset is {offset}")
+            forward, yaw = self.smart_approach(offset)
             
+        # Check Ending
+        if self.state=="search" and self.prev_detected is None and self.search_stage_two is not None and time.time()-self.search_stage_two > 30:
+           # when we had went through stage one and time out for 30 seconds
+           print(f"[DEBUG] time out in searching")
+           self.end = True
 
+        # handle adjust search
+        if self.state=="search" and self.prev_detected: # you are in adjust search mode when you had detection but in search mode again
+            if time.time() - self.adjust_search_time > 15:
+                self.end = True
+
+        if self.state=="approach" and (offset is None) and self.prev_detected == True:
+            if time.time() - self.prev_time > 2:
+                if self.adjust_count <2:  # adjust to search again
+                    print(f"[DEBUG] adjust and search")
+                    self.state = "search"
+                    self.adjust_count += 1
+                    self.adjust_search_time = time.time()
+
+                else:
+                    print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
+                    self.end = True
         # Continuously return motion commands, the state of the mission, and the visualized frame.
         return {"lateral": lateral, "forward": forward, "yaw": yaw, "vertical" : vertical, "end": self.end}, frame
