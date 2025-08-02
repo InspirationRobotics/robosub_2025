@@ -26,6 +26,7 @@ class PoleSlalomMission:
         self.target = target
         self.rc = rc
         self.cv_handler = cv_handler.CVHandler(**self.config)
+        self.last_heading_control = True
 
         for file_name in self.cv_files:
             self.cv_handler.start_cv(file_name, self.callback)
@@ -65,8 +66,13 @@ class PoleSlalomMission:
             forward = 1.0
             yaw = cv_data.get("yaw", 0)
             end = cv_data.get("end", False)
+            heading_control = cv_data.get("heading_control", True)
 
-            print("[MOTION] Fwd: {forward}, Lat: {lateral}")
+            print(f"[MOTION] Fwd: {forward}, Lat: {lateral}")
+            
+            if heading_control != self.last_heading_control:
+                self.rc.activate_heading_control(heading_control)
+                self.last_heading_control = heading_control
 
             if end:
                 print("[INFO] Pole slalom mission complete.")
