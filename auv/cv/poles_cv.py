@@ -109,18 +109,18 @@ class CV:
                 lateral = 2.0
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
                 
-                if self.rows_completed == 2 and time.time() - self.start_time >= 1.5:
-                    lateral = 2.0
-                    print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
-                    
-                else:
-                    self.start_time = None
-                    print("[INFO] Last strafe complete → transitioning to slaloming")
-                    self.state = "3rd slaloming"
             else:
                 self.start_time = None
                 print("[INFO] Strafing complete → transitioning to slaloming")
                 self.state = "slaloming"
+                
+            if self.rows_completed == 2 and time.time() - self.start_time >= 1.5:
+                lateral = 2.0
+                print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")        
+            else:
+                self.start_time = None
+                print("[INFO] Last strafe complete → transitioning to slaloming")
+                self.state = "3rd slaloming"
 
         elif self.state == "slaloming":
             if self.start_time is None:
@@ -189,8 +189,17 @@ class CV:
 
         # Determine heading control flag based on state
         heading_control = True
-        if self.state in ["looking for 2nd red pole", "looking for 3rd red pole"]:
+        
+        if self.state in ["looking for 2nd red pole"]:
             heading_control = False
+            search_heading = 30
+            
+        elif self.state in ["looking for 3rd red pole"]:
+            heading_control = False
+            search_heading = 330         
+        else:
+            heading_control = True
+            search_heading = 0
 
         # Visualization
         frame = raw_frame.copy()
@@ -210,4 +219,4 @@ class CV:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
         return {
-            "lateral": lateral, "forward": forward, "yaw": yaw, "vertical": vertical, "end": self.end, "heading_control": heading_control}, frame
+            "lateral": lateral, "forward": forward, "yaw": yaw, "vertical": vertical, "end": self.end, "heading_control": heading_control, "search_heading": search_heading}, frame

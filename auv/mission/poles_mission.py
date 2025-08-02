@@ -27,6 +27,8 @@ class PoleSlalomMission:
         self.rc = rc
         self.cv_handler = cv_handler.CVHandler(**self.config)
         self.last_heading_control = True
+        self.last_search_heading = None
+        self.end = False
 
         for file_name in self.cv_files:
             self.cv_handler.start_cv(file_name, self.callback)
@@ -67,12 +69,19 @@ class PoleSlalomMission:
             yaw = cv_data.get("yaw", 0)
             end = cv_data.get("end", False)
             heading_control = cv_data.get("heading_control", True)
+            search_heading = cv_data.get("search_heading", 0)
 
             print(f"[MOTION] Fwd: {forward}, Lat: {lateral}")
             
+            # Update heading control only when changed
             if heading_control != self.last_heading_control:
                 self.rc.activate_heading_control(heading_control)
                 self.last_heading_control = heading_control
+                
+             # Send heading command only if control is off and heading changed
+            if not heading_control and search_heading != self.last_search_heading:
+                self.rc.go_to_heading(search_heading)
+                self.last_search_heading = search_heading
 
             if end:
                 print("[INFO] Pole slalom mission complete.")
@@ -94,7 +103,6 @@ class PoleSlalomMission:
 
         self.rc.movement(lateral=0, forward=0, yaw=0)
         print("[INFO] Pole Slalom mission terminated")
-
 
 if __name__ == "__main__":
     from auv.utils import deviceHelper
