@@ -67,13 +67,13 @@ except Exception as e:
    rospy.logerr(e)
     
 """LATERAL WP"""
-try:
-   rospy.loginfo("Moving lateral for 2 seconds")
-   rc.movement(lateral=2)
-   time.sleep(2)
-except Exception as e:
-   rospy.logerr("ERROR OCCUR IN LATERAL WP")
-   rospy.logerr(e)
+# try:
+#    rospy.loginfo("Moving lateral for 2 seconds")
+#    rc.movement(lateral=2)
+#    time.sleep(2)
+# except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN LATERAL WP")
+#    rospy.logerr(e)
     
 """ BACK TO GATE WP"""
 try:
