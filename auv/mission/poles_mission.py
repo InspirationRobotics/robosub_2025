@@ -29,6 +29,7 @@ class PoleSlalomMission:
         self.last_heading_control = True
         self.last_search_heading = None
         self.end = False
+        self.state = "search"
 
         for file_name in self.cv_files:
             self.cv_handler.start_cv(file_name, self.callback)
