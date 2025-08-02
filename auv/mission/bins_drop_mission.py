@@ -33,7 +33,6 @@ class BinsMission:
 
         print("[INFO] Bin Approach Mission Init")
 
-
         time.sleep(1)
 
     def callback(self, msg):
@@ -73,6 +72,8 @@ class BinsMission:
                 print("[INFO] Ending Bins CV")
                 self.rc.movement(lateral=0, forward=0, yaw=0, vertical=0)
                 if drop:
+                    self.rc.move_servo("/auv/device/dropper")
+                    time.sleep(1)
                     self.rc.move_servo("/auv/device/dropper")
                 break
             else:
