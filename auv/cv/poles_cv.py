@@ -4,6 +4,7 @@ Pole Slalom CV. Detects red poles, yaws to face it, and approaches until close.
 import cv2
 import time
 import numpy as np
+from auv.motion import robot_control
 import os
 
 import cv2
@@ -23,7 +24,7 @@ class CV:
         self.start_time = None
         self.search_start_time = None
         self.rows_completed = 0
-
+    
         print("[INFO] Pole Center & Approach CV initialized")
 
     def detect_red_pole(self, frame):
@@ -76,21 +77,11 @@ class CV:
         lateral = 0
         yaw = 0
         vertical = 0
+        rc = robot_control.RobotControl()
         
         if self.state == "search":
             if detection["status"]:
                 self.state = "centering"
-            
-        elif self.search_start_time is None and self.rows_completed == 2:
-            self.search_start_time = time.time()
-            print(f"[INFO] Search time began: ({time.time() - self.start_time:.2f}s)")
-
-            if self.search_start_time is not None and time.time() - self.search_start_time < 7.0:
-                forward = 0.9
-                self.end = True
-                print("[INFO] Completed slalom through poles → ending")
-            else:
-                print("[INFO] Searching: No red pole detected")
 
         elif self.state == "centering":
             if detection["status"]:
@@ -111,7 +102,7 @@ class CV:
 
             if detection["status"]:
                 area = detection["area"]
-                forward = 1.0
+                forward = 2.0
                 print(f"[INFO] Approaching: area={area:.0f} → moving forward")
                 if area >= 5000:
                     self.state = "strafing"
@@ -126,8 +117,8 @@ class CV:
                 self.start_time = time.time()
                 print("[INFO] Strafing started")
 
-            if time.time() - self.start_time < 3.0: #4.0
-                lateral = -1.5
+            if time.time() - self.start_time < 1.5:
+                lateral = 2.0
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
             else:
                 self.start_time = None
@@ -139,15 +130,65 @@ class CV:
                 self.start_time = time.time()
                 print("[INFO] Slaloming started") 
         
-            if time.time() - self.start_time < 5.0: #6.0
-                forward = 1.5
+            if time.time() - self.start_time < 3.0:
+                forward = 2.0
                 print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
             else:
                 self.start_time = None
                 self.rows_completed += 1
-                self.state = "search"
+                self.state = "looking for 2nd red pole"
                 print(f"[INFO] Slaloming complete → rows completed: {self.rows_completed}")
-
+                
+        elif self.state == "looking for 2nd red pole":
+            rc.activate_heading_control(activate=False)
+            rc.go_to_heading(20)
+            self.state == "2nd & 3rd pole search"
+        
+        elif self.state == "2nd pole search":
+            if detection["status"]:
+                rc.go_to_heading(0)
+                rc.activate_heading_control(activate=True)
+                self.state = "2nd slamoming"
+        
+        elif self.state == "2nd slamoming":
+            if self.start_time is None:
+                self.start_time = time.time()
+                print("[INFO] Slaloming started") 
+        
+            if time.time() - self.start_time < 3.0:
+                forward = 2.0
+                print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
+            else:
+                self.start_time = None
+                self.rows_completed += 1
+                self.state = "looking for 3rd red pole"
+                print(f"[INFO] Slaloming complete → rows completed: {self.rows_completed}")   
+        
+        elif self.state == "looking for 3rd red pole":
+            rc.activate_heading_control(activate=False)
+            rc.go_to_heading(20)
+            self.state == "3rd pole search"
+            
+        elif self.state == "3rd pole search":
+            if detection["status"]:
+                rc.go_to_heading(0)
+                rc.activate_heading_control(activate=True)
+                self.state = "3rd slamoming"
+                
+        elif self.state == "3rd slamoming":
+            if self.start_time is None:
+                self.start_time = time.time()
+                print("[INFO] Slaloming started") 
+        
+            if time.time() - self.start_time < 6.0:
+                forward = 2.0
+                print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
+            else:
+                self.start_time = None
+                self.rows_completed += 1
+                self.end = True
+                print(f"[INFO] Slaloming complete → rows completed: {self.rows_completed}")  
+    
         if self.rows_completed == 3:
             self.end = True
             print("[INFO] Completed slalom through poles → ending")
@@ -155,13 +196,13 @@ class CV:
         return forward, lateral, yaw, vertical
 
     def run(self, raw_frame, target, detections):
-    # # Crop right half only in strafing state
-    #     if self.state == "strafing":
-    #         raw_frame = raw_frame[:, 320:]
-            
-    # Crop left half only in strafing state
+    # Crop right half only in strafing state
         if self.state == "strafing":
-            raw_frame = raw_frame[:, :320]
+            raw_frame = raw_frame[:, 320:]
+            
+    # # Crop left half only in strafing state
+    #     if self.state == "strafing":
+    #         raw_frame = raw_frame[:, :320]
 
         detection, red_mask_clean = self.detect_red_pole(raw_frame)
         forward, lateral, yaw, vertical = self.movement_calculation(detection)
