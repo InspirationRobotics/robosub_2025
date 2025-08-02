@@ -105,22 +105,18 @@ class CV:
                 self.start_time = time.time()
                 print("[INFO] Strafing started")
 
-            if time.time() - self.start_time < 3.0 and self.rows_completed < 2:
+            if time.time() - self.start_time < 1.5 and self.rows_completed < 2:
                 lateral = 2.0
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
                 
-            else:
-                self.start_time = None
-                print("[INFO] Strafing complete → transitioning to slaloming")
-                self.state = "slaloming"
-                
-            if self.rows_completed == 2 and time.time() - self.start_time >= 3.0:
+            elif self.rows_completed == 2 and time.time() - self.start_time >= 1.5:
                 lateral = 2.0
-                print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")        
+                print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
+                self.state = "3rd slaloming"        
             else:
                 self.start_time = None
                 print("[INFO] Last strafe complete → transitioning to slaloming")
-                self.state = "3rd slaloming"
+                self.state = "slaloming"
 
         elif self.state == "slaloming":
             if self.start_time is None:
