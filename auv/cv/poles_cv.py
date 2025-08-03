@@ -105,25 +105,28 @@ class CV:
                 self.start_time = time.time()
                 print("[INFO] Strafing started")
 
-            if time.time() - self.start_time < 1.5 and self.rows_completed < 2:
+            if self.rows_completed < 2 and time.time() - self.start_time < 1.5:
                 lateral = 2.0
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
                 
-            elif self.rows_completed == 2 and time.time() - self.start_time >= 1.5:
+            elif self.rows_completed == 2 and time.time() - self.start_time < 1.5:
                 lateral = 2.0
-                print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
-                self.state = "3rd slaloming"        
+                print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")     
             else:
                 self.start_time = None
-                print("[INFO] Last strafe complete → transitioning to slaloming")
-                self.state = "slaloming"
+                print("[INFO] Strafe complete → transitioning to slaloming")
+                self.state = "slaloming"        
 
         elif self.state == "slaloming":
             if self.start_time is None:
                 self.start_time = time.time()
                 print("[INFO] Slaloming started")
 
-            if time.time() - self.start_time < 3.0:
+            if self.rows_completed < 2 and time.time() - self.start_time < 3.0:
+                forward = 2.0
+                print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
+                
+            elif self.rows_completed == 2 and time.time() - self.start_time < 8.0:
                 forward = 2.0
                 print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
             else:
@@ -132,41 +135,22 @@ class CV:
                 print(f"[INFO] Slaloming complete → rows completed: {self.rows_completed}")
                 
             if self.rows_completed == 1:
-                    self.state = "looking for 2nd red pole"
+                    self.state = "transitioning to 2nd red pole"
             elif self.rows_completed == 2:
-                    self.state = "looking for 3rd red pole"
+                    self.state = "transitioning to 3rd red pole"
 
-        elif self.state == "looking for 2nd red pole":
-            print("[INFO] Looking for 2nd red pole")
-            self.state = "2nd pole search"
+        elif self.state == "transitioning to 2nd red pole":
+            print("[INFO] Transitioning to 2nd red pole")
+            self.state = "search"
 
-        elif self.state == "2nd pole search":
-            print("[INFO] Searching for 2nd red pole")
-            if detection["status"]:
-                self.state = "strafing"
-
-        elif self.state == "looking for 3rd red pole":
-            print("[INFO] Looking for 3rd red pole")
+        elif self.state == "transitioning to 3rd red pole":
+            print("[INFO] Transitioning to 3rd red pole")
             self.state = "3rd pole search"
 
         elif self.state == "3rd pole search":
             print("[INFO] Searching for 3rd red pole")
             if detection["status"]:
-                self.state = "strafing"
-
-        elif self.state == "3rd slaloming":
-            if self.start_time is None:
-                self.start_time = time.time()
-                print("[INFO] 3rd Slaloming started")
-
-            if time.time() - self.start_time < 6.0:
-                forward = 2.0
-                print(f"[INFO] 3rd Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
-            else:
-                self.start_time = None
-                self.rows_completed += 1
-                print(f"[INFO] 3rd Slaloming complete → rows completed: {self.rows_completed}")
-                self.end = True
+                self.state = "approaching"
         
         return forward, lateral, yaw, vertical
 
@@ -186,13 +170,9 @@ class CV:
         # Determine heading control flag based on state
         heading_control = True
         
-        if self.state in ["looking for 2nd red pole"]:
+        if self.state in ["transitionig 3rd red pole"]:
             heading_control = False
-            search_heading = 30
-            
-        elif self.state in ["looking for 3rd red pole"]:
-            heading_control = False
-            search_heading = 330         
+            search_heading = 330      
         else:
             heading_control = True
             search_heading = 0
