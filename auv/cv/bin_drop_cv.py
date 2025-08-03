@@ -14,7 +14,9 @@ class CV:
     camera = "/auv/camera/videoOAKdRawBottom"  # Switches to bottom cam after approach
     model = "everything"  # Will be replaced dynamically depending on mission param
 
-    def __init__(self, **config):
+    # Again, add doc strings and type hints to all functions/methods
+
+    def __init__(self, **config: dict):
         self.config = config
         self.shape = (640, 480)
         self.x_midpoint = self.shape[0] / 2
@@ -56,9 +58,12 @@ class CV:
                 self.last_detection_time = time.time()
 
         
-        Targets = {"bin":None,"sawfish":None,"shark":None} # each value should be [(x,y),ratio]
+        Targets = {"bin":None,"sawfish":None,"shark":None} # each value should be [(x,y), pix-meter ratio]
         numDetected = 0
         # Extract the dimension we want, assuming that we have one out of three of the detection
+
+        # These are doing a lot of the same thing. For the purposes of DRY, I might consider a helper function.
+        # To make the data more organized, I would consider using either a dictionary or a NamedTuple.
         if bin_detection is not None:  # TODO consider not using the bin detection at all, we only focus on marine animals
             Bin_center_x = (bin_detection.xmin+bin_detection.xmax)/2
             Bin_center_y = (bin_detection.ymax+bin_detection.ymin)/2
@@ -87,9 +92,13 @@ class CV:
             print("[INFO] Timeout for bin drop mission")
             self.end = True
             
-        # Step 2, main logic for rotating and centering  # TODO TODO add a centering state before we do rotating
+        # Step 2, main logic for rotating and centering  # TODO add a centering state before we do rotating
         if self.state == "centering":
             # Average out the center to find the target center
+
+            # What if not all of the possible detections are on the screen (or completely on the screen)? 
+            # That would bias the target center quite a bit. Is this your intention, or is it that as
+            # the bin moves more into the frame, the target center would adjust appropriately?
             sum_x = 0
             sum_y = 0
             for key, value in Targets:
@@ -99,7 +108,8 @@ class CV:
             average_x =  sum_x/numDetected
             average_y = sum_y/numDetected
 
-            # Calculate pwm base on target x,y
+            # Calculate pwm base on target x,y to align frame center with
+            # target center
             Offset_x = average_x - self.x_midpoint
             Offset_y = average_y - self.y_midpoint
             x_aligned = False
@@ -112,6 +122,8 @@ class CV:
             else:
                 print("[INFO] x aligned in centering state")
                 x_aligned = True
+            
+            # NOTE: Larger y for pixels are lower in the frame (not higher)
             if abs(Offset_y) > 100:
                 if Offset_y > 0:
                     forward = -0.5
@@ -127,13 +139,23 @@ class CV:
 
         elif self.state == "rotating":  # TODO Use all three detection and check if the center_y align within tolerance
             if bin_detection is not None:  
+                # Shouldn't we have the length and width already from further up in the code?
                 bin_length = bin_detection.xmax - bin_detection.xmin
                 bin_width = bin_detection.ymax - bin_detection.ymin
                 current_bin_ratio = (bin_length/bin_width)
+
+                # I'll need to review this ratio part with you orally to understand what's happening. I have a general
+                # idea from our pseudocode discussion, but I don't understand the low-level. Maybe putting a comment
+                # in the code would help future readers understand?
+
+                # Also, if we have a detection but the abs() condition is not fulfilled, it seems like we'll be sitting
+                # there doing nothing for a while. We may want to pin an else statement on that.
+
                 if abs(current_bin_ratio-1.5)<0.16: # TODO consider decresing 0.2 because our screen ratio is 1.333
                     self.state = "finetune"
                     print("[INFO] Rotated to the correct orientation, switch to centering state")
             else:
+                # How do we know this will not result in having us facing opposite the intended orientation?
                 yaw = 0.75 # continuously yaw cw to check if we are in the correct orientation
 
         elif self.state == "finetune":
@@ -163,7 +185,14 @@ class CV:
                 target_x = None
                 if Targets[Other_animal] is not None:
                     Other_x = Targets[Other_animal][0][0]
+
+                    # What if there isn't a bin detection? This will crash with an index error. You may want
+                    # to perform some exception handling for that.
                     if Other_x<Targets["bin"][0][0]:
+
+                        # Offset for a quarter of bin length (or half of a half)
+                        # to get to the x-center of a particular side. Assumption is we're
+                        # centered on the bin center (with some tolerance).
                         target_x = Targets["bin"][0][0] + (0.1524/target_pixToMeter)
                     else: 
                         target_x = Targets["bin"][0][0] - (0.1524/target_pixToMeter)
@@ -172,6 +201,9 @@ class CV:
                     target_x=Targets["bin"][0][0]
 
             # Step 5, Calculate pwm base on target x,y
+
+            # This logic is exactly the same as the centering state (except that this time
+            # we account for the dropper offset). Can we use a helper function to follow DRY?
             Offset_x = target_x - self.x_midpoint
             Offset_y = target_y - self.y_midpoint
             x_aligned = False
