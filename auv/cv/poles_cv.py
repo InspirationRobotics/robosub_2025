@@ -74,13 +74,13 @@ class CV:
             if detection["status"]:
                 self.state = "centering"
                 
-            if self.search_start_time is None:
-                self.search_start_time = time.time()
-                print("[INFO] Search time started")
+            # if self.search_start_time is None:
+            #     self.search_start_time = time.time()
+            #     print("[INFO] Search time started")
                 
-            if time.time() - self.search_start_time > 5.0 and self.rows_completed == 3:
-                self.end = True
-                print("[INFO] Search time exceeded 5.0 seconds → ending mission")
+            # if time.time() - self.search_start_time > 5.0 and self.rows_completed == 2:
+            #     self.end = True
+            #     print("[INFO] Search time exceeded 5.0 seconds → ending mission")
 
         elif self.state == "centering":
             if detection["status"]:
@@ -130,7 +130,7 @@ class CV:
                 self.start_time = time.time()
                 print("[INFO] Slaloming started")
 
-            if time.time() - self.start_time < 3.0:
+            if time.time() - self.start_time < 3.5:
                 forward = 2.0
                 print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")         
             else:
@@ -138,10 +138,13 @@ class CV:
                 self.rows_completed += 1
                 print(f"[INFO] Slaloming complete → rows completed: {self.rows_completed}")
                 
-            if self.rows_completed == 1:
-                    self.state = "transitioning to 2nd red pole"
-            elif self.rows_completed == 2:
-                    self.state = "transitioning to 3rd red pole"
+                if self.rows_completed == 1:
+                        self.state = "transitioning to 2nd red pole"
+                elif self.rows_completed == 2:
+                        self.state = "transitioning to 3rd red pole"
+                elif self.rows_completed == 3:
+                    self.end = True
+                    print("[INFO] All rows completed → ending mission")
 
         elif self.state == "transitioning to 2nd red pole":
             print("[INFO] Transitioning to 2nd red pole")
@@ -176,7 +179,7 @@ class CV:
         
         if self.state in ["transitioning to 3rd red pole"]:
             heading_control = False
-            search_heading = 330      
+            search_heading = 320      
         else:
             heading_control = True
             search_heading = 0

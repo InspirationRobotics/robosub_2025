@@ -72,7 +72,7 @@ class PoleSlalomMission:
             heading_control = cv_data.get("heading_control", True)
             search_heading = cv_data.get("search_heading", 0)
 
-            print(f"[MOTION] Fwd: {forward}, Lat: {lateral}")
+            # print(f"[MOTION] Fwd: {forward}, Lat: {lateral}")
             
             # Update heading control only when changed
             if heading_control != self.last_heading_control:
