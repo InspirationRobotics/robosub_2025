@@ -131,9 +131,9 @@ class CV:
                 self.rows_completed += 1
                 print(f"[INFO] Slaloming complete → rows completed: {self.rows_completed}")
                 
-                if self.rows_completed == 1:
+            if self.rows_completed == 1:
                     self.state = "looking for 2nd red pole"
-                elif self.rows_completed == 2:
+            elif self.rows_completed == 2:
                     self.state = "looking for 3rd red pole"
 
         elif self.state == "looking for 2nd red pole":
