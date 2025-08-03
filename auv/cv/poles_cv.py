@@ -73,6 +73,14 @@ class CV:
         if self.state == "search":
             if detection["status"]:
                 self.state = "centering"
+                
+            if self.search_start_time is None:
+                self.search_start_time = time.time()
+                print("[INFO] Search time started")
+                
+            if time.time() - self.search_start_time > 4.0:
+                self.end = True
+                print("[INFO] Search time exceeded 4 seconds → ending mission")
 
         elif self.state == "centering":
             if detection["status"]:
@@ -94,7 +102,7 @@ class CV:
                 area = detection["area"]
                 forward = 2.0
                 print(f"[INFO] Approaching: area={area:.0f} → moving forward")
-                if area >= 5000:
+                if area >= 4000:
                     self.state = "strafing"
             else:
                 print("[WARN] Lost pole while approaching → reverting to searching")
@@ -105,11 +113,11 @@ class CV:
                 self.start_time = time.time()
                 print("[INFO] Strafing started")
 
-            if self.rows_completed < 2 and time.time() - self.start_time < 1.5:
+            if self.rows_completed < 2 and time.time() - self.start_time < 2.0:
                 lateral = 2.0
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
                 
-            elif self.rows_completed == 2 and time.time() - self.start_time < 1.5:
+            elif self.rows_completed == 2 and time.time() - self.start_time < 2.0:
                 lateral = 2.0
                 print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")     
             else:
@@ -122,13 +130,9 @@ class CV:
                 self.start_time = time.time()
                 print("[INFO] Slaloming started")
 
-            if self.rows_completed < 2 and time.time() - self.start_time < 3.0:
+            if time.time() - self.start_time < 3.0:
                 forward = 2.0
-                print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
-                
-            elif self.rows_completed == 2 and time.time() - self.start_time < 8.0:
-                forward = 2.0
-                print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")
+                print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")         
             else:
                 self.start_time = None
                 self.rows_completed += 1
@@ -150,7 +154,7 @@ class CV:
         elif self.state == "3rd pole search":
             print("[INFO] Searching for 3rd red pole")
             if detection["status"]:
-                self.state = "approaching"
+                    self.state = "centering"
         
         return forward, lateral, yaw, vertical
 
@@ -170,7 +174,7 @@ class CV:
         # Determine heading control flag based on state
         heading_control = True
         
-        if self.state in ["transitionig 3rd red pole"]:
+        if self.state in ["transitioning to 3rd red pole"]:
             heading_control = False
             search_heading = 330      
         else:

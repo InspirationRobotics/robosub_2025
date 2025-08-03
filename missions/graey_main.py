@@ -34,9 +34,9 @@ try:
    rospy.sleep(8)
    rospy.loginfo("Robot heading set to gate heading")
 
-   rospy.loginfo("Moving forward for 8 seconds")
+   rospy.loginfo("Moving forward for 3 seconds")
    rc.movement(forward=2)
-   time.sleep(8)
+   time.sleep(3)
    rc.movement() # stop moving forward
    print("[INFO] GATE MISSION COMPLETE")
 except KeyboardInterrupt as e:
@@ -64,6 +64,7 @@ try:
    poles.run()
    poles.cleanup()
    print("[INFO] POLES MISSION COMPLETE")
+   
 except Exception as e:
    rospy.logerr("ERROR OCCUR IN POLES MISSION")
    rospy.logerr(e)
