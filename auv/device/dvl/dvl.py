@@ -69,7 +69,7 @@ class DVL:
         self.error = [0, 0, 0]  # accumulated error
 
         self.vel = [0, 0, 0]  
-
+        self.onyx_dvl_orientation_offset = 49.55 # degrees
         self.is_valid = False
         self.data_available = False
 
@@ -171,17 +171,29 @@ class DVL:
             hours = int(TS[1][6:8]) * 60 * 60
             t = hours + minutes + seconds + centi
 
+            cos_t = np.cos(self.onyx_dvl_orientation_offset)
+            sin_t = np.sin(self.onyx_dvl_orientation_offset)
+
+            vx_body = cos_t * vx - sin_t * vy
+            vy_body = cos_t * vy + sin_t * vx
             # this is the only data we need
             data["time"] = t
-            data["vx"] = int(BS[1]) / 1000
-            data["vy"] = int(BS[2]) / 1000
+            # vx, vy in dvl frame
+            vx = int(BS[1]) / 1000  
+            vy = int(BS[2]) / 1000
+            # convert dvl frame to onyx body frame
+            data["vx"] = cos_t * vx + sin_t * vy
+            data["vy"] = cos_t * vy - sin_t * vx  
             data["vz"] = int(BS[3]) / 1000
             data["valid"] = BS[4] == "A"
 
-        
+            
+
+
             # apply simple filtering
             if abs(data["vx"]) > 10 or abs(data["vy"]) > 10 or abs(data["vz"]) > 10:
                 data = None
+                
 
         except:
             print("I failed")
