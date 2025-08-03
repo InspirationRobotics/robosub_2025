@@ -16,7 +16,7 @@ from auv.utils import arm, disarm
 class BinsMission:
     cv_files = ["bin_drop_cv"]
 
-    def __init__(self, target=None, **config):
+    def __init__(self, target="sawfish", **config):
         self.config = config
         self.data = {}
         self.next_data = {}
