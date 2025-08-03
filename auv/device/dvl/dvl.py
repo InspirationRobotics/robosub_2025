@@ -174,8 +174,8 @@ class DVL:
             cos_t = np.cos(self.onyx_dvl_orientation_offset)
             sin_t = np.sin(self.onyx_dvl_orientation_offset)
 
-            vx_body = cos_t * vx + sin_t * vy
-            vy_body = cos_t * vy - sin_t * vx
+            vx_body = cos_t * vx - sin_t * vy
+            vy_body = cos_t * vy + sin_t * vx
             # this is the only data we need
             data["time"] = t
             # vx, vy in dvl frame
