@@ -38,6 +38,7 @@ try:
    rc.movement(forward=2)
    time.sleep(8)
    rc.movement() # stop moving forward
+   print("[INFO] GATE MISSION COMPLETE")
 except KeyboardInterrupt as e:
    rospy.logwarn("Skipping current mission")
 except Exception as e:
@@ -62,18 +63,19 @@ try:
    poles = poles_mission.PoleSlalomMission(target=target, rc=rc,**config)
    poles.run()
    poles.cleanup()
+   print("[INFO] POLES MISSION COMPLETE")
 except Exception as e:
    rospy.logerr("ERROR OCCUR IN POLES MISSION")
    rospy.logerr(e)
     
 """LATERAL WP"""
-# try:
-#    rospy.loginfo("Moving lateral for 2 seconds")
-#    rc.movement(lateral=2)
-#    time.sleep(2)
-# except Exception as e:
-#    rospy.logerr("ERROR OCCUR IN LATERAL WP")
-#    rospy.logerr(e)
+try:
+   rospy.loginfo("Moving lateral for 2 seconds")
+   rc.movement(lateral=2)
+   time.sleep(2)
+except Exception as e:
+   rospy.logerr("ERROR OCCUR IN LATERAL WP")
+   rospy.logerr(e)
     
 """ BACK TO GATE WP"""
 try:
