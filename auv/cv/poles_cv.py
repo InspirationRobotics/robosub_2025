@@ -78,9 +78,9 @@ class CV:
                 self.search_start_time = time.time()
                 print("[INFO] Search time started")
                 
-            if time.time() - self.search_start_time > 4.0:
+            if time.time() - self.search_start_time > 5.0 and self.rows_completed == 3:
                 self.end = True
-                print("[INFO] Search time exceeded 4 seconds → ending mission")
+                print("[INFO] Search time exceeded 5.0 seconds → ending mission")
 
         elif self.state == "centering":
             if detection["status"]:
