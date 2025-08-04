@@ -98,7 +98,8 @@ class CV:
 
             # What if not all of the possible detections are on the screen (or completely on the screen)? 
             # That would bias the target center quite a bit. Is this your intention, or is it that as
-            # the bin moves more into the frame, the target center would adjust appropriately?
+            # the bin moves more into the frame, the target center would adjust appropriately? 
+            # Chase: Correct! As it approach it will adjust appropriatedly
             sum_x = 0
             sum_y = 0
             for key, value in Targets:
@@ -150,12 +151,16 @@ class CV:
 
                 # Also, if we have a detection but the abs() condition is not fulfilled, it seems like we'll be sitting
                 # there doing nothing for a while. We may want to pin an else statement on that.
-
+                
+                # 1.5 is the bin_length/bin_width
                 if abs(current_bin_ratio-1.5)<0.16: # TODO consider decresing 0.2 because our screen ratio is 1.333
                     self.state = "finetune"
                     print("[INFO] Rotated to the correct orientation, switch to centering state")
+                else:
+                    yaw = 0.6
             else:
                 # How do we know this will not result in having us facing opposite the intended orientation?
+                # Chase: as opposite doesn't really matter, we will handle that in finetune state
                 yaw = 0.75 # continuously yaw cw to check if we are in the correct orientation
 
         elif self.state == "finetune":
@@ -183,22 +188,26 @@ class CV:
                 else:
                     Other_animal = "sawfish"
                 target_x = None
-                if Targets[Other_animal] is not None:
-                    Other_x = Targets[Other_animal][0][0]
+                try:
+                    if Targets[Other_animal] is not None:
+                        Other_x = Targets[Other_animal][0][0]
 
-                    # What if there isn't a bin detection? This will crash with an index error. You may want
-                    # to perform some exception handling for that.
-                    if Other_x<Targets["bin"][0][0]:
+                        # What if there isn't a bin detection? This will crash with an index error. You may want
+                        # to perform some exception handling for that.
+                        if Other_x<Targets["bin"][0][0]:
 
-                        # Offset for a quarter of bin length (or half of a half)
-                        # to get to the x-center of a particular side. Assumption is we're
-                        # centered on the bin center (with some tolerance).
-                        target_x = Targets["bin"][0][0] + (0.1524/target_pixToMeter)
-                    else: 
-                        target_x = Targets["bin"][0][0] - (0.1524/target_pixToMeter)
-                else:
-                    # Just use the center of the bin if we don’t detect any target animal
-                    target_x=Targets["bin"][0][0]
+                            # Offset for a quarter of bin length (or half of a half)
+                            # to get to the x-center of a particular side. Assumption is we're
+                            # centered on the bin center (with some tolerance).
+                            target_x = Targets["bin"][0][0] + (0.1524/target_pixToMeter)  # 0.1524 is 6 inches, which is half of the poster side length
+                        else: 
+                            target_x = Targets["bin"][0][0] - (0.1524/target_pixToMeter)
+                    else:
+                        # Just use the center of the bin if we don’t detect any target animal
+                        target_x=Targets["bin"][0][0]
+                except IndexError as e:
+                    print("[WARN] No bin detected, set target x to center of the screen")
+                    target_x = self.x_midpoint
 
             # Step 5, Calculate pwm base on target x,y
 
@@ -229,7 +238,7 @@ class CV:
                 print("[INFO] Dropping the marker")
                 self.end = True  # end the mission and drop the ball
                 self.drop = True
-        
+
         return {
             "lateral": lateral,
             "forward": forward,
