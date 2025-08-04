@@ -74,13 +74,13 @@ class CV:
             if detection["status"]:
                 self.state = "centering"
                 
-            # if self.search_start_time is None:
-            #     self.search_start_time = time.time()
-            #     print("[INFO] Search time started")
+            if self.search_start_time is None:
+                self.search_start_time = time.time()
+                print("[INFO] Search time started")
                 
-            # if time.time() - self.search_start_time > 5.0 and self.rows_completed == 2:
-            #     self.end = True
-            #     print("[INFO] Search time exceeded 5.0 seconds → ending mission")
+            if time.time() - self.search_start_time > 5.0 and self.rows_completed == 2:
+                self.end = True
+                print("[INFO] Search time exceeded 5.0 seconds → ending mission")
 
         elif self.state == "centering":
             if detection["status"]:
@@ -177,7 +177,7 @@ class CV:
         # Determine heading control flag based on state
         heading_control = True
         
-        if self.state in ["transitioning to 3rd red pole"]:
+        if self.state in ["3rd pole search"]:
             heading_control = False
             search_heading = 320      
         else:

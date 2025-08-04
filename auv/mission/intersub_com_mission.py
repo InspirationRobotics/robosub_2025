@@ -66,7 +66,10 @@ class intersubComMission:
             while not self.end:
                 if time_counter>=120:
                     self.end=True
-                    rospy.loginfo("Time out, mission terminated")
+                    rospy.loginfo("Time out, mission terminated, roll without onyx")
+                    fake_msg = String()
+                    fake_msg.data = "ROLL"
+                    self.rec_callback(fake_msg)
                 time.sleep(1)
                 time_counter += 1
                 rospy.loginfo(f"Waited for {time_counter} seconds")
