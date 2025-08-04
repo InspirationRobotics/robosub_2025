@@ -26,7 +26,6 @@ class PoleSlalomMission:
         self.target = target
         self.rc = rc
         self.cv_handler = cv_handler.CVHandler(**self.config)
-        self.row_count = 0
         self.end = False
 
         for file_name in self.cv_files:
@@ -73,10 +72,6 @@ class PoleSlalomMission:
                 rospy.loginfo("Pole slalom mission time out.")
                 self.rc.movement()
                 break
-            elif self.row_count==3:
-                rospy.loginfo("Pole Slalom Mission completed")
-                self.rc.movement()
-                break
             elif reached:
                 # When we reached certain distance away from the red pole, perform preset maneuver
                 self.rc.movement()
@@ -91,16 +86,31 @@ class PoleSlalomMission:
                 time.sleep(2)
                 self.rc.movement()
 
-                # move lateral left for ###
-                self.rc.movement(lateral=-2)
-                time.sleep(1.5)
+                # move lateral right for ###
+                self.rc.movement(lateral=2)
+                time.sleep(1)
                 self.rc.movement()
 
-                # Increase row count by one
-                self.row_count += 1 
+                # move forward for ###
+                self.rc.movement(forward=2)
+                time.sleep(4)
+                self.rc.movement()
 
-                # print status
-                rospy.loginfo(f"Current row: {self.row_count}")
+                # move lateral left for ###
+                self.rc.movement(lateral=-2)
+                time.sleep(3)
+                self.rc.movement()
+
+                # move forward for ###
+                self.rc.movement(forward = 2)
+                time.sleep(5)
+                self.rc.movement()
+
+                # Print information
+                rospy.loginfo("Finished preset maneuver")
+
+                # Exit loop
+                break
             else:
                 self.rc.movement(lateral=lateral, forward=forward)
 

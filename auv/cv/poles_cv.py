@@ -15,15 +15,16 @@ class CV:
         self.x_midpoint = 320
         self.tolerance = 40  # How centered the object should be in px
         self.config = config
-        self.state = "search"
+        self.state = "centering"
         self.end = False
-        self.start_time = None
-        self.search_start_time = None
-        self.rows_completed = 0
-
+        self.reached = False
+        self.prev_detect_timestamp = None
         print("[INFO] Pole Center & Approach CV initialized")
 
     def detect_red_pole(self, frame):
+        """
+        Detect red pole using HSV, return status, bbox and mask frame
+        """
         crop_bottom = 80
         height = frame.shape[0]
         frame = frame[0:height - crop_bottom, :]
@@ -64,152 +65,61 @@ class CV:
             "status": False, "xmin": None, "xmax": None, "ymin": None, "ymax": None, "area": 0
         }, red_mask_clean
 
-    def movement_calculation(self, detection):
+    def centering(self, detection):
         forward = 0
         lateral = 0
         yaw = 0
         vertical = 0
+        if detection["status"]:
+            self.prev_detect_timestamp = None # set timer to None
+            # go forward at power 2 when detected
+            forward = 1.5
 
-        if self.state == "search":
-            if detection["status"]:
-                self.state = "centering"
-                
-            if self.search_start_time is None:
-                self.search_start_time = time.time()
-                print("[INFO] Search time started")
-                
-            if time.time() - self.search_start_time > 5.0 and self.rows_completed == 2:
-                self.end = True
-                print("[INFO] Search time exceeded 5.0 seconds → ending mission")
+            # calculate offset between screen center and target center
+            pole_x_center = (detection["xmin"] + detection["xmax"]) / 2
+            offset = pole_x_center - self.x_midpoint
 
-        elif self.state == "centering":
-            if detection["status"]:
-                pole_x_center = (detection["xmin"] + detection["xmax"]) / 2
-                offset = pole_x_center - self.x_midpoint
-
-                if abs(offset) > self.tolerance:
-                    lateral = 1.0 if offset > 0 else -1.0
-                    print(f"[INFO] Centering: offset={offset:.1f} → lateral={lateral}")
-                else:
-                    print("[INFO] Centering: Pole centered → transitioning to approaching")
-                    self.state = "approaching"
+            # movement calculation
+            if abs(offset) > self.tolerance:
+                lateral = 1.0 if offset > 0 else -1.0
+                print(f"[INFO] Centering: offset={offset:.1f} → lateral={lateral}")
             else:
-                print("[WARN] Lost pole while centering → reverting to searching")
-                self.state = "search"
+                # No lateral motion when you are within tolerance
+                lateral = 0
+                forward = 2
 
-        elif self.state == "approaching":
-            if detection["status"]:
                 area = detection["area"]
-                forward = 2.0
                 print(f"[INFO] Approaching: area={area:.0f} → moving forward")
-                if area >= 4000:
-                    self.state = "strafing"
-            else:
-                print("[WARN] Lost pole while approaching → reverting to searching")
-                self.state = "search"
-
-        elif self.state == "strafing":
-            if self.start_time is None:
-                self.start_time = time.time()
-                print("[INFO] Strafing started")
-
-            if self.rows_completed < 2 and time.time() - self.start_time < 2.0:
-                lateral = 2.0
-                print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")
-                
-            elif self.rows_completed == 2 and time.time() - self.start_time < 2.0:
-                lateral = 2.0
-                print(f"[INFO] Strafing: Moving laterally ({time.time() - self.start_time:.2f}s)")     
-            else:
-                self.start_time = None
-                print("[INFO] Strafe complete → transitioning to slaloming")
-                self.state = "slaloming"        
-
-        elif self.state == "slaloming":
-            if self.start_time is None:
-                self.start_time = time.time()
-                print("[INFO] Slaloming started")
-
-            if time.time() - self.start_time < 3.5:
-                forward = 2.0
-                print(f"[INFO] Slaloming: Moving forward ({time.time() - self.start_time:.2f}s)")         
-            else:
-                self.start_time = None
-                self.rows_completed += 1
-                print(f"[INFO] Slaloming complete → rows completed: {self.rows_completed}")
-                
-                if self.rows_completed == 1:
-                        self.state = "transitioning to 2nd red pole"
-                elif self.rows_completed == 2:
-                        self.state = "transitioning to 3rd red pole"
-                elif self.rows_completed == 3:
-                    self.end = True
-                    print("[INFO] All rows completed → ending mission")
-
-        elif self.state == "transitioning to 2nd red pole":
-            print("[INFO] Transitioning to 2nd red pole")
-            self.state = "search"
-
-        elif self.state == "transitioning to 3rd red pole":
-            print("[INFO] Transitioning to 3rd red pole")
-            self.state = "3rd pole search"
-
-        elif self.state == "3rd pole search":
-            print("[INFO] Searching for 3rd red pole")
-            if detection["status"]:
-                    self.state = "3rd pole centering"
-                    
-        elif self.state == "3rd pole centering":
-            if detection["status"]:
-                pole_x_center = (detection["xmin"] + detection["xmax"]) / 2
-                offset = pole_x_center - self.x_midpoint
-
-                if abs(offset) > self.tolerance:
-                    lateral = 1.0 if offset > 0 else -1.0
-                    print(f"[INFO] Centering: offset={offset:.1f} → lateral={lateral}")
+                # Distance estimation to stop moving forward
+                if area >= 4000: 
+                    self.reached = True
+                    forward = 0
+                    lateral = 0
+                    yaw = 0
+                    vertical = 0
                 else:
-                    print("[INFO] Centering: Pole centered → transitioning to approaching")
-                    self.state = "3rd pole approaching"
-            else:
-                print("[WARN] Lost pole while centering → reverting to searching")
-                self.state = "3rd pole search"
-                
-        elif self.state == "3rd pole approaching":
-            if detection["status"]:
-                area = detection["area"]
-                forward = 2.0
-                print(f"[INFO] Approaching: area={area:.0f} → moving forward")
-                if area >= 4000:
-                    self.state = "strafing"
-            else:
-                print("[WARN] Lost pole while approaching → reverting to searching")
-                self.state = "3rd pole search"
-        
+                    self.reached = False
+
+        else:
+            if self.prev_detect_timestamp is None:
+                self.prev_detect_timestamp = time.time()
+            # Blindly go forward slowly when lost detection
+            print("[WARN] Lost pole while centering")
+            forward = 1
+
         return forward, lateral, yaw, vertical
 
     def run(self, raw_frame, target, detections):
-        
-        # Crop right half only in strafing state
-        if self.state == "strafing":
-            raw_frame = raw_frame[:, 320:]
-            
-        # # Crop left half only in strafing state
-        # if self.state == "strafing":
-        #     raw_frame = raw_frame[:, :320]
-
+        # Detect red pole
         detection, red_mask_clean = self.detect_red_pole(raw_frame)
-        forward, lateral, yaw, vertical = self.movement_calculation(detection)
-
-        # Determine heading control flag based on state
-        heading_control = True
         
-        if self.state in ["3rd pole search, 3rd pole centering, 3rd pole approaching"]:
-            heading_control = False
-            search_heading = 320      
-        else:
-            heading_control = True
-            search_heading = 0
+        # Calculate movement
+        forward, lateral, yaw, vertical = self.centering(detection)
 
+        # Check 10s timeout
+        if time.time() - self.prev_detect_timestamp > 10:
+            self.end = True
+        # #########################################
         # Visualization
         frame = raw_frame.copy()
         if detection["status"] and detection["xmin"] is not None and detection["xmax"] is not None:
@@ -227,5 +137,4 @@ class CV:
         cv2.putText(frame, f"State: {self.state}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
-        return {
-            "lateral": lateral, "forward": forward, "yaw": yaw, "vertical": vertical, "end": self.end, "heading_control": heading_control, "search_heading": search_heading}, frame
+        return {"lateral": lateral, "forward": forward, "yaw": yaw, "vertical": vertical, "end": self.end, "reached": self.reached}, frame

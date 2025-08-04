@@ -5,7 +5,7 @@ To create a sequential order of missions for Graey to follow.
 import rospy
 import time
 from auv.utils import deviceHelper
-from auv.mission import poles_mission, intersub_com_mission
+from auv.mission import poles_mission, intersub_com_mission, poles_mission_preset
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
@@ -20,7 +20,7 @@ time.sleep(7)
 target = "left"
 gate_heading = 0 # calibrate beforehand
 config = deviceHelper.variables
-
+eventflags = [False,False,False,False,False]
 
 """GATE MISSION"""
 try:
@@ -33,17 +33,23 @@ try:
    rc.set_absolute_yaw(gate_heading) # this is hard coded angle
    rospy.sleep(8)
    rospy.loginfo("Robot heading set to gate heading")
+   eventflags[0] = True
 
    rospy.loginfo("Moving forward for 3 seconds")
    rc.movement(forward=2)
    time.sleep(3)
    rc.movement() # stop moving forward
    print("[INFO] GATE MISSION COMPLETE")
+   eventflags[1] = True
 except KeyboardInterrupt as e:
    rospy.logwarn("Skipping current mission")
+   eventflags[0] = True
+   eventflags[1] = True
 except Exception as e:
    rospy.logerr("ERROR OCCUR IN GATE MISSION")
    rospy.logerr(e)
+   eventflags[0] = True
+   eventflags[1] = True
     
 # """WP TO POLES"""
 # try:
@@ -56,6 +62,20 @@ except Exception as e:
 #     rospy.logerr("ERROR OCCUR IN WP TO POLES")
 #     rospy.logerr(e)
 
+"""POLES MISSION PRESET MANEUVER"""
+try: 
+   # Run the poles mission
+   rospy.loginfo("Start of poles mission...")
+   poles = poles_mission_preset.PoleSlalomMission(target=target, rc=rc,**config)
+   poles.run()
+   poles.cleanup()
+   print("[INFO] POLES MISSION COMPLETE")
+   eventflags[2] = True
+except Exception as e:
+   rospy.logerr("ERROR OCCUR IN POLES MISSION")
+   rospy.logerr(e)
+   eventflags[2] = True
+
 """POLES MISSION"""
 try: 
    # Run the poles mission
@@ -64,11 +84,13 @@ try:
    poles.run()
    poles.cleanup()
    print("[INFO] POLES MISSION COMPLETE")
-   
+   eventflags[2] = True
 except Exception as e:
    rospy.logerr("ERROR OCCUR IN POLES MISSION")
    rospy.logerr(e)
-    
+   eventflags[2] = True
+
+
 """LATERAL WP"""
 try:
    rospy.loginfo("Moving lateral for 2 seconds")
@@ -92,9 +114,11 @@ try:
     intersubMission = intersub_com_mission.intersubComMission(robotControl=rc)
     intersubMission.run()
     rospy.loginfo("FINISHED INTERSUB COMMUNICATION")
+    eventflags[3] = True
 except Exception as e:
     rospy.logerr("ERROR DURING MODEM MISSION")
     rospy.logerr(e)
+    eventflags[3] = True
     
 #"""ALIGNING WITH GATE WP"""
 #try:
