@@ -1,9 +1,9 @@
 """
 This is the servo node that controls all servos connected to our pololo mini maestro
 Service names:
-    - dropper : /auv/device/dropper
-    - gripper : /auv/device/gripper
-    - torpedo:  /auv/device/torpedo
+    - dropper : /auv/devices/dropper
+    - gripper : /auv/devices/gripper
+    - torpedo:  /auv/devices/torpedo
 """
 import rospy
 import time
@@ -27,9 +27,9 @@ class MaestroServer:
         self.has_dropped1_marker = False
         self.has_dropped2_marker = False
 
-        self.dropperService = rospy.Service('/auv/device/dropper', Trigger, self.dropperCallback)
-        self.gripperService = rospy.Service('/auv/device/gripper', Trigger, self.gripperCallback)
-        self.torpedoService = rospy.Service('/auv/device/torpedo', Trigger, self.torpedoCallback)
+        self.dropperService = rospy.Service('/auv/devices/dropper', Trigger, self.dropperCallback)
+        self.gripperService = rospy.Service('/auv/devices/gripper', Trigger, self.gripperCallback)
+        self.torpedoService = rospy.Service('/auv/devices/torpedo', Trigger, self.torpedoCallback)
 
         # Set all servos to default state
         self.maestro.set_pwm(*self.torpedo_state["reload_required"])

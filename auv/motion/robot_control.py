@@ -438,11 +438,11 @@ class RobotControl:
         """Operate a servo via the maestro_server file
         Args:
             - service (str): The servo to operate. Accepted values:
-                - /auv/device/dropper
-                - /auv/device/torpedo
+                - /auv/devices/dropper
+                - /auv/devices/torpedo
                 - /auv/device/gripper
         """
-        if service in ["/auv/device/dropper", "/auv/device/torpedo", "/auv/device/gripper"]:
+        if service in ["/auv/devices/dropper", "/auv/devices/torpedo", "/auv/devices/gripper"]:
             self.service = service
         else:
             raise ValueError("Unknown servo service called")
