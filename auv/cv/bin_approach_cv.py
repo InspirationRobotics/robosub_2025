@@ -43,12 +43,12 @@ class CV:
         # at the code it made sense. Calling a switch back from approach to search an "adjust" is a little bit quirky,
         # there may be a better name for it. A big thing in industry is not just functional, but also readable code. 
         # Code isn't any good if the next person coming along has no idea what's happening.
-        self.adjust_search_time = None
+        self.swtich_back_time = None
         self.search_counter = 0
         self.search_stage_one_timestamp = None # store time
         self.search_stage_two_timestamp = None # store time
         self.stage_two_end = False
-        self.adjust_count = 0
+        self.switch_count = 0
         self.end = False
         self.prev_offset = None
         self.prev_time = time.time()
@@ -88,7 +88,7 @@ class CV:
         Run the CV script.
 
         Args:
-            frame: The frame from the camera stream
+            frame(cvFrame): The frame from the camera stream
             target: This can be any type of information, for example, the object to look for
             detections: This only applies to OAK-D cameras; this is the list of detections from the ML model output
 
@@ -152,14 +152,12 @@ class CV:
 
         if self.state == "search":
             # For less than two searches, yaw left at 20% for 5 seconds then yaw right at 20% for 5 seconds
-            # This program will search left for a certain number of degrees then return to the initial heading.
-            # It does NOT search both sides around the initial heading, only the left side. Hopefully that's what
-            # you intended, if not then modify the code.
+            # This program will search left for a certain number of degrees then search right
             if self.search_counter<=2:
                 if self.search_stage_one_timestamp is None:
                     print("[DEBUG] Searching in stage 1")
                     self.search_stage_one_timestamp = time.time()
-                if time.time()-self.search_stage_one_timestamp > 5:
+                if time.time()-self.search_stage_one_timestamp > 5 * (self.search_counter + 1):
                     print(f"[DEBUG] Searching in stage one, counter is {self.search_counter}")
                     self.search_counter += 1
                     self.search_stage_one_timestamp = time.time()
@@ -194,8 +192,8 @@ class CV:
         # I don't see any place in the script where self.prev_detected is set to None. A quick test 
         # reveals False is not None. You need a better condition since at the present state, the script will never end.
 
-        # Also, what if we've made it over the bins in less than 30 seconds after search_stage_two begins?
-        if self.state=="search" and self.prev_detected is None and self.search_stage_two_timestamp is not None and time.time()-self.search_stage_two_timestamp > 30:
+        # Also, what if we've made it over the bins in less than 30 seconds after search_stage_two begins? Substitude self.prev_detected with self.prev_offset
+        if self.state=="search" and self.prev_offset is None and self.search_stage_two_timestamp is not None and time.time()-self.search_stage_two_timestamp > 30:
            # when we had went through stage one and time out for 30 seconds
            print(f"[DEBUG] time out in searching")
            self.end = True
@@ -207,18 +205,18 @@ class CV:
         # the drop script to see if you account for that.
 
         if self.state=="search" and self.prev_detected: # you are in adjust search mode when you had detection but in search mode again
-            if time.time() - self.adjust_search_time > 15:
+            if time.time() - self.swtich_back_time > 15:
                 self.end = True
 
         # If we lost the bins for two seconds in approach mode, change to search mode up to two times per
         # mission attempt and start a timer for 15 seconds.
         if self.state=="approach" and (offset is None) and self.prev_detected == True:
             if time.time() - self.prev_time > 2:
-                if self.adjust_count <2:  # adjust to search again
+                if self.switch_count <2:  # switch back to search again
                     print(f"[DEBUG] adjust and search")
                     self.state = "search"
-                    self.adjust_count += 1
-                    self.adjust_search_time = time.time()
+                    self.switch_count += 1
+                    self.swtich_back_time = time.time()
 
                 else:
                     print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
