@@ -157,7 +157,33 @@ class CV:
         elif self.state == "3rd pole search":
             print("[INFO] Searching for 3rd red pole")
             if detection["status"]:
-                    self.state = "centering"
+                    self.state = "3rd pole centering"
+                    
+        elif self.state == "3rd pole centering":
+            if detection["status"]:
+                pole_x_center = (detection["xmin"] + detection["xmax"]) / 2
+                offset = pole_x_center - self.x_midpoint
+
+                if abs(offset) > self.tolerance:
+                    lateral = 1.0 if offset > 0 else -1.0
+                    print(f"[INFO] Centering: offset={offset:.1f} → lateral={lateral}")
+                else:
+                    print("[INFO] Centering: Pole centered → transitioning to approaching")
+                    self.state = "3rd pole approaching"
+            else:
+                print("[WARN] Lost pole while centering → reverting to searching")
+                self.state = "3rd pole search"
+                
+        elif self.state == "3rd pole approaching":
+            if detection["status"]:
+                area = detection["area"]
+                forward = 2.0
+                print(f"[INFO] Approaching: area={area:.0f} → moving forward")
+                if area >= 4000:
+                    self.state = "strafing"
+            else:
+                print("[WARN] Lost pole while approaching → reverting to searching")
+                self.state = "3rd pole search"
         
         return forward, lateral, yaw, vertical
 
@@ -177,7 +203,7 @@ class CV:
         # Determine heading control flag based on state
         heading_control = True
         
-        if self.state in ["3rd pole search"]:
+        if self.state in ["3rd pole search, 3rd pole centering, 3rd pole approaching"]:
             heading_control = False
             search_heading = 320      
         else:
