@@ -19,7 +19,9 @@ file_dir = os.path.dirname(os.path.abspath(__file__)) # Obtain the file director
 
 # If "nx" is in the platform node name, Onyx is the sub, else Graey (Onyx runs on an Nvidia NX)
 # Load the configuration of Onyx/Graey
-if "jetson-desktop" in platform.node():
+hostname = platform.node()
+print(f"Hostname is: {hostname}")
+if "jetson-desktop" in hostname:
     onyx = True 
     variables = load_json(f"{file_dir}/../../config/onyx.json")
 else:
@@ -28,7 +30,7 @@ else:
 
 def findFromId(ids):
     """Finding devices based on their IDs"""
-    print("Starting findFromId")
+    print(f"Starting findFromId for {ids}")
     bash = os.popen("bash /home/inspiration/robosub_2025/auv/utils/usbLink.sh").read() # Read usbLink.sh
     bashSplit = bash.split("\n") # Split output into lines at "\n"
     result = []
@@ -51,7 +53,10 @@ def findFromId(ids):
             result.remove(i)
     if len(result) == 0:
         print(bash)
-        return ["Device not found, above is list of all available devices"]
+        print("Device not found, above is list of all available devices")
+        return None
+    
+    print(f"Find port {result[0]}")
     return result[0]
 
 
@@ -125,6 +130,7 @@ def dataFromConfig(name):
     if usbID == None:
         print("id not found")
         return None  # id is not on sub so leave it
+    print(f"USB ID: {usbID}")
     return findFromId([usbID])
 
 

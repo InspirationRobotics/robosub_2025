@@ -8,6 +8,8 @@ from serial import Serial
 from auv.utils import deviceHelper
 from sensor_msgs.msg import Imu
 
+rospy.loginfo("Finished importing")
+
 class VN100:
     def __init__(self, port: str = deviceHelper.dataFromConfig("vectornav")):
         """Makes a serial connection to the VN100 IMU utilizing deviceHelper and starts reading"""
@@ -132,7 +134,8 @@ if __name__ == "__main__":
     except AttributeError as e:
         rospy.logerr("Attribute error occur, most likely due to None type data")
         rospy.logerr(e)
-    except ValueError:
-        print("Bad data")
+    except ValueError as e:
+        rospy.logerr("Bad data")
+        rospy.logerr(e)
     except Exception as e:
         print(f"Generic exception caught: {e}")
