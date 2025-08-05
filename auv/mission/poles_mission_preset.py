@@ -82,28 +82,28 @@ class PoleSlalomMission:
                 self.rc.movement()
 
                 # move forward for ###
-                self.rc.movement(forward=2)
-                time.sleep(2)
+                self.rc.movement(forward=3)
+                time.sleep(3)
                 self.rc.movement()
 
                 # move lateral right for ###
                 self.rc.movement(lateral=2)
-                time.sleep(1)
+                time.sleep(2)
                 self.rc.movement()
 
                 # move forward for ###
-                self.rc.movement(forward=2)
-                time.sleep(4)
+                self.rc.movement(forward=3)
+                time.sleep(3)
                 self.rc.movement()
 
                 # move lateral left for ###
                 self.rc.movement(lateral=-2)
-                time.sleep(3)
+                time.sleep(2)
                 self.rc.movement()
 
                 # move forward for ###
-                self.rc.movement(forward = 2)
-                time.sleep(5)
+                self.rc.movement(forward = 3)
+                time.sleep(8)
                 self.rc.movement()
 
                 # Print information

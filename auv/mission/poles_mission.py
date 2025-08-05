@@ -87,8 +87,8 @@ class PoleSlalomMission:
                 self.rc.movement()
 
                 # move forward for ###
-                self.rc.movement(forward=2)
-                time.sleep(2)
+                self.rc.movement(forward=3)
+                time.sleep(2.5)
                 self.rc.movement()
 
                 # move lateral left for ###
@@ -101,11 +101,14 @@ class PoleSlalomMission:
 
                 # print status
                 rospy.loginfo(f"Current row: {self.row_count}")
+                reached = False
             else:
                 self.rc.movement(lateral=lateral, forward=forward)
 
             time.sleep(0.01)
 
+        self.rc.movement(forward=3)
+        time.sleep(2.5)
         rospy.loginfo("Pole Slalom mission run complete")
 
     def cleanup(self):
