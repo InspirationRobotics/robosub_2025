@@ -13,25 +13,23 @@ from auv.utils import arm, disarm, deviceHelper
 rospy.init_node("Graey", anonymous = True)
 rc = robot_control.RobotControl()
 rc.set_control_mode('depth_hold')
-rc.set_absolute_z(0.5)
-rospy.loginfo("Robot armed and set to depth 0.5m")
+rc.set_absolute_z(0.7)
+rospy.loginfo("Robot armed and set to depth 0.7m")
 rospy.loginfo("Waiting for 7 seconds before proceeding")
 time.sleep(7)
-target = "left"
-gate_heading = 0 # calibrate beforehand
+gate_heading = 0 # CALIBRATE EACH TIME 
 config = deviceHelper.variables
 eventflags = [False,False,False,False,False]
 
-"""GATE MISSION"""
+"""COINT TOSS + GATE MISSION"""
 try:
-   # Rotate towards the heading of the gate, move 2 meters forward
-   # current_heading = rc.orientation["yaw"]
-   # TODO two ways of doing coin toss
-   # 1. Using absolute heading, this require recalibration each run
-   # 2. Using relative heading, this require hard code the angle
    rc.activate_heading_control(activate=True)
-   rc.set_absolute_yaw(gate_heading) # this is hard coded angle
-   rospy.sleep(8)
+   rc.set_absolute_yaw(gate_heading) # Set deire heaidng
+
+   # wait until robot reach heaidng within 2 degrees error
+   while abs(gate_heading-rc.orientation['yaw']) > 2: # 2 degrees tolerance
+      time.sleep(1)
+   
    rospy.loginfo("Robot heading set to gate heading")
    eventflags[0] = True
 
@@ -62,25 +60,25 @@ except Exception as e:
 #     rospy.logerr("ERROR OCCUR IN WP TO POLES")
 #     rospy.logerr(e)
 
-"""POLES MISSION PRESET MANEUVER"""
-try: 
-   # Run the poles mission
-   rospy.loginfo("Start of poles mission...")
-   poles = poles_mission_preset.PoleSlalomMission(target=target, rc=rc,**config)
-   poles.run()
-   poles.cleanup()
-   print("[INFO] POLES MISSION COMPLETE")
-   eventflags[2] = True
-except Exception as e:
-   rospy.logerr("ERROR OCCUR IN POLES MISSION")
-   rospy.logerr(e)
-   eventflags[2] = True
+# """POLES MISSION PRESET MANEUVER"""
+# try: 
+#    # Run the poles mission
+#    rospy.loginfo("Start of poles mission...")
+#    poles = poles_mission_preset.PoleSlalomMission(rc=rc,**config)
+#    poles.run()
+#    poles.cleanup()
+#    print("[INFO] POLES MISSION COMPLETE")
+#    eventflags[2] = True
+# except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN POLES MISSION")
+#    rospy.logerr(e)
+#    eventflags[2] = True
 
 """POLES MISSION"""
 try: 
    # Run the poles mission
    rospy.loginfo("Start of poles mission...")
-   poles = poles_mission.PoleSlalomMission(target=target, rc=rc,**config)
+   poles = poles_mission.PoleSlalomMission(rc=rc,**config)
    poles.run()
    poles.cleanup()
    print("[INFO] POLES MISSION COMPLETE")
@@ -94,17 +92,19 @@ except Exception as e:
 """LATERAL WP"""
 try:
    rospy.loginfo("Moving lateral for 2 seconds")
-   rc.movement(lateral=2)
+   rc.movement(lateral=-2)
    time.sleep(2)
+   rc.movement()
 except Exception as e:
    rospy.logerr("ERROR OCCUR IN LATERAL WP")
    rospy.logerr(e)
     
 """ BACK TO GATE WP"""
 try:
-   rospy.loginfo("Moving backward for 15 seconds")
+   rospy.loginfo("Moving backward for 3 seconds")
    rc.movement(forward=-2)
-   time.sleep(15)
+   time.sleep(3)
+   rc.movement()
 except Exception as e:
    rospy.logerr("ERROR OCCUR IN BACK TO GATE WP")
    rospy.logerr(e)

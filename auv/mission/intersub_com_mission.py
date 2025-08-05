@@ -41,7 +41,7 @@ class intersubComMission:
                 self.rc.go_to_heading(270)
                 self.rc.go_to_heading(360)
             if msg.data == "ROLL":
-                self.rc.set_absolute_z(0.8)
+                self.rc.set_absolute_z(0.4)
                 time.sleep(10)
                 self.rc.set_flight_mode("ACRO")
                 self.rc.set_control_mode("direct")
@@ -64,7 +64,7 @@ class intersubComMission:
             destination_addr = "020"
             time_counter = 0
             while not self.end:
-                if time_counter>=120:
+                if time_counter>= 5: # set time out to 5s for testing purpose
                     self.end=True
                     rospy.loginfo("Time out, mission terminated, roll without onyx")
                     fake_msg = String()
