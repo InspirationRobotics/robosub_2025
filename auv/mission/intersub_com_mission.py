@@ -41,6 +41,7 @@ class intersubComMission:
                 self.rc.go_to_heading(270)
                 self.rc.go_to_heading(360)
             if msg.data == "ROLL":
+                rospy.loginfo("Doing roll maneuver")
                 self.rc.set_absolute_z(0.4)
                 time.sleep(10)
                 self.rc.set_flight_mode("ACRO")
@@ -49,7 +50,6 @@ class intersubComMission:
                 time.sleep(4)  # fine tune this value for Graey
                 self.rc.movement()
                 self.rc.set_control_mode("depth_hold")
-                # self.rc.set_flight_mode("STABILIZE")
             self.end = True
 
     def run(self):
@@ -79,6 +79,7 @@ class intersubComMission:
             self.rc.set_absolute_z(0.5)
             time.sleep(10)
             self.rc.set_flight_mode("STABILIZE")
+            rospy.loginfo("Back to Stabilize mode...")
 
 
         elif current_sub == "onyx":

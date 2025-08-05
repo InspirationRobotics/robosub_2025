@@ -21,33 +21,33 @@ gate_heading = 0 # CALIBRATE EACH TIME
 config = deviceHelper.variables
 eventflags = [False,False,False,False,False]
 
-"""COINT TOSS + GATE MISSION"""
-try:
-   rc.activate_heading_control(activate=True)
-   rc.set_absolute_yaw(gate_heading) # Set deire heaidng
+# """COINT TOSS + GATE MISSION"""
+# try:
+#    rc.activate_heading_control(activate=True)
+#    rc.set_absolute_yaw(gate_heading) # Set deire heaidng
 
-   # wait until robot reach heaidng within 2 degrees error
-   while abs(gate_heading-rc.orientation['yaw']) > 2: # 2 degrees tolerance
-      time.sleep(1)
+#    # wait until robot reach heaidng within 2 degrees error
+#    while abs(gate_heading-rc.orientation['yaw']) > 2: # 2 degrees tolerance
+#       time.sleep(1)
    
-   rospy.loginfo("Robot heading set to gate heading")
-   eventflags[0] = True
+#    rospy.loginfo("Robot heading set to gate heading")
+#    eventflags[0] = True
 
-   rospy.loginfo("Moving forward for 3 seconds")
-   rc.movement(forward=2)
-   time.sleep(3)
-   rc.movement() # stop moving forward
-   print("[INFO] GATE MISSION COMPLETE")
-   eventflags[1] = True
-except KeyboardInterrupt as e:
-   rospy.logwarn("Skipping current mission")
-   eventflags[0] = True
-   eventflags[1] = True
-except Exception as e:
-   rospy.logerr("ERROR OCCUR IN GATE MISSION")
-   rospy.logerr(e)
-   eventflags[0] = True
-   eventflags[1] = True
+#    rospy.loginfo("Moving forward for 3 seconds")
+#    rc.movement(forward=2)
+#    time.sleep(3)
+#    rc.movement() # stop moving forward
+#    print("[INFO] GATE MISSION COMPLETE")
+#    eventflags[1] = True
+# except KeyboardInterrupt as e:
+#    rospy.logwarn("Skipping current mission")
+#    eventflags[0] = True
+#    eventflags[1] = True
+# except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN GATE MISSION")
+#    rospy.logerr(e)
+#    eventflags[0] = True
+#    eventflags[1] = True
     
 # """WP TO POLES"""
 # try:

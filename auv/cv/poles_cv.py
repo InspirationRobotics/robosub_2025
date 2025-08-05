@@ -4,7 +4,6 @@ Pole Slalom CV. Detects red poles, yaws to face it, and approaches until close.
 import cv2
 import time
 import numpy as np
-from auv.motion import robot_control
 import os
 
 class CV:
@@ -25,6 +24,7 @@ class CV:
         """
         Detect red pole using HSV, return status, bbox and mask frame
         """
+        print("Reached line 27")
         crop_bottom = 80
         height = frame.shape[0]
         frame = frame[0:height - crop_bottom, :]
@@ -44,6 +44,7 @@ class CV:
         red_mask_clean = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel)
         red_mask_clean = cv2.morphologyEx(red_mask_clean, cv2.MORPH_OPEN, kernel)
 
+        print("reached line 47")
         contours, _ = cv2.findContours(red_mask_clean, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         red_poles = []
         for cnt in contours:
@@ -54,6 +55,7 @@ class CV:
                 if aspect_ratio > 1.5:
                     red_poles.append((x, y, w, h, area))
 
+        print("reached line 53")
         if red_poles:
             red_poles.sort(key=lambda x: x[4], reverse=True)
             x, y, w, h, area = red_poles[0]
@@ -113,12 +115,16 @@ class CV:
         # Detect red pole
         detection, red_mask_clean = self.detect_red_pole(raw_frame)
         
+        print("reached line 115")
         # Calculate movement
         forward, lateral, yaw, vertical = self.centering(detection)
 
+        
+        print("reached line 120")
         # Check 10s timeout
-        if time.time() - self.prev_detect_timestamp > 10:
-            self.end = True
+        if self.prev_detect_timestamp is not None: # avoid Unsupport operant type Error
+            if time.time() - self.prev_detect_timestamp > 10:
+                self.end = True
         # #########################################
         # Visualization
         frame = raw_frame.copy()
