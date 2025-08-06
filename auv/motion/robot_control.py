@@ -453,12 +453,19 @@ class RobotControl:
             target (float): desire distance
         """
         self.dvl_sum = 0
+        dt = 0.1 # 10 Hz
         while(abs(target-self.dvl_sum)>0.3):
             delta = target - self.dvl_sum
             if delta>0:
                 self.movement(forward=2)
             else:
                 self.movement(forward=-1.5)
+            
+            # update distane traveled in body frame:
+            with self.lock:
+                self.dvl_sum += self.dvl_velocity['y'] * dt
+            
+            time.sleep(dt)
 
         self.movement() # stop motors after reaching distance
 
@@ -469,13 +476,20 @@ class RobotControl:
             target (float): desire distance
         """
         self.dvl_sum = 0
+        dt = 0.1 # 10 Hz
+
         while(abs(target-self.dvl_sum)>0.3):
             delta = target - self.dvl_sum
             if delta>0:
                 self.movement(lateral=2)
             else:
                 self.movement(lateral=-1.5)
-
+            # update distane traveled in body frame:
+            with self.lock:
+                self.dvl_sum += self.dvl_velocity['x'] * dt
+            
+            time.sleep(dt)
+            
         self.movement() # stop motors after reaching distance
         
     def move_servo(self, service: str):
