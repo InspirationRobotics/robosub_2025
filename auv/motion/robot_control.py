@@ -446,7 +446,7 @@ class RobotControl:
             rospy.loginfo(f"Going to depth {target}")
             time.sleep(1)
   
-    def go_forward_distance(self, target):
+    def go_forward_distance(self, target:float):
         """
         Go forward by a certain distance base on dvl
         Args:
@@ -465,11 +465,12 @@ class RobotControl:
             with self.lock:
                 self.dvl_sum += self.dvl_velocity['y'] * dt
             
+            rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
             time.sleep(dt)
 
         self.movement() # stop motors after reaching distance
 
-    def go_lateral_distance(self, target):
+    def go_lateral_distance(self, target:float):
         """
         Go latera by a certain distance base on dvl
         Args:
@@ -488,6 +489,7 @@ class RobotControl:
             with self.lock:
                 self.dvl_sum += self.dvl_velocity['x'] * dt
             
+            rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
             time.sleep(dt)
             
         self.movement() # stop motors after reaching distance
