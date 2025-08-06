@@ -13,7 +13,7 @@ from auv.utils import arm, disarm, deviceHelper
 rospy.init_node("Graey", anonymous = True)
 rc = robot_control.RobotControl()
 rc.set_control_mode('depth_hold')
-rc.set_absolute_z(0.7)
+rc.set_absolute_z(0.5)
 rospy.loginfo("Robot armed and set to depth 0.7m")
 rospy.loginfo("Waiting for 7 seconds before proceeding")
 time.sleep(7)
@@ -36,7 +36,7 @@ try:
 
    rospy.loginfo("Moving forward for 3 seconds")
    rc.movement(forward=2)
-   time.sleep(3)
+   time.sleep(5)
    rc.movement() # stop moving forward
    print("[INFO] GATE MISSION COMPLETE")
    eventflags[1] = True

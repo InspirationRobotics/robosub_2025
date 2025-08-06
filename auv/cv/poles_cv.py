@@ -15,6 +15,7 @@ class CV:
         self.tolerance = 40  # How centered the object should be in px
         self.config = config
         self.state = "centering"
+        self.start_time = time.time()
         self.end = False
         self.reached = False
         self.prev_detect_timestamp = None
@@ -65,7 +66,7 @@ class CV:
         }, red_mask_clean
 
     def centering(self, detection):
-        forward = 0
+        forward = 1.5
         lateral = 0
         yaw = 0
         vertical = 0
@@ -82,6 +83,7 @@ class CV:
             if abs(offset) > self.tolerance:
                 lateral = 1.0 if offset > 0 else -1.0
                 print(f"[INFO] Centering: offset={offset:.1f} → lateral={lateral}")
+                self.reached = False
             else:
                 # No lateral motion when you are within tolerance
                 lateral = 0
@@ -115,10 +117,10 @@ class CV:
         # Calculate movement
         forward, lateral, yaw, vertical = self.centering(detection)
 
-        # Check 10s timeout
-        if self.prev_detect_timestamp is not None: # avoid Unsupport operant type Error
-            if time.time() - self.prev_detect_timestamp > 10:
-                self.end = True
+        # Check for timeout
+        if time.time() - self.start_time > 45: # predicted mission timeis 30s
+            self.end = True
+            print("[INFO] Pole Slalom mission timed out.")
         # #########################################
         # Visualization
         frame = raw_frame.copy()

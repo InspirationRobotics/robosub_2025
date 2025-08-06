@@ -83,17 +83,17 @@ class PoleSlalomMission:
 
                 # move lateral right for ###
                 self.rc.movement(lateral=2)
-                time.sleep(2)
+                time.sleep(2.5)
                 self.rc.movement()
 
                 # move forward for ###
                 self.rc.movement(forward=3)
-                time.sleep(2.5)
+                time.sleep(3.0)
                 self.rc.movement()
 
                 # move lateral left for ###
                 self.rc.movement(lateral=-2)
-                time.sleep(1.5)
+                time.sleep(2.0)
                 self.rc.movement()
 
                 # Increase row count by one
