@@ -23,6 +23,8 @@ rospy.loginfo(f"Start moving forward {Fdistance} m")
 rc.go_forward_distance(Fdistance)
 rospy.loginfo(f"Moved {Fdistance} m")
 
+time.sleep(1.5)
+
 # move lateral by distance
 Ldistance = 1.0
 rospy.loginfo(f"Start moving lateral {Ldistance} m")

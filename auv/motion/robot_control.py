@@ -453,7 +453,7 @@ class RobotControl:
             target (float): desire distance
         """
         self.dvl_sum = 0
-        dt = 0.1 # 10 Hz
+        dt = 0.05 # 20 Hz
         while(abs(target-self.dvl_sum)>0.3):
             delta = target - self.dvl_sum
             if delta>0:
@@ -477,7 +477,7 @@ class RobotControl:
             target (float): desire distance
         """
         self.dvl_sum = 0
-        dt = 0.1 # 10 Hz
+        dt = 0.05 # 20 Hz
 
         while(abs(target-self.dvl_sum)>0.3):
             delta = target - self.dvl_sum
