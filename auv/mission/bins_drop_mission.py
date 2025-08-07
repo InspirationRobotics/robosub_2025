@@ -13,7 +13,7 @@ from auv.motion import robot_control
 from auv.utils import arm, disarm
 
 
-class BinsMission:
+class BinsDropMission:
     cv_files = ["bin_drop_cv"]
 
     def __init__(self, target="sawfish", **config):

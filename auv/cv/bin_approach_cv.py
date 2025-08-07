@@ -27,7 +27,7 @@ class CV:
         """
         # Camera to get the camera stream from.
         self.camera = "/auv/camera/videoOAKdRawForward"
-        self.model = "everything" # Change later once data is collected for the platform
+        self.model = "bins" # Change later once data is collected for the platform
 
         self.config = config
         self.shape = (640, 480) # maybe self.frame or self.cam_frame would be a better var name
@@ -162,9 +162,9 @@ class CV:
                     self.search_counter += 1
                     self.search_stage_one_timestamp = time.time()
                 if self.search_counter%2==1:
-                    yaw = 1
+                    yaw = 0.6
                 else:
-                    yaw = -1
+                    yaw = -0.6
             else:
             # Yaw in the direction where the bin was previously seen, or right if not seen
                 if self.search_stage_two_timestamp is None:
@@ -172,11 +172,11 @@ class CV:
                     self.search_stage_two_timestamp = time.time()
                 
                 if self.prev_offset is None:
-                    yaw = 1
+                    yaw = 0.6
                 elif self.prev_offset > 0 :
-                    yaw= 1
+                    yaw= 0.6
                 elif self.prev_offset < 0:
-                    yaw = -1
+                    yaw = -0.6
 
         if self.state == "approach":
         # If a detection exists, end search stage two and approach

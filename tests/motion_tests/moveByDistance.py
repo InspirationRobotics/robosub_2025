@@ -18,13 +18,13 @@ while abs(rc.position['z'] - 0.5)>0.1:
 rospy.loginfo("Reached depth")
 
 # move forward by distance
-Fdistance = 3.0
+Fdistance = 1.0
 rospy.loginfo(f"Start moving forward {Fdistance} m")
 rc.go_forward_distance(Fdistance)
 rospy.loginfo(f"Moved {Fdistance} m")
 
 # move lateral by distance
-Ldistance = 3.0
+Ldistance = 1.0
 rospy.loginfo(f"Start moving lateral {Ldistance} m")
 rc.go_lateral_distance(Ldistance)
 rospy.loginfo(f"Moved {Ldistance} m")

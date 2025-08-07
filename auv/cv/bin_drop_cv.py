@@ -12,7 +12,7 @@ class CV:
     """
 
     camera = "/auv/camera/videoOAKdRawBottom"  # Switches to bottom cam after approach
-    model = "everything"  # Will be replaced dynamically depending on mission param
+    model = "bins"  # Will be replaced dynamically depending on mission param
 
     # Again, add doc strings and type hints to all functions/methods
 
