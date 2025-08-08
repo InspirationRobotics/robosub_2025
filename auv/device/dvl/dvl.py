@@ -171,11 +171,17 @@ class DVL:
             hours = int(TS[1][6:8]) * 60 * 60
             t = hours + minutes + seconds + centi
 
-            # vx, vy in dvl frame
-            vx = int(BS[1]) / 1000  
+            # raw vx, vy, vz in dvl frame
+            vx = int(BS[1]) / 1000
             vy = int(BS[2]) / 1000
             vz = int(BS[3]) / 1000
 
+            # apply scale factor
+            vx *= self.dvl_scale_factor
+            vy *= self.dvl_scale_factor
+            vz *= self.dvl_scale_factor
+
+            # Apply rotation
             cos_t = np.cos(self.onyx_dvl_orientation_offset)
             sin_t = np.sin(self.onyx_dvl_orientation_offset)
 
