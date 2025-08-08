@@ -20,11 +20,11 @@ class FOG:
         self.cal_time = rospy.get_param('~cal_time', 10)
         self.cal_sum = 0
         self.cal_count = 0
-        self.integration_factor = rospy.get_param('~integration_factor', 120)
+        self.integration_factor = deviceHelper.variables.get("FOG_SCALE_FACTOR", 120)
         self.integrated_sum = 0
         self.bias = 0
         self.pub_fog = rospy.Publisher("auv/devices/fog", Float64, queue_size=10)
-        self.calibrate_at_start = rospy.get_param('~calibrate_at_start', True)
+        self.calibrate_at_start = True
 
         if self.calibrate_at_start:
             self.calibrate()
