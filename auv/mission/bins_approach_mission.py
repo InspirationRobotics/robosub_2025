@@ -33,6 +33,9 @@ class BinsApproachMission:
 
         print("[INFO] Bin Approach Mission Init")
 
+        self.init_heading = self.rc.orientation['yaw']
+        self.search_angle = 45
+        self.search_counter = 0
 
         time.sleep(1)
 
@@ -59,6 +62,8 @@ class BinsApproachMission:
             self.next_data = {}
 
             cv_data = self.data.get("bin_approach_cv", {})
+            state = cv_data.get("state", "search")
+            prev_offset = cv_data.get("prev_offset", None)
             lateral = cv_data.get("lateral", 0)
             forward = cv_data.get("forward", 0)
             yaw = cv_data.get("yaw", 0)
@@ -77,6 +82,17 @@ class BinsApproachMission:
                 time.sleep(0.7)
                 self.rc.movement(0)
                 break
+            elif state=="search":
+                # Search left and right 45 degrees for 5 times
+                if self.search_counter < 5:
+                    if self.search_counter%2==0:
+                        self.rc.go_to_heading(self.init_heading - self.search_angle)
+                    else:
+                        self.rc.go_to_heading(self.init_heading + self.search_angle)
+                else:
+                    # Enter second stage of doing 360 searching
+                    self.rc.go_to_heading(self.init_heading + 45 * (self.search_counter-5))
+
             else:
                 self.rc.movement(lateral=lateral, forward=forward, yaw=yaw, vertical=vertical)
 
