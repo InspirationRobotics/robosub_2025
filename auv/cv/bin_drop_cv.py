@@ -181,7 +181,7 @@ class CV:
 
             # Calculate the dropper center base on the target animal
             if Targets[target_animal] is not None:
-                target_x = Targets[target_animal][0][0] - (0.275/target_pixToMeter)# extract x coordinate, 0.275 is the horizontal distance the dropper is away from the camera center
+                target_x = Targets[target_animal][0][0] + (0.275/target_pixToMeter)# extract x coordinate, 0.275 is the horizontal distance the dropper is away from the camera center
             else: # calculate the target x base on other detecitons
                 if target_animal=="sawfish":
                     Other_animal = "shark"
@@ -199,9 +199,9 @@ class CV:
                             # Offset for a quarter of bin length (or half of a half)
                             # to get to the x-center of a particular side. Assumption is we're
                             # centered on the bin center (with some tolerance).
-                            target_x = Targets["bin"][0][0] + (0.1524/target_pixToMeter)  # 0.1524 is 6 inches, which is half of the poster side length
+                            target_x = Targets["bin"][0][0] + (0.1524/target_pixToMeter) + (0.275/target_pixToMeter)  # 0.1524 is 6 inches, which is half of the poster side length
                         else: 
-                            target_x = Targets["bin"][0][0] - (0.1524/target_pixToMeter)
+                            target_x = Targets["bin"][0][0] - (0.1524/target_pixToMeter) + (0.275/target_pixToMeter) # 0.275m is the offset between the camera center and dropper center
                     else:
                         # Just use the center of the bin if we don’t detect any target animal
                         target_x=Targets["bin"][0][0]
