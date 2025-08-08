@@ -16,13 +16,13 @@ from auv.utils import arm, disarm
 class BinsApproachMission:
     cv_files = ["bin_approach_cv"]
 
-    def __init__(self, target=None, **config):
+    def __init__(self, rc=None, target=None, **config):
         self.config = config
         self.data = {}
         self.next_data = {}
         self.received = False
 
-        self.rc = robot_control.RobotControl()
+        self.rc = rc
         self.cv_handler = cv_handler.CVHandler(**self.config)
 
         for file_name in self.cv_files:
@@ -70,6 +70,12 @@ class BinsApproachMission:
             if end:
                 print("[INFO] Ending Bin Approach CV")
                 self.rc.movement()
+                self.rc.movement(lateral=2)
+                time.sleep(1)
+                self.rc.movement()
+                self.rc.movement(forward=-2)
+                time.sleep(0.7)
+                self.rc.movement(0)
                 break
             else:
                 self.rc.movement(lateral=lateral, forward=forward, yaw=yaw, vertical=vertical)
@@ -86,17 +92,18 @@ class BinsApproachMission:
 
 if __name__ == "__main__":
     from auv.utils import deviceHelper
-
-    rospy.init_node("bins_approach_mission", anonymous=True)
-
+    from auv.motion import robot_control
+    rospy.init_node("bins_approach_mission")
+    robotControl = robot_control.RobotControl()
     config = deviceHelper.variables
-    config.update({
-        # "cv_dummy": ["/somepath/thisisavideo.mp4"],
-    })
+    robotControl.set_absolute_z(0.6)
+    while abs(robotControl.position['z'] - 0.6)>0.1:
+        time.sleep(1)
+    rospy.loginfo("Reached depth 0.6")
 
-    mission = BinsApproachMission(**config)
-
-    arm.arm()
+    mission = BinsApproachMission(rc=robotControl**config)
     mission.run()
     mission.cleanup()
-    disarm.disarm()
+
+    robotControl.exit()
+    rospy.loginfo("Exit mission")

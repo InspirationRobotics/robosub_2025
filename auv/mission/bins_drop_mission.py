@@ -13,7 +13,7 @@ from auv.motion import robot_control
 from auv.utils import arm, disarm
 
 
-class BinsMission:
+class BinsDropMission:
     cv_files = ["bin_drop_cv"]
 
     def __init__(self, target="sawfish", **config):
@@ -28,8 +28,9 @@ class BinsMission:
         for file_name in self.cv_files:
             self.cv_handler.start_cv(file_name, self.callback)
 
+        # time.sleep(5) # wait for the cv script to initialize
         if target is not None:
-            self.cv_handler.set_target("bins_cv", target)
+            self.cv_handler.set_target("bin_drop_cv", target)
 
         print("[INFO] Bin Approach Mission Init")
 

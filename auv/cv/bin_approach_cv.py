@@ -27,12 +27,12 @@ class CV:
         """
         # Camera to get the camera stream from.
         self.camera = "/auv/camera/videoOAKdRawForward"
-        self.model = "everything" # Change later once data is collected for the platform
+        self.model = "bins" # Change later once data is collected for the platform
 
         self.config = config
         self.shape = (640, 480) # maybe self.frame or self.cam_frame would be a better var name
-        self.x_midpoint = self.shape[0]/2
-        self.y_midpoint = self.shape[1]/2
+        self.framecenter_x = self.shape[0]/2
+        self.framecenter_y = self.shape[1]/2
 
         self.tolerance = 120 # Pixels
 
@@ -82,6 +82,17 @@ class CV:
         
         return forward, yaw
 
+    def process_detection_offset(self, detection):
+        self.target_x = (detection.xmin + detection.xmax) / 2
+        self.target_y = (detection.ymin + detection.ymax) / 2
+        self.curr_offset = self.target_x - self.framecenter_x # These var names could use some work. Both self.target_x and self.framecenter_x are technically midpoints - the former of the detection bounding box, the latter of the frame
+        self.prev_detected = True
+        self.prev_offset = self.curr_offset
+        self.state = "approach"
+        print(f"[DEBUG] self.target_x is {self.target_x}, self.target_y is {self.target_y}") # Why are we including the self.target_y here but not if there's one detection?
+
+    
+
     # Add type hints to this function
     def run(self, frame, target, detections):
         """
@@ -104,8 +115,8 @@ class CV:
         yaw = 0
         vertical = 0
 
-        target_x = None
-        target_y = None
+        self.target_x = None
+        self.target_y = None
 
         # Configure search state if there aren't detections
         if detections is None:
@@ -113,9 +124,9 @@ class CV:
         if len(detections) == 0 and self.prev_detected == False:
             self.state = "search"
         
-        # Utilize bin detections with at least 65% confidence
+        # Utilize bin detections with at least 55% confidence
         detected_list = []
-        detection_confidence = 0.65
+        detection_confidence = 0.55
         for det in detections:
             if "bin" in det.label:
                 print(f"[DEBUG] Detected {det.label} with confidence {det.confidence}")
@@ -123,32 +134,22 @@ class CV:
                     detected_list.append(det)
 
         # select the highest confidence Bin deteciton if multiple
-        offset = None
+        self.curr_offset = None
         if len(detected_list)==0:
-            offset = None
+            self.curr_offset = None
         elif len(detected_list)==1:
             self.prev_time = time.time()
             detection = detected_list[0]
-            target_x = (detection.xmin + detection.xmax) / 2
-            target_y = (detection.ymin + detection.ymax) / 2
-            offset = target_x - self.x_midpoint # These var names could use some work. Both target_x and self.x_midpoint are technically midpoints - the former of the detection bounding box, the latter of the frame
-            self.prev_detected = True
-            self.prev_offset = offset
-            self.state = "approach"
-            print(f"[DEBUG] target_x is {target_x}")
+            self.process_detection_offset(detection=detection)
+
         else:  # when there are more than one Bin detection
             # Select the detection with the highest confidence
             self.prev_time = time.time()
             detection = max(detected_list, key=lambda det: det.confidence)
-            target_x = (detection.xmin + detection.xmax) / 2 # These blocks seem to be mostly the same except for a few lines. Part of programming
-            target_y = (detection.ymin + detection.ymax) / 2 # is DRY (Don't Repeat Yourself). Consider making a helper function within the run method
-            offset = target_x - self.x_midpoint # and calling it in each of these blocks to reduce redundancy.
             detection_confidence = detection.confidence
-            self.prev_detected = True
-            self.prev_offset = offset
-            self.state = "approach"
             print(f"[DEBUG] Multiple Bins detected. Using highest confidence detection: {detection_confidence}")
-            print(f"[DEBUG] target_x is {target_x}, target_y is {target_y}") # Why are we including the target_y here but not if there's one detection?
+            self.process_detection_offset(detection=detection)
+
 
         if self.state == "search":
             # For less than two searches, yaw left at 20% for 5 seconds then yaw right at 20% for 5 seconds
@@ -162,9 +163,9 @@ class CV:
                     self.search_counter += 1
                     self.search_stage_one_timestamp = time.time()
                 if self.search_counter%2==1:
-                    yaw = 1
+                    yaw = 0.6
                 else:
-                    yaw = -1
+                    yaw = -0.6
             else:
             # Yaw in the direction where the bin was previously seen, or right if not seen
                 if self.search_stage_two_timestamp is None:
@@ -172,11 +173,11 @@ class CV:
                     self.search_stage_two_timestamp = time.time()
                 
                 if self.prev_offset is None:
-                    yaw = 1
+                    yaw = 0.6
                 elif self.prev_offset > 0 :
-                    yaw= 1
+                    yaw = 0.6
                 elif self.prev_offset < 0:
-                    yaw = -1
+                    yaw = -0.6
 
         if self.state == "approach":
         # If a detection exists, end search stage two and approach
@@ -184,8 +185,8 @@ class CV:
                 self.stage_two_end = True
                 self.search_stage_two_timestamp=time.time()
             print("[DEBUG] Approaching now!")
-            print(f"[INFO] offset is {offset}")
-            forward, yaw = self.smart_approach(offset)
+            print(f"[INFO] offset is {self.curr_offset}")
+            forward, yaw = self.smart_approach(self.curr_offset)
             
         # Check Ending
 
@@ -210,16 +211,21 @@ class CV:
 
         # If we lost the bins for two seconds in approach mode, change to search mode up to two times per
         # mission attempt and start a timer for 15 seconds.
-        if self.state=="approach" and (offset is None) and self.prev_detected == True:
-            if time.time() - self.prev_time > 2:
-                if self.switch_count <2:  # switch back to search again
-                    print(f"[DEBUG] adjust and search")
-                    self.state = "search"
-                    self.switch_count += 1
-                    self.swtich_back_time = time.time()
+        if self.state=="approach" and (self.curr_offset is None) and self.prev_detected == True:
+            lost_detection_time = time.time() - self.prev_time
+            print(f"Lost detection for {lost_detection_time} s during approaching")
+            if  lost_detection_time> 6.5:
+                # if self.switch_count <2:  # switch back to search again
+                #     print(f"[DEBUG] switch back to search state")
+                #     self.state = "search"
+                #     self.switch_count += 1
+                #     self.swtich_back_time = time.time()
 
-                else:
-                    print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
-                    self.end = True
+                # else:
+                #     print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
+                #     self.end = True
+                print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
+                self.end = True
+        
         # Continuously return motion commands, the state of the mission, and the visualized frame.
         return {"lateral": lateral, "forward": forward, "yaw": yaw, "vertical" : vertical, "end": self.end}, frame

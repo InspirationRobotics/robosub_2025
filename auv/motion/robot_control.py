@@ -12,6 +12,7 @@ from std_msgs.msg import Float64, Float32MultiArray, String
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Vector3Stamped
+from geometry_msgs.msg import TwistStamped
 import mavros_msgs.msg
 import mavros_msgs.srv
 from std_srvs.srv import Trigger
@@ -59,7 +60,7 @@ class RobotControl:
         Initialize the RobotControl class
 
         Args:
-            enable_dvl (bool): Flag to enable or disable DVL
+            debug (bool): Flag to enable or disable DVL
         """
         self.rate = rospy.Rate(20) # 10 Hz
         # Get the configuration of the devices plugged into the sub(thrusters, camera, etc.)
@@ -77,13 +78,18 @@ class RobotControl:
         
         # Establish thruster and depth publishers
         self.sub_pose       = rospy.Subscriber("/auv/state/pose", PoseStamped, self.pose_callback)  
+        self.sub_dvl        = rospy.Subscriber("/auv/devices/dvl/velocity", TwistStamped, self.dvl_callback)
         self.pub_thrusters  = rospy.Publisher("/mavros/rc/override", mavros_msgs.msg.OverrideRCIn, queue_size=10)
-        self.pub_modem     = rospy.Publisher("/auv/devices/modem/send", String, queue_size=10)
+        self.pub_modem      = rospy.Publisher("/auv/devices/modem/send", String, queue_size=10)
 
         # Create variable to store pwm when direct control
         self.direct_input = [0] * 6
         # store desire point
         self.desired_point  = {"x":None,"y":None,"z":None,"yaw":None,"pitch":None,"roll":None}
+
+        # Store dvl data and initialize dvl integration sum
+        self.dvl_velocity = {'x': None, 'y': None, 'z': None}
+        self.dvl_sum      = None
         # A set of PIDs (Proportional - Integral - Derivative) to handle the movement of the sub
         """
         PIDs work by continously computing the error between the desired setpoint (desired yaw angle, forward velocity, etc.) and the 
@@ -154,6 +160,7 @@ class RobotControl:
         self.thread.start()
 
     def pose_callback(self, msg):
+        """Callback function for ekf output"""
         self.position['x'] = msg.pose.position.x
         self.position['y'] = msg.pose.position.y
         self.position['z'] = msg.pose.position.z
@@ -162,6 +169,11 @@ class RobotControl:
         self.orientation['pitch']   = (msg.pose.orientation.y)
         self.orientation['roll']    = (msg.pose.orientation.x)
 
+    def dvl_callback(self, msg):
+        self.dvl_velocity['x'] = msg.twist.linear.x
+        self.dvl_velocity['y'] = msg.twist.linear.y
+        self.dvl_velocity['z'] = msg.twist.linear.z   
+    
     def publisherThread(self):
         """
         Publisher to publish the thruster values
@@ -434,6 +446,55 @@ class RobotControl:
             rospy.loginfo(f"Going to depth {target}")
             time.sleep(1)
   
+    def go_forward_distance(self, target:float):
+        """
+        Go forward by a certain distance base on dvl
+        Args:
+            target (float): desire distance
+        """
+        self.dvl_sum = 0
+        dt = 0.05 # 20 Hz
+        start_time = time.time()
+        while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
+            delta = target - self.dvl_sum
+            if delta>0:
+                self.movement(forward=2)
+            else:
+                self.movement(forward=-1.5)
+            
+            # update distane traveled in body frame:
+            with self.lock:
+                self.dvl_sum += self.dvl_velocity['y'] * dt
+            
+            rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
+            time.sleep(dt)
+
+        self.movement() # stop motors after reaching distance
+
+    def go_lateral_distance(self, target:float):
+        """
+        Go latera by a certain distance base on dvl
+        Args:
+            target (float): desire distance
+        """
+        self.dvl_sum = 0
+        dt = 0.05 # 20 Hz
+        start_time = time.time()
+        while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
+            delta = target - self.dvl_sum
+            if delta>0:
+                self.movement(lateral=2)
+            else:
+                self.movement(lateral=-1.5)
+            # update distane traveled in body frame:
+            with self.lock:
+                self.dvl_sum += self.dvl_velocity['x'] * dt
+            
+            rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
+            time.sleep(dt)
+            
+        self.movement() # stop motors after reaching distance
+        
     def move_servo(self, service: str):
         """Operate a servo via the maestro_server file
         Args:
@@ -530,73 +591,6 @@ class RobotControl:
         """
         self.PIDs["roll"].reset()
         self.desired_point["roll"] = np.deg2rad(roll)
-
-    def set_relative_z(self, depth):
-        """
-        Set the depth of the robot relative to the current depth
-
-        Args:
-            depth (float): Relative depth to set the robot to (-2 means up, 2 means down)
-        """
-        # Clear the PID error
-        self.PIDs["depth"].reset()
-        self.desired_point["z"].setpoint = depth + self.pose.pose.position.z
-
-    def set_relative_x(self, x):
-        """
-        Set the x position of the robot relative to the current position
-
-        Args:
-            x (float): Relative x position to set the robot to (-2 means left, 2 means right)
-        """
-        # Clear the PID error
-        self.PIDs["lateral"].reset()
-        self.desired_point["x"] = x + self.pose.pose.position.x
-
-    def set_relative_y(self, y):
-        """
-        Set the y position of the robot relative to the current position
-
-        Args:
-            y (float): Relative y position to set the robot to (-2 means left, 2 means right)
-        """
-        # Clear the PID error
-        self.PIDs["surge"].reset()
-        self.desired_point["y"] = y + self.pose.pose.position.y
-
-    def set_relative_yaw(self, yaw):
-        """
-        Set the heading of the robot relative to the current heading
-
-        Args:
-            yaw (float): Relative heading to set the robot to (-90 means CCW, 90 means CW), unit: degrees
-        """
-        # Clear the PID error
-        self.PIDs["yaw"].reset()
-        self.desired_point["yaw"] = yaw + self.orientation['yaw']
-        rospy.loginfo(f"Set desire heading to {(yaw + self.orientation['yaw'])%360}")
-
-    def set_relative_pitch(self, pitch):
-        """
-        Set the heading of the robot relative to the current heading
-
-        Args:
-            pitch (float): Relative pitch to set the robot to, unit: degrees
-        """
-        # Clear the PID error
-        self.PIDs["pitch"].reset()
-        self.desired_point["pitch"] = np.deg2rad(pitch) + self.orientation['pitch']
-
-    def set_relative_roll(self, roll):
-        """
-        Set the heading of the robot relative to the current heading
-
-        Args:
-            roll (float): Relative heading to set the robot to, unit: degrees
-        """
-        # Clear the PID error
-        self.PIDs["roll"].reset()
-        self.desired_point["roll"] = np.deg2rad(roll) + self.orientation['roll']
 
     def waypointNav(self,x,y):
         if self.mode=="depth_hold":

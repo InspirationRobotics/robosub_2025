@@ -171,6 +171,11 @@ class DVL:
             hours = int(TS[1][6:8]) * 60 * 60
             t = hours + minutes + seconds + centi
 
+            # vx, vy in dvl frame
+            vx = int(BS[1]) / 1000  
+            vy = int(BS[2]) / 1000
+            vz = int(BS[3]) / 1000
+
             cos_t = np.cos(self.onyx_dvl_orientation_offset)
             sin_t = np.sin(self.onyx_dvl_orientation_offset)
 
@@ -178,13 +183,10 @@ class DVL:
             vy_body = cos_t * vy + sin_t * vx
             # this is the only data we need
             data["time"] = t
-            # vx, vy in dvl frame
-            vx = int(BS[1]) / 1000  
-            vy = int(BS[2]) / 1000
             # convert dvl frame to onyx body frame
-            data["vx"] = cos_t * vx + sin_t * vy
-            data["vy"] = cos_t * vy - sin_t * vx  
-            data["vz"] = int(BS[3]) / 1000
+            data["vx"] = vx_body
+            data["vy"] = vy_body 
+            data["vz"] = vz
             data["valid"] = BS[4] == "A"
 
             
@@ -195,8 +197,9 @@ class DVL:
                 data = None
                 
 
-        except:
-            print("I failed")
+        except Exception as e:
+            rospy.logerr(f"Error while reading onyx dvl data")
+            rospy.logerr(e)
             data = None
             
         return data
