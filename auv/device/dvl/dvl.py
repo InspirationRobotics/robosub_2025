@@ -67,9 +67,9 @@ class DVL:
         self.current_time = None
         
         self.error = [0, 0, 0]  # accumulated error
-
+        self.dvl_scale_factor = deviceHelper.variables.get("DVL_SCALE_FACTOR", 1)
         self.vel = [0, 0, 0]  
-        self.onyx_dvl_orientation_offset = 49.55 # degrees
+        self.onyx_dvl_orientation_offset = deviceHelper.variables.get("DVL_ORIENTATION_OFFSET", 0) # degrees | need to spin ccw 49.55 degrees
         self.is_valid = False
         self.data_available = False
 
