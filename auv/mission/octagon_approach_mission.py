@@ -30,7 +30,7 @@ class OctagonApproachMission:
         self.next_data = {}  # Dictionary to store the newest data from the CV handler; this data will be merged with self.data.
         self.received = False
 
-        self.robot_control = rc
+        self.rc = rc
         self.cv_handler = cv_handler.CVHandler(**self.config)
 
         # Initialize the CV handlers; dummys are used to input a video file instead of the camera stream as data for the CV script to run on
@@ -84,20 +84,20 @@ class OctagonApproachMission:
 
             if end:
                 print("[INFO] Ending Octagon Approach CV")
-                self.robot_control.movement()
+                self.rc.movement()
                 break
             else:
-                self.robot_control.movement(lateral = lateral, forward = forward, yaw = yaw)
+                self.rc.movement(lateral = lateral, forward = forward, yaw = yaw)
 
         time.sleep(2)
         # Surfacing and resubmerging
         rospy.loginfo(f"Surfacing and resubmerging")
         for i in range(2):
             if i == False:
-                self.robot_control.set_absolute_z(0.0)
+                self.rc.set_absolute_z(0.0)
                 time.sleep(7)
             elif i == True:
-                self.robot_control.set_absolute_z(0.7)
+                self.rc.set_absolute_z(0.7)
                 time.sleep(7)
 
 
@@ -112,7 +112,7 @@ class OctagonApproachMission:
             self.cv_handler.stop_cv(file_name)
 
         # Idle the robot
-        self.robot_control.movement(lateral = 0, forward = 0, yaw = 0)
+        self.rc.movement(lateral = 0, forward = 0, yaw = 0)
         print("[INFO] Octagon approach mission terminated")
 
 

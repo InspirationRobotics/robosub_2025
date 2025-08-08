@@ -147,10 +147,6 @@ class CV:
             self.process_detection_offset(detection=detection)
 
         if self.state == "approach":
-        # If a detection exists, end search stage two and approach
-            if not self.stage_two_end:
-                self.stage_two_end = True
-                self.search_stage_two_timestamp=time.time()
             print("[DEBUG] Approaching now!")
             print(f"[INFO] offset is {self.curr_offset}")
             forward, yaw = self.smart_approach(self.curr_offset)
