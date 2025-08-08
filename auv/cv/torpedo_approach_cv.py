@@ -1,5 +1,5 @@
 """
-Octagon Approach CV. Finds the octagon, and approaches the octagon until it can no longer see it.
+Torpedo Approach CV. Finds the Torpedo, and approaches and circumnavigates to face perpendicular to the Torpedo.
 """
 
 import time
@@ -11,7 +11,7 @@ import queue
 
 class CV:
     """
-    Octagon Approach CV class. DO NOT change the name of the class, as this will mess up all of the backend files to run the CV scripts.
+    Torpedo Approach CV class. DO NOT change the name of the class, as this will mess up all of the backend files to run the CV scripts.
     """
 
     def __init__(self, **config):
@@ -27,24 +27,26 @@ class CV:
         self.model = "everything" # Change later once data is collected for the platform
 
         self.config = config
-        self.shape = (640, 480)
+        self.shape = (640, 480) 
         self.x_midpoint = self.shape[0]/2
         self.y_midpoint = self.shape[1]/2
-
+        "TODO Confirm the tolerance for the Torpedo poster "
         self.tolerance = 120 # Pixels
 
         self.prev_detected = False
         self.state = None
 
-        self.start_time = None
+        self.start_time = time.time()
         self.last_yaw = 0
         self.yaw_time_search = 2
         self.end = False
+        self.reached = False
+        self.prev_detect_timestamp = None
         self.prev_time = time.time()
-        
         self.detection_list = [] # Queue to store the detections(bool) from the ML model
-        print("[INFO] Octagon Approach CV Initialization")
+        print("[INFO] Torpedo Approach CV Initialization")
 
+    
     def update_list(self, value):
         """
         Update the detection list with the new value.
@@ -56,18 +58,24 @@ class CV:
             self.detection_list.pop(0)
         self.detection_list.append(value)
     
-    def smart_approach(self, detection_x):
+    def smart_approach(self, offset: int) -> Tuple[float, float]:
         """Function to properly yaw and move forward"""
         forward = 0
-        # Yaw cannot go below 0.5
-        if detection_x < self.x_midpoint - self.tolerance:
-            yaw = 0.75
-        elif detection_x > self.x_midpoint + self.tolerance:
-            yaw = -0.75
-        else:
+        yaw = 0
+        
+        # If the detection is centered or there is none, center it
+        if offset is None or abs(offset) < self.tolerance:
             yaw = 0
             forward = 2.0
-
+        
+        # Yaw right if detection is too far right
+        elif offset > 0:
+            yaw = 0.8
+        
+        # Yaw left if detection is too far left
+        elif offset < 0:
+            yaw = -0.8
+        
         return forward, yaw
 
     def run(self, frame, target, detections):
@@ -94,8 +102,8 @@ class CV:
         target_x = None
         target_y = None
 
-        # Find the bin if no detection is found
-        # Align with the bin and move forward (through strafe should be fine)
+        # Find the torpedo if no detection is found
+        # Align with the torpedo and move forward (through strafe and yaw should be fine)
         # If we have lost sight of the bin, then end
 
         # So we do not get a NoneType error
@@ -104,14 +112,7 @@ class CV:
         if len(detections) == 0 and self.prev_detected == False:
             self.state = "search"
         
-        if len(detections) == 0 and self.prev_detected == True and sum(self.detection_list) < 5:
-            if time.time() - self.prev_time < 2:
-                self.state = None
-                forward = 0
-            else:
-                self.end = True
-
-
+        detected_list = []
         detection_confidence = 0.65
         for detection in detections:
             if detection.label == "torpedo_target":
