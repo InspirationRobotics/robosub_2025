@@ -15,25 +15,19 @@ rc.activate_heading_control(True)
 arm.arm()
 
 # Diving down
-rc.set_absolute_z(0.5)
-while abs(rc.position['z'] - 0.5)>0.1:
+rc.set_absolute_z(0.8)
+while abs(rc.position['z'] - 0.8)>0.1:
     time.sleep(1)
 
 rospy.loginfo("Reached depth")
 
-# move forward by distance
-Fdistance = 1.9812
-rospy.loginfo(f"Start moving forward {Fdistance} m")
-rc.go_forward_distance(Fdistance)
-rospy.loginfo(f"Moved {Fdistance} m")
+time.sleep(2)
 
-time.sleep(1.5)
-
-# # move lateral by distance
-# Ldistance = 1.0
-# rospy.loginfo(f"Start moving lateral {Ldistance} m")
-# rc.go_lateral_distance(Ldistance)
-# rospy.loginfo(f"Moved {Ldistance} m")
+rc.move_servo("/auv/devices/torpedo")
+time.sleep(2)
+rc.move_servo("/auv/devices/torpedo")
+time.sleep(2)
+rc.move_servo("/auv/devices/torpedo")
 
 # Exit
 rospy.loginfo("Reached the end")

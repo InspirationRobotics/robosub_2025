@@ -84,7 +84,7 @@ class CV:
 
     def process_detection_offset(self, detection):
         self.target_x = (detection.xmin + detection.xmax) / 2
-        self.self.target_y = (detection.ymin + detection.ymax) / 2
+        self.target_y = (detection.ymin + detection.ymax) / 2
         self.curr_offset = self.target_x - self.framecenter_x # These var names could use some work. Both self.target_x and self.framecenter_x are technically midpoints - the former of the detection bounding box, the latter of the frame
         self.prev_detected = True
         self.prev_offset = self.curr_offset
@@ -214,16 +214,18 @@ class CV:
         if self.state=="approach" and (self.curr_offset is None) and self.prev_detected == True:
             lost_detection_time = time.time() - self.prev_time
             print(f"Lost detection for {lost_detection_time} s during approaching")
-            if  lost_detection_time> 2:
-                if self.switch_count <2:  # switch back to search again
-                    print(f"[DEBUG] switch back to search state")
-                    self.state = "search"
-                    self.switch_count += 1
-                    self.swtich_back_time = time.time()
+            if  lost_detection_time> 6.5:
+                # if self.switch_count <2:  # switch back to search again
+                #     print(f"[DEBUG] switch back to search state")
+                #     self.state = "search"
+                #     self.switch_count += 1
+                #     self.swtich_back_time = time.time()
 
-                else:
-                    print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
-                    self.end = True
+                # else:
+                #     print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
+                #     self.end = True
+                print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
+                self.end = True
         
         # Continuously return motion commands, the state of the mission, and the visualized frame.
         return {"lateral": lateral, "forward": forward, "yaw": yaw, "vertical" : vertical, "end": self.end}, frame

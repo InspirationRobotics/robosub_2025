@@ -39,18 +39,23 @@ rospy.loginfo("Finish initialization")
 
 """BIN MISSION"""
 try:
-   binApproach = bins_approach_mission.BinsApproachMission(rc=rc, **config)
-   binApproach.run()
-   binApproach.cleanup()
-   rospy.loginfo("BIN APPROACH MISSION FINISHED")
-   binDrop = bins_drop_mission.BinsDropMission(rc=rc, **config)
-   binDrop.run()
-   binDrop.cleanup()
-   rospy.loginfo("BIN drop MISSION FINISHED")
+    binApproach = bins_approach_mission.BinsApproachMission(rc=rc, **config)
+    binApproach.run()
+    binApproach.cleanup()
+    rospy.loginfo("BIN APPROACH MISSION FINISHED")
+    rc.move_servo("/auv/devices/dropper")
+    time.sleep(0.3)
+    rc.move_servo("/auv/devices/dropper")
+    time.sleep(0.3)
+    rc.move_servo("/auv/devices/dropper")
+#    binDrop = bins_drop_mission.BinsDropMission(rc=rc, **config)
+#    binDrop.run()
+#    binDrop.cleanup()
+    rospy.loginfo("BIN drop MISSION FINISHED")
 except Exception as e:
-   rospy.logerr("ERROR DOING BIN MISSION")
-   rospy.logerr(e)
-   pass
+    rospy.logerr("ERROR DOING BIN MISSION")
+    rospy.logerr(e)
+    pass
 
 """TORPEDO MISSION"""
 #try:
@@ -85,6 +90,8 @@ try:
 except Exception as e:
     rospy.logerr("ERROR DURING MODEM MISSION")
     rospy.logerr(e)
+
+
 print("[INFO] Mission run terminate")
 disarm.disarm()
 rc.exit()

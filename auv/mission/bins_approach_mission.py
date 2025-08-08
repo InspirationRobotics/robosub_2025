@@ -70,6 +70,12 @@ class BinsApproachMission:
             if end:
                 print("[INFO] Ending Bin Approach CV")
                 self.rc.movement()
+                self.rc.movement(lateral=2)
+                time.sleep(1)
+                self.rc.movement()
+                self.rc.movement(forward=-2)
+                time.sleep(0.7)
+                self.rc.movement(0)
                 break
             else:
                 self.rc.movement(lateral=lateral, forward=forward, yaw=yaw, vertical=vertical)

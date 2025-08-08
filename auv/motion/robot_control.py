@@ -454,7 +454,8 @@ class RobotControl:
         """
         self.dvl_sum = 0
         dt = 0.05 # 20 Hz
-        while(abs(target-self.dvl_sum)>0.3):
+        start_time = time.time()
+        while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
             delta = target - self.dvl_sum
             if delta>0:
                 self.movement(forward=2)
@@ -478,8 +479,8 @@ class RobotControl:
         """
         self.dvl_sum = 0
         dt = 0.05 # 20 Hz
-
-        while(abs(target-self.dvl_sum)>0.3):
+        start_time = time.time()
+        while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
             delta = target - self.dvl_sum
             if delta>0:
                 self.movement(lateral=2)
