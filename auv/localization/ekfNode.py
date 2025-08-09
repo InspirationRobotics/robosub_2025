@@ -101,16 +101,14 @@ class EKFNode:
         self.orientation['roll'] = msg.orientation.x
         self.orientation['pitch'] = (msg.orientation.y + 180) % 360
         # NOTE Use vectornav IMU for both Graey and Onyx before we get FOG working
-        # if self.sub=="graey":
-        #     # Only use IMU heading when we don't have FOG
-        #     self.orientation['yaw'] = msg.orientation.z  
-        self.orientation['yaw'] = msg.orientation.z 
+        if self.sub=="graey":
+            # Only use IMU heading when we don't have FOG
+            self.orientation['yaw'] = msg.orientation.z  
 
     def fog_callback(self, msg):
         # Use FOG heading instead of IMU heading
-        # NOTE Use vectornav IMU for both Graey and Onyx before we get FOG working
-        # self.orientation['yaw'] = msg.data 
-        pass
+        self.orientation['yaw'] = msg.data 
+
 
     def dvl_callback(self, msg):
         yaw = np.deg2rad(self.orientation['yaw'])
