@@ -59,7 +59,7 @@ class BinsDropMission:
             self.received = False
             self.next_data = {}
 
-            cv_data = self.data.get("bins_cv", {})
+            cv_data = self.data.get("bin_drop_cv", {})
             lateral = cv_data.get("lateral", 0)
             forward = cv_data.get("forward", 0)
             yaw = cv_data.get("yaw", 0)
@@ -67,7 +67,6 @@ class BinsDropMission:
             end = cv_data.get("end", False)
             drop = cv_data.get("drop", False)
 
-            print(f"[MOTION] Fwd: {forward}, Lat: {lateral}, Yaw: {yaw}, Vert: {vertical}")
 
             if end:
                 print("[INFO] Ending Bins CV")
@@ -78,7 +77,6 @@ class BinsDropMission:
                     self.rc.move_servo("/auv/device/dropper")
                 break
             else:
-                rospy.loginfo("rc the sub")
                 self.rc.movement(lateral=lateral, forward=forward, yaw=yaw, vertical=vertical)
 
         print("[INFO] Bins mission terminated")

@@ -48,6 +48,7 @@ class CV:
         for dect in detections:
             if "bin" in dect.label:
                 bin_detected = True
+                print(f"[INFO] {dect.label} detected")
                 if dect.label=="bin":
                     bin_detection = dect
                 elif dect.label=="bin_sawfish":
@@ -100,43 +101,45 @@ class CV:
             # That would bias the target center quite a bit. Is this your intention, or is it that as
             # the bin moves more into the frame, the target center would adjust appropriately? 
             # Chase: Correct! As it approach it will adjust appropriatedly
-            sum_x = 0
-            sum_y = 0
-            for key, value in Targets:
-                if value is not None:
-                    sum_x += value[0][0]
-                    sum_y += value[0][1]
-            average_x =  sum_x/numDetected
-            average_y = sum_y/numDetected
+            if numDetected>0:
+                sum_x = 0
+                sum_y = 0
+                for key, value in Targets.items():
+                    if value is not None:
+                        sum_x += value[0][0]
+                        sum_y += value[0][1]
+                
+                average_x =  sum_x/numDetected
+                average_y = sum_y/numDetected
 
-            # Calculate pwm base on target x,y to align frame center with
-            # target center
-            Offset_x = average_x - self.x_midpoint
-            Offset_y = average_y - self.y_midpoint
-            x_aligned = False
-            y_aligned = False
-            if abs(Offset_x) > 100:
-                if Offset_x > 0:
-                    lateral = 0.5
+                # Calculate pwm base on target x,y to align frame center with
+                # target center
+                Offset_x = average_x - self.x_midpoint
+                Offset_y = average_y - self.y_midpoint
+                x_aligned = False
+                y_aligned = False
+                if abs(Offset_x) > 100:
+                    if Offset_x > 0:
+                        lateral = 0.5
+                    else:
+                        lateral = -0.5
                 else:
-                    lateral = -0.5
-            else:
-                print("[INFO] x aligned in centering state")
-                x_aligned = True
-            
-            # NOTE: Larger y for pixels are lower in the frame (not higher)
-            if abs(Offset_y) > 100:
-                if Offset_y > 0:
-                    forward = -0.5
+                    print("[INFO] x aligned in centering state")
+                    x_aligned = True
+                
+                # NOTE: Larger y for pixels are lower in the frame (not higher)
+                if abs(Offset_y) > 100:
+                    if Offset_y > 0:
+                        forward = -0.5
+                    else:
+                        forward = 0.5
                 else:
-                    forward = 0.5
-            else:
-                print("[INFO] y aligned in centering state")
-                y_aligned = True
-            
-            if x_aligned and y_aligned:
-                print("[INFO] switching to rotating state")
-                self.state = "rotating"
+                    print("[INFO] y aligned in centering state")
+                    y_aligned = True
+                
+                if x_aligned and y_aligned:
+                    print("[INFO] switching to rotating state")
+                    self.state = "rotating"
 
         elif self.state == "rotating":  # TODO Use all three detection and check if the center_y align within tolerance
             if bin_detection is not None:  

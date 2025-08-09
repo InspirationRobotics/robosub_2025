@@ -9,7 +9,7 @@ from reaching the Octagon mission).
 import rospy
 import time
 
-from auv.mission import octagon_approach_mission, intersub_com_mission, bins_approach_mission, bins_drop_mission
+from auv.mission import bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
@@ -39,7 +39,7 @@ rospy.loginfo("Finish initialization")
 
 """BIN MISSION"""
 try:
-    binApproach = bins_approach_mission.BinsApproachMission(rc=rc, **config)
+    binApproach = bin_approach_mission.BinsApproachMission(rc=rc, **config)
     binApproach.run()
     binApproach.cleanup()
     rospy.loginfo("BIN APPROACH MISSION FINISHED")
