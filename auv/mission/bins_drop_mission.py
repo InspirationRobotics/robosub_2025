@@ -16,13 +16,13 @@ from auv.utils import arm, disarm
 class BinsDropMission:
     cv_files = ["bin_drop_cv"]
 
-    def __init__(self, target="sawfish", **config):
+    def __init__(self, rc = None, target="sawfish", **config):
         self.config = config
         self.data = {}
         self.next_data = {}
         self.received = False
 
-        self.rc = robot_control.RobotControl()
+        self.rc = rc
         self.cv_handler = cv_handler.CVHandler(**self.config)
 
         for file_name in self.cv_files:
@@ -95,15 +95,12 @@ if __name__ == "__main__":
     from auv.utils import deviceHelper
 
     rospy.init_node("bins_mission", anonymous=True)
-
+    RC = robot_control.RobotControl()
     config = deviceHelper.variables
-    config.update({
-        # "cv_dummy": ["/somepath/thisisavideo.mp4"],
-    })
 
-    mission = BinsMission(**config)
+    mission = BinsDropMission(rc=RC, **config)
 
-    arm.arm()
     mission.run()
     mission.cleanup()
-    disarm.disarm()
+
+    RC.exit()
