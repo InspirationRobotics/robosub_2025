@@ -30,18 +30,23 @@ if __name__ == "__main__":
         rospy.sleep(2)
         test_servo("/auv/device/gripper")
         rospy.sleep(2)
-        test_servo("/auv/device/dropper")
+        test_servo("/auv/device/gripper")
+        rospy.sleep(2)
+        test_servo("/auv/device/gripper")
+        rospy.sleep(2)
+        """test_servo("/auv/device/dropper")
         rospy.sleep(2)
         test_servo('/auv/device/dropper')
         rospy.sleep(2)
         test_servo('/auv/device/dropper')
-        rospy.sleep(5)
+        rospy.sleep(5) """
         """test_servo("/auv/device/torpedo")
         rospy.sleep(2)
         test_servo("/auv/device/torpedo")
         rospy.sleep(2)
         test_servo("/auv/device/torpedo")
         rospy.sleep(2)"""
+    
         # Keep node alive until shutdown
         while not rospy.is_shutdown():
             rospy.sleep(0.1)

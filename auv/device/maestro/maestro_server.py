@@ -19,7 +19,7 @@ class MaestroServer:
 
         self.torpedo_state = {"firing_first": (2, 1800), "firing_second": (2, 1000), "reload_required": (2,2300)}
         self.dropper_state = {"beginning_position": (1,1765), "dropping_first": (1, 1136), "dropping_second": (1,750), "beginning_position": (1,1765)}
-        self.gripper_state = {"static": (0, 1500), "opening": (0, 2000), "closing": (0, 1000)}
+        self.gripper_state = {"static": (0, 1734), "close_for_bottle": (0, 1359),"static": (0, 1734), "closing_for_spoon": (0, 1390), "static": (0, 1734)}
 
         self.has_launched_torpedo = False
         self.has_reloaded_torpedo = False
@@ -81,16 +81,16 @@ class MaestroServer:
         rospy.loginfo("picking up 1 item")
        
         if not self.has_picked_item:
-            self.maestro.set_pwm(*self.gripper_state["opening"])
+            self.maestro.set_pwm(*self.gripper_state["static"])
             self.has_picked_item = True
 
         elif not self.has_released_item:
-            self.maestro.set_pwm(*self.gripper_state["closing"])
+            self.maestro.set_pwm(*self.gripper_state["close_for_bottle"])
             self.has_released_item = True
 
         else:
             # reset for the next cycle
-            self.maestro.set_pwm(*self.gripper_state["static"])
+            self.maestro.set_pwm(*self.gripper_state["closing_for_spoon"])
             self.has_picked_item = False
             self.has_released_item = False
  

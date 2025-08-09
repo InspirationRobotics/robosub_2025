@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     maestro.set_pwm(0, 1656)#vo on channel 0
     print("TORPEDO 1 dropped")
-    time.sleep(8)# adjust this number for the amount of time in between dropping the markers
+    time.sleep(1)# adjust this number for the amount of time in between dropping the markers
 
 
     maestro.set_pwm(0, 1800)#Move servo on channel 0
