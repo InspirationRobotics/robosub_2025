@@ -120,9 +120,9 @@ class CV:
                 y_aligned = False
                 if abs(Offset_x) > 100:
                     if Offset_x > 0:
-                        lateral = 0.5
+                        lateral = 1.5
                     else:
-                        lateral = -0.5
+                        lateral = -1.5
                 else:
                     print("[INFO] x aligned in centering state")
                     x_aligned = True
@@ -130,9 +130,9 @@ class CV:
                 # NOTE: Larger y for pixels are lower in the frame (not higher)
                 if abs(Offset_y) > 100:
                     if Offset_y > 0:
-                        forward = -0.5
+                        forward = -1.5
                     else:
-                        forward = 0.5
+                        forward = 1.5
                 else:
                     print("[INFO] y aligned in centering state")
                     y_aligned = True
@@ -141,7 +141,7 @@ class CV:
                     print("[INFO] switching to rotating state")
                     self.state = "rotating"
 
-        elif self.state == "rotating":  # TODO Use all three detection and check if the center_y align within tolerance
+        elif self.state == "rotating" and numDetected > 0:  # TODO Use all three detection and check if the center_y align within tolerance
             if bin_detection is not None:  
                 # Shouldn't we have the length and width already from further up in the code?
                 bin_length = bin_detection.xmax - bin_detection.xmin
@@ -160,19 +160,19 @@ class CV:
                     self.state = "finetune"
                     print("[INFO] Rotated to the correct orientation, switch to centering state")
                 else:
-                    yaw = 0.6
+                    yaw = 0.7
             else:
                 # How do we know this will not result in having us facing opposite the intended orientation?
                 # Chase: as opposite doesn't really matter, we will handle that in finetune state
                 yaw = 0.75 # continuously yaw cw to check if we are in the correct orientation
 
-        elif self.state == "finetune":
+        elif self.state == "finetune" and numDetected >0:
         
             # Average out the pixToMeter factor because we can not assume that we will always have bin deteciton
             Sum_pixToMeter = 0  # m/pixel
             Counter = 0
             Sum_y = 0
-            for key, value in Targets:
+            for key, value in Targets.items():
                 if value is not None:
                     Target_y = value[0][1]
                     Sum_y += Target_y 
@@ -220,19 +220,21 @@ class CV:
             Offset_y = target_y - self.y_midpoint
             x_aligned = False
             y_aligned = False
-            if abs(Offset_x) > 100:
+            if abs(Offset_x) > 50: 
+                x_aligned = False
                 if Offset_x > 0:
-                    lateral = 0.5
+                    lateral = 1.5
                 else:
-                    lateral = -0.5
+                    lateral = -1.5
             else:
                 print("[INFO] x aligned")
                 x_aligned = True
-            if abs(Offset_y) > 100:
+            if abs(Offset_y) > 50:
+                y_aligned = False
                 if Offset_y > 0:
-                    forward = -0.5
+                    forward = -1.5
                 else:
-                    forward = 0.5
+                    forward = 1.5
             else:
                 print("[INFO] y aligned")
                 y_aligned = True

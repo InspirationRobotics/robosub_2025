@@ -119,7 +119,7 @@ if __name__ == "__main__":
     # You can also import it in a mission file outside of the package
     from auv.utils import deviceHelper
     from auv.motion import robot_control
-    rospy.init_node("torpdeo_approach_mission")
+    rospy.init_node("torpdeo_approach_mission",anonymous = True)
     robotControl = robot_control.RobotControl()
     config = deviceHelper.variables
     robotControl.set_absolute_z(0.8)
@@ -127,7 +127,7 @@ if __name__ == "__main__":
         time.sleep(1)
     rospy.loginfo("Reached depth 0.8")
 
-    mission = torpedoApproachMission(rc=robotControl**config)
+    mission = torpedoApproachMission(rc=robotControl, **config)
     mission.run()
     mission.cleanup()
 

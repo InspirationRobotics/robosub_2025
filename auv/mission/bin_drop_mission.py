@@ -67,13 +67,13 @@ class BinsDropMission:
             end = cv_data.get("end", False)
             drop = cv_data.get("drop", False)
 
-
+            rospy.loginfo(f"cv_data | {cv_data}")
             if end:
                 print("[INFO] Ending Bins CV")
                 self.rc.movement(lateral=0, forward=0, yaw=0, vertical=0)
                 if drop:
                     self.rc.move_servo("/auv/device/dropper")
-                    time.sleep(1)
+                    time.sleep(0.2)
                     self.rc.move_servo("/auv/device/dropper")
                 break
             else:
@@ -94,6 +94,7 @@ if __name__ == "__main__":
 
     rospy.init_node("bins_mission", anonymous=True)
     RC = robot_control.RobotControl()
+    RC.set_flight_mode("STABILIZE")
     config = deviceHelper.variables
 
     mission = BinsDropMission(rc=RC, **config)

@@ -1,0 +1,35 @@
+{
+    "model": {
+        "xml": "bin_octagon_main.xml",
+        "bin": "bin_octagon_main.bin"
+    },
+    "nn_config": {
+        "output_format": "detection",
+        "NN_family": "YOLO",
+        "input_size": "640x480",
+        "NN_specific_metadata": {
+            "classes": 11,
+            "coordinates": 4,
+            "anchors": [],
+            "anchor_masks": {},
+            "iou_threshold": 0.5,
+            "confidence_threshold": 0.5
+        }
+    },
+    "mappings": {
+        "labels": [
+            "bin",
+            "bin_sawfish",
+            "bin_shark",
+            "gate",
+            "gate_sawfish",
+            "gate_shark",
+            "octagon_table",
+            "path",
+            "torpedo_sawfish",
+            "torpedo_shark",
+            "torpedo_target"
+        ]
+    },
+    "version": 1
+}

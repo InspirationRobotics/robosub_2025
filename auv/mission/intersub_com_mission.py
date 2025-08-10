@@ -106,6 +106,8 @@ if __name__=="__main__":
     rospy.init_node("intersub_coms_mission", anonymous=True)
     rc = RobotControl()
     rc.set_control_mode("depth_hold")
+    rc.set_absolute_z(0.5)
+    time.sleep(10)
     mission = intersubComMission(robotControl=rc)
     mission.run()
     rc.exit()
