@@ -9,7 +9,7 @@ from reaching the Octagon mission).
 import rospy
 import time
 
-from auv.mission import octagon_approach_mission, intersub_com_mission
+from auv.mission import bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
@@ -19,8 +19,10 @@ rc = robot_control.RobotControl()
 rc.set_control_mode("depth_hold")
 config = deviceHelper.variables
 
-rc.set_absolute_z(0.5)
-time.sleep(10)
+rc.set_absolute_z(0.4)
+while abs(rc.position['z'] - 0.4)>0.1:
+    time.sleep(1)
+
 rospy.loginfo("Finish initialization")
 
 """GATE MISSION"""
@@ -36,14 +38,24 @@ rospy.loginfo("Finish initialization")
     #rospy.logerr(e)
 
 """BIN MISSION"""
-#try:
-#    pass
-#    rospy.loginfo("BIN MISSION FINISHED")
-#
-#except Exception as e:
-#    rospy.logerr("ERROR DOING BIN MISSION")
-#    rospy.logerr(e)
-#    pass
+try:
+    binApproach = bin_approach_mission.BinsApproachMission(rc=rc, **config)
+    binApproach.run()
+    binApproach.cleanup()
+    rospy.loginfo("BIN APPROACH MISSION FINISHED")
+    rc.move_servo("/auv/devices/dropper")
+    time.sleep(0.3)
+    rc.move_servo("/auv/devices/dropper")
+    time.sleep(0.3)
+    rc.move_servo("/auv/devices/dropper")
+#    binDrop = bins_drop_mission.BinsDropMission(rc=rc, **config)
+#    binDrop.run()
+#    binDrop.cleanup()
+    rospy.loginfo("BIN drop MISSION FINISHED")
+except Exception as e:
+    rospy.logerr("ERROR DOING BIN MISSION")
+    rospy.logerr(e)
+    pass
 
 """TORPEDO MISSION"""
 #try:
@@ -78,6 +90,8 @@ try:
 except Exception as e:
     rospy.logerr("ERROR DURING MODEM MISSION")
     rospy.logerr(e)
+
+
 print("[INFO] Mission run terminate")
 disarm.disarm()
 rc.exit()

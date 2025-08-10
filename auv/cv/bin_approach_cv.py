@@ -27,32 +27,32 @@ class CV:
         """
         # Camera to get the camera stream from.
         self.camera = "/auv/camera/videoOAKdRawForward"
-        self.model = "everything" # Change later once data is collected for the platform
+        self.model = "bins" # Change later once data is collected for the platform
 
         self.config = config
         self.shape = (640, 480) # maybe self.frame or self.cam_frame would be a better var name
-        self.x_midpoint = self.shape[0]/2
-        self.y_midpoint = self.shape[1]/2
+        self.framecenter_x = self.shape[0]/2
+        self.framecenter_y = self.shape[1]/2
 
         self.tolerance = 120 # Pixels
 
         self.prev_detected = False
         self.state = "search"
 
+        # Leonard: NOTE 
         # Most var names (except the last three) don't immediately give away their function, although when I looked
         # at the code it made sense. Calling a switch back from approach to search an "adjust" is a little bit quirky,
         # there may be a better name for it. A big thing in industry is not just functional, but also readable code. 
-        # Code isn't any good if the next person coming along has no idea what's happening.
-        self.swtich_back_time = None
-        self.search_counter = 0
-        self.search_stage_one_timestamp = None # store time
-        self.search_stage_two_timestamp = None # store time
+        # Code isn't any good if the next person coming along has no idea what's happening.  
+        
+        # Chase: Solved, change var name to switch_back_time
+        self.switch_back_time = None
         self.stage_two_end = False
         self.switch_count = 0
         self.end = False
         self.prev_offset = None
         self.prev_time = time.time()
-        
+        self.start_time = self.prev_time
         print("[INFO] Bin Approach CV Initialization")
     
     def smart_approach(self, offset: int) -> Tuple[float, float]:
@@ -82,7 +82,18 @@ class CV:
         
         return forward, yaw
 
-    # Add type hints to this function
+    def process_detection_offset(self, detection):
+        """A function to calculate offset if there is detection, set state to approach"""
+        self.target_x = (detection.xmin + detection.xmax) / 2
+        self.target_y = (detection.ymin + detection.ymax) / 2
+        self.curr_offset = self.target_x - self.framecenter_x # These var names could use some work. Both self.target_x and self.framecenter_x are technically midpoints - the former of the detection bounding box, the latter of the frame
+        self.prev_detected = True
+        self.prev_offset = self.curr_offset
+        self.state = "approach"
+        print(f"[DEBUG] self.target_x is {self.target_x}, self.target_y is {self.target_y}") # Why are we including the self.target_y here but not if there's one detection?
+
+    
+
     def run(self, frame, target, detections):
         """
         Run the CV script.
@@ -104,122 +115,76 @@ class CV:
         yaw = 0
         vertical = 0
 
-        target_x = None
-        target_y = None
+        self.target_x = None
+        self.target_y = None
 
         # Configure search state if there aren't detections
         if detections is None:
             detections = []
-        if len(detections) == 0 and self.prev_detected == False:
-            self.state = "search"
         
-        # Utilize bin detections with at least 65% confidence
+        # Utilize bin detections with at least 55% confidence
         detected_list = []
-        detection_confidence = 0.65
+        detection_confidence = 0.55
         for det in detections:
             if "bin" in det.label:
                 print(f"[DEBUG] Detected {det.label} with confidence {det.confidence}")
                 if det.confidence > detection_confidence:
                     detected_list.append(det)
 
-        # select the highest confidence Bin deteciton if multiple
-        offset = None
+        self.curr_offset = None
         if len(detected_list)==0:
-            offset = None
+            self.curr_offset = None
         elif len(detected_list)==1:
             self.prev_time = time.time()
             detection = detected_list[0]
-            target_x = (detection.xmin + detection.xmax) / 2
-            target_y = (detection.ymin + detection.ymax) / 2
-            offset = target_x - self.x_midpoint # These var names could use some work. Both target_x and self.x_midpoint are technically midpoints - the former of the detection bounding box, the latter of the frame
-            self.prev_detected = True
-            self.prev_offset = offset
-            self.state = "approach"
-            print(f"[DEBUG] target_x is {target_x}")
-        else:  # when there are more than one Bin detection
-            # Select the detection with the highest confidence
+            self.process_detection_offset(detection=detection)
+        else: 
+            # select the highest confidence Bin deteciton if multiple
             self.prev_time = time.time()
             detection = max(detected_list, key=lambda det: det.confidence)
-            target_x = (detection.xmin + detection.xmax) / 2 # These blocks seem to be mostly the same except for a few lines. Part of programming
-            target_y = (detection.ymin + detection.ymax) / 2 # is DRY (Don't Repeat Yourself). Consider making a helper function within the run method
-            offset = target_x - self.x_midpoint # and calling it in each of these blocks to reduce redundancy.
             detection_confidence = detection.confidence
-            self.prev_detected = True
-            self.prev_offset = offset
-            self.state = "approach"
             print(f"[DEBUG] Multiple Bins detected. Using highest confidence detection: {detection_confidence}")
-            print(f"[DEBUG] target_x is {target_x}, target_y is {target_y}") # Why are we including the target_y here but not if there's one detection?
-
-        if self.state == "search":
-            # For less than two searches, yaw left at 20% for 5 seconds then yaw right at 20% for 5 seconds
-            # This program will search left for a certain number of degrees then search right
-            if self.search_counter<=2:
-                if self.search_stage_one_timestamp is None:
-                    print("[DEBUG] Searching in stage 1")
-                    self.search_stage_one_timestamp = time.time()
-                if time.time()-self.search_stage_one_timestamp > 5 * (self.search_counter + 1):
-                    print(f"[DEBUG] Searching in stage one, counter is {self.search_counter}")
-                    self.search_counter += 1
-                    self.search_stage_one_timestamp = time.time()
-                if self.search_counter%2==1:
-                    yaw = 1
-                else:
-                    yaw = -1
-            else:
-            # Yaw in the direction where the bin was previously seen, or right if not seen
-                if self.search_stage_two_timestamp is None:
-                    print(f"[DEBUG] Searching in stage two")
-                    self.search_stage_two_timestamp = time.time()
-                
-                if self.prev_offset is None:
-                    yaw = 1
-                elif self.prev_offset > 0 :
-                    yaw= 1
-                elif self.prev_offset < 0:
-                    yaw = -1
+            self.process_detection_offset(detection=detection)
 
         if self.state == "approach":
-        # If a detection exists, end search stage two and approach
-            if not self.stage_two_end:
-                self.stage_two_end = True
-                self.search_stage_two_timestamp=time.time()
             print("[DEBUG] Approaching now!")
-            print(f"[INFO] offset is {offset}")
-            forward, yaw = self.smart_approach(offset)
+            print(f"[INFO] offset is {self.curr_offset}")
+            forward, yaw = self.smart_approach(self.curr_offset)
             
         # Check Ending
 
-        # I don't see any place in the script where self.prev_detected is set to None. A quick test 
-        # reveals False is not None. You need a better condition since at the present state, the script will never end.
-
-        # Also, what if we've made it over the bins in less than 30 seconds after search_stage_two begins? Substitude self.prev_detected with self.prev_offset
-        if self.state=="search" and self.prev_offset is None and self.search_stage_two_timestamp is not None and time.time()-self.search_stage_two_timestamp > 30:
-           # when we had went through stage one and time out for 30 seconds
-           print(f"[DEBUG] time out in searching")
-           self.end = True
+        # Ending 1: Total Misison Time Out
+        if time.time() - self.start_time > 120: # Arbitary set to 120 s for now, need to see what's the estimated mission time including searching
+            self.end = True
 
         # End the script if we've lost the bins and then was searching for 15 seconds. This should result in
         # yawing for 15 seconds for a full 360 degrees. In theory, it should work if we're on top of the bins
         # (meaning that we won't find it). In practice, the model needs to be robust enough to prevent false positives.
         # Also, what if we are close to (but not on top of) the bins so that it's out of the FOV? I'll need to inspect
         # the drop script to see if you account for that.
-
-        if self.state=="search" and self.prev_detected: # you are in adjust search mode when you had detection but in search mode again
-            if time.time() - self.swtich_back_time > 15:
+        
+        # Ending 2: Lost target durnig approaching and can't pick up detection again (Only when we have the ability to search again after lost target during approaching)
+        if self.state=="search" and self.prev_detected:
+            if time.time() - self.switch_back_time > 15:
                 self.end = True
 
-        # If we lost the bins for two seconds in approach mode, change to search mode up to two times per
-        # mission attempt and start a timer for 15 seconds.
-        if self.state=="approach" and (offset is None) and self.prev_detected == True:
-            if time.time() - self.prev_time > 2:
-                if self.switch_count <2:  # switch back to search again
-                    print(f"[DEBUG] adjust and search")
-                    self.state = "search"
-                    self.switch_count += 1
-                    self.swtich_back_time = time.time()
+        # Ending 3: Lost target for 6.5 s continuously, either end the mission directly or switch back to search state
+        if self.state=="approach" and (self.curr_offset is None) and self.prev_detected == True:
+            lost_detection_time = time.time() - self.prev_time
+            print(f"Lost detection for {lost_detection_time} s during approaching")
+            if  lost_detection_time> 6.5:
+                """Uncomment the following code if you want to have the ability to search again after lost target during approaching"""
+                # if self.switch_count <2:  # switch back to search again
+                #     print(f"[DEBUG] switch back to search state")
+                #     self.state = "search"
+                #     self.switch_count += 1
+                #     self.switch_back_time = time.time()
 
-                else:
-                    print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
-                    self.end = True
+                # else:
+                #     print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
+                #     self.end = True
+                print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
+                self.end = True
+        
         # Continuously return motion commands, the state of the mission, and the visualized frame.
-        return {"lateral": lateral, "forward": forward, "yaw": yaw, "vertical" : vertical, "end": self.end}, frame
+        return {"state": self.state, "prev_offset": self.prev_offset,"lateral": lateral, "forward": forward, "yaw": yaw, "vertical" : vertical, "end": self.end}, frame

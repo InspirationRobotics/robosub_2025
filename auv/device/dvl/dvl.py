@@ -67,9 +67,9 @@ class DVL:
         self.current_time = None
         
         self.error = [0, 0, 0]  # accumulated error
-
+        self.dvl_scale_factor = deviceHelper.variables.get("DVL_SCALE_FACTOR", 1)
         self.vel = [0, 0, 0]  
-        self.onyx_dvl_orientation_offset = 49.55 # degrees
+        self.onyx_dvl_orientation_offset = deviceHelper.variables.get("DVL_ORIENTATION_OFFSET", 0) # degrees | need to spin ccw 49.55 degrees
         self.is_valid = False
         self.data_available = False
 
@@ -171,6 +171,17 @@ class DVL:
             hours = int(TS[1][6:8]) * 60 * 60
             t = hours + minutes + seconds + centi
 
+            # raw vx, vy, vz in dvl frame
+            vx = int(BS[1]) / 1000
+            vy = int(BS[2]) / 1000
+            vz = int(BS[3]) / 1000
+
+            # apply scale factor
+            vx *= self.dvl_scale_factor
+            vy *= self.dvl_scale_factor
+            vz *= self.dvl_scale_factor
+
+            # Apply rotation
             cos_t = np.cos(self.onyx_dvl_orientation_offset)
             sin_t = np.sin(self.onyx_dvl_orientation_offset)
 
@@ -178,13 +189,10 @@ class DVL:
             vy_body = cos_t * vy + sin_t * vx
             # this is the only data we need
             data["time"] = t
-            # vx, vy in dvl frame
-            vx = int(BS[1]) / 1000  
-            vy = int(BS[2]) / 1000
             # convert dvl frame to onyx body frame
-            data["vx"] = cos_t * vx + sin_t * vy
-            data["vy"] = cos_t * vy - sin_t * vx  
-            data["vz"] = int(BS[3]) / 1000
+            data["vx"] = vx_body
+            data["vy"] = vy_body 
+            data["vz"] = vz
             data["valid"] = BS[4] == "A"
 
             
@@ -195,8 +203,9 @@ class DVL:
                 data = None
                 
 
-        except:
-            print("I failed")
+        except Exception as e:
+            rospy.logerr(f"Error while reading onyx dvl data")
+            rospy.logerr(e)
             data = None
             
         return data

@@ -19,13 +19,15 @@ class MaestroServer:
 
         self.torpedo_state = {"firing_first": (2, 1800), "firing_second": (2, 1000), "reload_required": (2,2300)}
         self.dropper_state = {"beginning_position": (1,1765), "dropping_first": (1, 1136), "dropping_second": (1,750), "beginning_position": (1,1765)}
-        self.gripper_state = {"static": (0, 1500), "opening": (0, 1550), "closing": (0, 1450)}
+        self.gripper_state = {"static": (0, 1672), "opening": (0, 1672), "closing": (0, 1141)}
 
         self.has_launched_torpedo = False
         self.has_reloaded_torpedo = False
 
         self.has_dropped1_marker = False
         self.has_dropped2_marker = False
+
+        self.gripper_closed = False
 
         self.dropperService = rospy.Service('/auv/devices/dropper', Trigger, self.dropperCallback)
         self.gripperService = rospy.Service('/auv/devices/gripper', Trigger, self.gripperCallback)
@@ -56,17 +58,6 @@ class MaestroServer:
             self.has_dropped1_marker = False
             self.has_dropped2_marker = False
 
-        """self.maestro.set_pwm(0,1765)  # Move servo on channel 0
-        time.sleep(1.0)
-        self.maestro.set_pwm(0,1136)  # Move servo on channel 0
-        print("marker 1 dropped")
-        time.sleep(2.0) # adjust this number for the amount of time
-        self.maestro.set_pwm(0,750) # Move servo on channel 0
-        print("marker 2 dropped")
-        time.sleep(1.0)
-        self.maestro.set_pwm(0,1765)  # Move servo on channel 0
-        time.sleep(1)
-        """
 
         return TriggerResponse(
             success=True,
@@ -88,18 +79,18 @@ class MaestroServer:
                 self.maestro.set_pwm(*self.gripper_state[state])
                 time.sleep(0.05)
 
-        # Open gripper
-        gripper_state("opening")
-        
-        # Wait for 0.5 secs
-        gripper_state("static")
-
-        # Close gripper
-        gripper_state("closing")
+        if self.gripper_closed:
+            # Open gripper
+            gripper_state("opening")
+            self.gripper_closed = not self.gripper_closed
+        else:
+            # Close gripper
+            gripper_state("closing")
+            self.gripper_closed = not self.gripper_closed
 
         return TriggerResponse(
             success=True,
-            message="Triggered successfully!"
+            message="Gripper Triggered successfully!"
         )
 
 

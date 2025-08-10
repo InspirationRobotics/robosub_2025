@@ -1,6 +1,5 @@
 import time
 import rospy
-print("import rc")
 from auv.motion.robot_control import RobotControl
 
 rospy.loginfo("Starting modem test script...")
@@ -11,8 +10,7 @@ time.sleep(2)
 rospy.loginfo("Initialized robot control")
 
 # Send message
-
-rc.send_modem(addr="020",movement="ROLL")
+rc.send_modem(addr="010",movement="ROLL")
 rospy.loginfo(f"Sent message ")
 time.sleep(1)
 

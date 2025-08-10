@@ -12,7 +12,7 @@ class CV:
     """
 
     camera = "/auv/camera/videoOAKdRawBottom"  # Switches to bottom cam after approach
-    model = "everything"  # Will be replaced dynamically depending on mission param
+    model = "bins"  # Will be replaced dynamically depending on mission param
 
     # Again, add doc strings and type hints to all functions/methods
 
@@ -48,6 +48,7 @@ class CV:
         for dect in detections:
             if "bin" in dect.label:
                 bin_detected = True
+                print(f"[INFO] {dect.label} detected")
                 if dect.label=="bin":
                     bin_detection = dect
                 elif dect.label=="bin_sawfish":
@@ -100,45 +101,47 @@ class CV:
             # That would bias the target center quite a bit. Is this your intention, or is it that as
             # the bin moves more into the frame, the target center would adjust appropriately? 
             # Chase: Correct! As it approach it will adjust appropriatedly
-            sum_x = 0
-            sum_y = 0
-            for key, value in Targets:
-                if value is not None:
-                    sum_x += value[0][0]
-                    sum_y += value[0][1]
-            average_x =  sum_x/numDetected
-            average_y = sum_y/numDetected
+            if numDetected>0:
+                sum_x = 0
+                sum_y = 0
+                for key, value in Targets.items():
+                    if value is not None:
+                        sum_x += value[0][0]
+                        sum_y += value[0][1]
+                
+                average_x =  sum_x/numDetected
+                average_y = sum_y/numDetected
 
-            # Calculate pwm base on target x,y to align frame center with
-            # target center
-            Offset_x = average_x - self.x_midpoint
-            Offset_y = average_y - self.y_midpoint
-            x_aligned = False
-            y_aligned = False
-            if abs(Offset_x) > 100:
-                if Offset_x > 0:
-                    lateral = 0.5
+                # Calculate pwm base on target x,y to align frame center with
+                # target center
+                Offset_x = average_x - self.x_midpoint
+                Offset_y = average_y - self.y_midpoint
+                x_aligned = False
+                y_aligned = False
+                if abs(Offset_x) > 100:
+                    if Offset_x > 0:
+                        lateral = 1.5
+                    else:
+                        lateral = -1.5
                 else:
-                    lateral = -0.5
-            else:
-                print("[INFO] x aligned in centering state")
-                x_aligned = True
-            
-            # NOTE: Larger y for pixels are lower in the frame (not higher)
-            if abs(Offset_y) > 100:
-                if Offset_y > 0:
-                    forward = -0.5
+                    print("[INFO] x aligned in centering state")
+                    x_aligned = True
+                
+                # NOTE: Larger y for pixels are lower in the frame (not higher)
+                if abs(Offset_y) > 100:
+                    if Offset_y > 0:
+                        forward = -1.5
+                    else:
+                        forward = 1.5
                 else:
-                    forward = 0.5
-            else:
-                print("[INFO] y aligned in centering state")
-                y_aligned = True
-            
-            if x_aligned and y_aligned:
-                print("[INFO] switching to rotating state")
-                self.state = "rotating"
+                    print("[INFO] y aligned in centering state")
+                    y_aligned = True
+                
+                if x_aligned and y_aligned:
+                    print("[INFO] switching to rotating state")
+                    self.state = "rotating"
 
-        elif self.state == "rotating":  # TODO Use all three detection and check if the center_y align within tolerance
+        elif self.state == "rotating" and numDetected > 0:  # TODO Use all three detection and check if the center_y align within tolerance
             if bin_detection is not None:  
                 # Shouldn't we have the length and width already from further up in the code?
                 bin_length = bin_detection.xmax - bin_detection.xmin
@@ -157,19 +160,19 @@ class CV:
                     self.state = "finetune"
                     print("[INFO] Rotated to the correct orientation, switch to centering state")
                 else:
-                    yaw = 0.6
+                    yaw = 0.7
             else:
                 # How do we know this will not result in having us facing opposite the intended orientation?
                 # Chase: as opposite doesn't really matter, we will handle that in finetune state
                 yaw = 0.75 # continuously yaw cw to check if we are in the correct orientation
 
-        elif self.state == "finetune":
+        elif self.state == "finetune" and numDetected >0:
         
             # Average out the pixToMeter factor because we can not assume that we will always have bin deteciton
             Sum_pixToMeter = 0  # m/pixel
             Counter = 0
             Sum_y = 0
-            for key, value in Targets:
+            for key, value in Targets.items():
                 if value is not None:
                     Target_y = value[0][1]
                     Sum_y += Target_y 
@@ -181,7 +184,7 @@ class CV:
 
             # Calculate the dropper center base on the target animal
             if Targets[target_animal] is not None:
-                target_x = Targets[target_animal][0][0] - (0.275/target_pixToMeter)# extract x coordinate, 0.275 is the horizontal distance the dropper is away from the camera center
+                target_x = Targets[target_animal][0][0] + (0.275/target_pixToMeter)# extract x coordinate, 0.275 is the horizontal distance the dropper is away from the camera center
             else: # calculate the target x base on other detecitons
                 if target_animal=="sawfish":
                     Other_animal = "shark"
@@ -199,9 +202,9 @@ class CV:
                             # Offset for a quarter of bin length (or half of a half)
                             # to get to the x-center of a particular side. Assumption is we're
                             # centered on the bin center (with some tolerance).
-                            target_x = Targets["bin"][0][0] + (0.1524/target_pixToMeter)  # 0.1524 is 6 inches, which is half of the poster side length
+                            target_x = Targets["bin"][0][0] + (0.1524/target_pixToMeter) + (0.275/target_pixToMeter)  # 0.1524 is 6 inches, which is half of the poster side length
                         else: 
-                            target_x = Targets["bin"][0][0] - (0.1524/target_pixToMeter)
+                            target_x = Targets["bin"][0][0] - (0.1524/target_pixToMeter) + (0.275/target_pixToMeter) # 0.275m is the offset between the camera center and dropper center
                     else:
                         # Just use the center of the bin if we don’t detect any target animal
                         target_x=Targets["bin"][0][0]
@@ -217,19 +220,21 @@ class CV:
             Offset_y = target_y - self.y_midpoint
             x_aligned = False
             y_aligned = False
-            if abs(Offset_x) > 100:
+            if abs(Offset_x) > 50: 
+                x_aligned = False
                 if Offset_x > 0:
-                    lateral = 0.5
+                    lateral = 1.5
                 else:
-                    lateral = -0.5
+                    lateral = -1.5
             else:
                 print("[INFO] x aligned")
                 x_aligned = True
-            if abs(Offset_y) > 100:
+            if abs(Offset_y) > 50:
+                y_aligned = False
                 if Offset_y > 0:
-                    forward = -0.5
+                    forward = -1.5
                 else:
-                    forward = 0.5
+                    forward = 1.5
             else:
                 print("[INFO] y aligned")
                 y_aligned = True
