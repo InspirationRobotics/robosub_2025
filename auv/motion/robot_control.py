@@ -443,7 +443,7 @@ class RobotControl:
     def go_to_depth(self, target):
         self.set_absolute_z(target)
         while abs(target - self.position['z']) > 0.1:
-            rospy.loginfo(f"Going to depth {target}")
+            rospy.loginfo(f"Going to depth: {target} | current depth: {self.position['z']}")
             time.sleep(1)
   
     def go_forward_distance(self, target:float):
@@ -564,8 +564,7 @@ class RobotControl:
 
     def set_absolute_yaw(self, yaw:float):
         """
-        Set the heading of the robot
-
+        Set the heading of the robot, this method only works when you activate heading control
         Args:
             yaw (float): robot desired yaw angle, unit: degrees
         """

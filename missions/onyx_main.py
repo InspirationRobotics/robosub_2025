@@ -9,7 +9,7 @@ from reaching the Octagon mission).
 import rospy
 import time
 
-from auv.mission import bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission
+from auv.mission import bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, torpedo_approach_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
@@ -19,6 +19,7 @@ rc = robot_control.RobotControl()
 rc.set_control_mode("depth_hold")
 config = deviceHelper.variables
 
+# Dive down to desire depth
 rc.set_absolute_z(0.4)
 while abs(rc.position['z'] - 0.4)>0.1:
     time.sleep(1)
@@ -55,31 +56,34 @@ try:
 except Exception as e:
     rospy.logerr("ERROR DOING BIN MISSION")
     rospy.logerr(e)
-    pass
 
 """TORPEDO MISSION"""
-#try:
-#    pass
-#    rospy.loginfo("TORPEDO MISSION FINISHED")
-#except Exception as e:
-#    rospy.logerr("ERROR DOING TORPEDO MISSION")
-#    rospy.logerr(e)
-#    pass
+try:
+    torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
+    torpedoApproach.run()
+    torpedoApproach.cleanup()
+    rc.move_servo("/auv/devices/torpedo")
+    time.sleep(0.3)
+    rc.move_servo("/auv/devices/torpedo")
+    time.sleep(0.3)
+    rc.move_servo("/auv/devices/torpedo")
+    rospy.loginfo("TORPEDO MISSION FINISHED")
+except Exception as e:
+    rospy.logerr("ERROR DOING TORPEDO MISSION")
+    rospy.logerr(e)
 
 
 """OCTAGON MISSION"""
-#try:
-#    octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
-#    time.sleep(2)
-#    octagon.run()
-#    octagon.cleanup()
-#    rospy.loginfo("OCTAGON MISSION FINISHED")
-#except Exception as e:
-#    rospy.logerr("ERROR DOING OCTAGON MISSION")
-#    rospy.logerr(e)
-#    octagon.cleanup()
-#
-#time.sleep(1.0)
+try:
+   octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
+   time.sleep(2)
+   octagon.run()
+   octagon.cleanup()
+   rospy.loginfo("OCTAGON MISSION FINISHED")
+except Exception as e:
+   rospy.logerr("ERROR DOING OCTAGON MISSION")
+   rospy.logerr(e)
+
 
 
 """MODEMS + ROLL"""
