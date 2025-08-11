@@ -425,11 +425,12 @@ class RobotControl:
         target = (target) % 360
         print(f"[INFO] Setting heading to {target}")
         self.prev_error = None
-        while not rospy.is_shutdown():
+        start_time = time.time()
+        while not rospy.is_shutdown() and time.time() - start_time < 30: # 30s timeout for this loop
 
             error = heading_error(self.orientation['yaw'], target)
 
-            output = min(self.PIDs["yaw"](-error / 180),0.5) # make sure the output is greater than 0.5 for the thrusters to even move
+            output = min(self.PIDs["yaw"](-error / 180),0.6) # make sure the output is greater than 0.5 for the thrusters to even move
 
             if abs(error) <= 3:
                 print("[INFO] Heading reached")
@@ -469,7 +470,16 @@ class RobotControl:
             rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
             time.sleep(dt)
 
-        self.movement() # stop motors after reaching distance
+        # stop motors after reaching distance
+        self.movement()
+
+        # Push back funciton
+        if target>0:
+            self.movement(forward=-2)
+        else:
+            self.movement(forward=2)
+        time.sleep(0.6)
+        self.movement()
 
     def go_lateral_distance(self, target:float):
         """
@@ -493,7 +503,16 @@ class RobotControl:
             rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
             time.sleep(dt)
             
-        self.movement() # stop motors after reaching distance
+        # stop motors after reaching distance
+        self.movement() 
+
+        # Push back funciton
+        if target>0:
+            self.movement(lateral=-1.5)
+        else:
+            self.movement(lateral= 1.5)
+        time.sleep(0.6)
+        self.movement()
         
     def move_servo(self, service: str):
         """Operate a servo via the maestro_server file
@@ -592,36 +611,27 @@ class RobotControl:
         self.desired_point["roll"] = np.deg2rad(roll)
 
     def waypointNav(self,x,y):
+        """Navigate to a global waypoint in x, y, deactivate heading control"""
         if self.mode=="depth_hold":
-            pre_heading_control = self.heading_control
-            self.heading_control = False
-            reached = False
-            
+            self.activate_heading_control(False)            
             try:
-                rospy.loginfo("Waypoint loop starting")
-                while not reached and not rospy.is_shutdown():
-                    with self.lock:
-                        dx = x - self.position['x']
-                        dy = y - self.position['y']
-                    D = get_norm(dx,dy)
-                    if D < 1:
-                        reached = True
-                        rospy.loginfo("Reach waypoint or got interupted")
-                    current_heading = self.orientation['yaw'] % 360
-                    target_heading  = get_heading_from_coords(dx,dy)
-                    yaw_error = heading_error(current_heading, target_heading)
-                    yaw_pwm = self.PIDs["yaw"]( - yaw_error / 180)
-                    surge_pwm = max(min(D/5.0,1) * 3,0.5)
-
-                    rospy.loginfo(f"distance away: {D}")
-                    rospy.loginfo(f"yaw pwm: {yaw_pwm}, forward pwm: {surge_pwm}")
-                    self.movement(yaw=yaw_pwm,forward=surge_pwm)
-                    time.sleep(0.1)
-                
-                # Restore previous heading control
-                self.heading_control = pre_heading_control
-            except KeyboardInterrupt as e:
-                reached = True
+                rospy.loginfo(f"Moving to {(x,y)}")
+                with self.lock:
+                    dx = x - self.position['x']
+                    dy = y - self.position['y']
+                D = get_norm(dx,dy)
+                target_heading  = get_heading_from_coords(dx,dy)
+                rospy.loginfo(f"Going to heading {target_heading} degrees")
+                self.go_to_heading(target_heading)
+                self.set_absolute_yaw(target_heading)
+                self.activate_heading_control(True)
+                rospy.loginfo(f"Heading reached, going forward {D} m")
+                self.go_forward_distance(D)
+                self.activate_heading_control(False)
+                rospy.loginfo(f"Reached {(x,y)}")
+                time.sleep(0.1)
+            except Exception as e:
+                rospy.loginfo("Waypoint navigation interupted")
 
     def reset(self):
         for key, pid in self.PIDs.items():
