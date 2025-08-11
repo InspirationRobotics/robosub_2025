@@ -30,10 +30,7 @@ try:
    # set event flag for coin toss mission to True
    eventflags[0] = True
    
-   # (half of the 9.3 m pool) --> 15.25591 ft
-   # so we'll move 18 feet to pass through the gate
-   
-   gate_forward_distance = 5.4864 # m
+   gate_forward_distance = 4.572 # m
    rospy.loginfo(f"Start moving forward {gate_forward_distance} m")
    rc.go_forward_distance(gate_forward_distance)
    rospy.loginfo(f"Moved {gate_forward_distance} m")

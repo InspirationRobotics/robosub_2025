@@ -20,7 +20,6 @@ OUTPUT=$(/usr/bin/python3 /home/inspiration/auv/auv/utils/deviceHelper.py)
 
 echo "Found pixhawk on "${OUTPUT}
 screen -dmS roscore bash -c "source /opt/ros/$DISTRO/setup.bash ; roscore"
-screen -dmS mavros bash -c "source /opt/ros/$DISTRO/setup.bash ; sleep 5 ; roslaunch --wait mavros apm.launch fcu_url:=$OUTPUT"
+screen -dmS mavros bash -c "source /opt/ros/$DISTRO/setup.bash ; sleep 5 ; roslaunch --wait mavros px4.launch fcu_url:=$OUTPUT"
 screen -dmS cams bash -c "sleep 10 ; /usr/bin/python3 /home/inspiration/auv/auv/device/camsVersatile.py"
-screen -dmS killswitch bash -c "sleep 10 ; /usr/bin/python3 /home/inspiration/auv/auv/utils/gShutdown.py"
 echo "Done"
