@@ -109,9 +109,9 @@ class DVL:
                 # In Graey, x-axis is forward and y-axis is lateral,
                 # to be consistent w/ Onyx we will switch them here
                 self.graey_data["time"] += float(line["time"]) / 1000
-                self.graey_data["vx"] = float(line["vy"])
-                self.graey_data["vy"] = float(line["vx"])
-                self.graey_data["vz"] = float(line["vz"])
+                self.graey_data["vx"] = float(line["vy"]) * self.dvl_scale_factor
+                self.graey_data["vy"] = float(line["vx"]) * self.dvl_scale_factor
+                self.graey_data["vz"] = float(line["vz"]) * self.dvl_scale_factor
                 self.graey_data["error"] = float(line["fom"])
                 self.graey_data["valid"] = line["velocity_valid"]
                 return self.graey_data
