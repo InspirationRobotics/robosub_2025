@@ -13,32 +13,33 @@ from auv.utils import arm, disarm, deviceHelper
 rospy.init_node("Graey", anonymous = True)
 rc = robot_control.RobotControl()
 rc.set_control_mode('depth_hold')
-rc.set_absolute_z(0.5)
-rospy.loginfo("Robot armed and set to depth 0.7m")
-rospy.loginfo("Waiting for 7 seconds before proceeding")
-time.sleep(7)
+rc.go_to_depth(0.5)
+rospy.loginfo("Robot armed and set to depth 0.5 m")
 gate_heading = 0 # CALIBRATE EACH TIME 
+return_heading = 180
 config = deviceHelper.variables
 eventflags = [False,False,False,False,False]
 
 """COINT TOSS + GATE MISSION"""
 try:
-   rc.activate_heading_control(activate=True)
-   rc.set_absolute_yaw(gate_heading) # Set deire heaidng
-
-   # wait until robot reach heaidng within 2 degrees error
-   # while abs(gate_heading-rc.orientation['yaw']) > 2: # 2 degrees tolerance
-   #    time.sleep(1)
-   rc.go_to_heading(0)
-   
+   rc.go_to_heading(gate_heading)
+   rc.activate_heading_control(True)
+   rc.set_absolute_yaw(gate_heading)
    rospy.loginfo("Robot heading set to gate heading")
+   
+   # set event flag for coin toss mission to True
    eventflags[0] = True
-
-   rospy.loginfo("Moving forward for 3 seconds")
-   rc.movement(forward=2)
-   time.sleep(5)
-   rc.movement() # stop moving forward
+   
+   # (half of the 9.3 m pool) --> 15.25591 ft
+   # so we'll move 18 feet to pass through the gate
+   
+   gate_forward_distance = 5.4864 # m
+   rospy.loginfo(f"Start moving forward {gate_forward_distance} m")
+   rc.go_forward_distance(gate_forward_distance)
+   rospy.loginfo(f"Moved {gate_forward_distance} m")
+   
    print("[INFO] GATE MISSION COMPLETE")
+   # set event flag for gate mission to True
    eventflags[1] = True
 except KeyboardInterrupt as e:
    rospy.logwarn("Skipping current mission")
@@ -49,17 +50,6 @@ except Exception as e:
    rospy.logerr(e)
    eventflags[0] = True
    eventflags[1] = True
-    
-# """WP TO POLES"""
-# try:
-#     # TODO consider the gate has an angle with the poles
-#     rospy.loginfo("Moving right for 6 seconds")
-#     rc.movement(lateral=2)
-#     time.sleep(6)
-#     rc.movement()
-# except Exception as e:
-#     rospy.logerr("ERROR OCCUR IN WP TO POLES")
-#     rospy.logerr(e)
 
 # """POLES MISSION PRESET MANEUVER"""
 # try: 
@@ -76,68 +66,66 @@ except Exception as e:
 #    eventflags[2] = True
 
 """POLES MISSION"""
-try: 
-   # Run the poles mission
-   rospy.loginfo("Start of poles mission...")
-   poles = poles_mission.PoleSlalomMission(rc=rc,**config)
-   poles.run()
-   poles.cleanup()
-   print("[INFO] POLES MISSION COMPLETE")
-   eventflags[2] = True
-except Exception as e:
-   rospy.logerr("ERROR OCCUR IN POLES MISSION")
-   rospy.logerr(e)
-   eventflags[2] = True
+# try: 
+#    # Run the poles mission
+#    rospy.loginfo("Start of poles mission...")
+#    poles = poles_mission.PoleSlalomMission(rc=rc,**config)
+#    poles.run()
+#    poles.cleanup()
+#    print("[INFO] POLES MISSION COMPLETE")
+#    eventflags[2] = True
+# except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN POLES MISSION")
+#    rospy.logerr(e)
+#    eventflags[2] = True
 
-
-"""LATERAL WP"""
+"""TURNING 180 DEGREES"""
 try:
-   rospy.loginfo("Moving lateral for 2 seconds")
-   rc.movement(lateral=-2)
-   time.sleep(2)
-   rc.movement()
+   rc.activate_heading_control(activate=False)
+   rc.go_to_heading(return_heading)
+   rospy.loginfo("Robot heading set to return heading")
 except Exception as e:
-   rospy.logerr("ERROR OCCUR IN LATERAL WP")
+   rospy.logerr("ERROR OCCUR IN TURNING 180 DEGREES")
    rospy.logerr(e)
-    
-""" BACK TO GATE WP"""
-try:
-   rospy.loginfo("Moving backward for 3 seconds")
-   rc.movement(forward=-2)
-   time.sleep(3)
-   rc.movement()
-except Exception as e:
-   rospy.logerr("ERROR OCCUR IN BACK TO GATE WP")
-   rospy.logerr(e)
-    
-"""MODEMS + ROLL"""
+   
+"""MODEMS"""
 try:
     intersubMission = intersub_com_mission.intersubComMission(robotControl=rc)
-    intersubMission.run()
+    intersubMission.run()  # <-- Comms only
     rospy.loginfo("FINISHED INTERSUB COMMUNICATION")
     eventflags[3] = True
 except Exception as e:
     rospy.logerr("ERROR DURING MODEM MISSION")
     rospy.logerr(e)
-    eventflags[3] = True
+    eventflags[3] = True  
+
+"""FORWARD AFTER COMMUNICATION"""
+try:
+   forward_after_comms_distance = 2.7432  # 9 ft
+   rospy.loginfo(f"Start moving forward {forward_after_comms_distance} m")
+   rc.go_forward_distance(forward_after_comms_distance)
+   rospy.loginfo(f"Moved {forward_after_comms_distance} m")
+except Exception as e:
+   rospy.logerr("ERROR OCCUR IN FORWARD AFTER COMMUNICATION")
+   rospy.logerr(e)
+
+"""ROLL MANEUVER"""
+try:
+    intersubMission.do_roll()  # <-- Execute roll here
+except Exception as e:
+    rospy.logerr("ERROR OCCUR DURING ROLL MANEUVER")
+    rospy.logerr(e)
     
-#"""ALIGNING WITH GATE WP"""
-#try:
-#    rospy.loginfo("Moving right for 5 seconds")
-#    rc.movement(lateral=2)
-#    time.sleep(5)
-#except Exception as e:
-#    rospy.logerr("ERROR OCCUR IN ALIGNING WITH GATE WP")
-#    rospy.logerr(e)
-    
-"""GOING BACK THROUGH GATE"""
-#try:
-#    rospy.loginfo("Moving backward for 5 seconds")
-#    rc.movement(forward=-2)
-#    time.sleep(5)
-#except Exception as e:
-#    rospy.logerr("ERROR OCCUR IN GOING BACK THROUGH GATE WP")
-#    rospy.logerr(e)
+"""FORWARD AFTER ROLL"""
+try:
+   forward_after_roll_distance = 1.524 # 5 ft
+   rospy.loginfo(f"Start moving forward {forward_after_roll_distance} m")
+   rc.go_forward_distance(forward_after_roll_distance)
+   rospy.loginfo(f"Moved {forward_after_roll_distance} m")
+
+except Exception as e:
+   rospy.logerr("ERROR OCCUR IN FORWARD AFTER ROLL")
+   rospy.logerr(e)
 
 disarm.disarm()
 rc.exit()
