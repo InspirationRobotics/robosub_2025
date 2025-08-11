@@ -63,7 +63,7 @@ robosub_2025
 │   │   ├── # everything related to the sensors
 │   │   ├── # each device should have its own file/folder
 │   ├── localization 
-│   │   ├── # TODO
+│   │   ├── # EKF node fused IMU, DVL, and barometer
 │   ├── mission 
 │   │   ├── # Mission classes
 │   │   ├── # see auv/mission/template_mission.py for an example
