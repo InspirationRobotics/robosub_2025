@@ -4,7 +4,6 @@ PRODUCT=$(sudo lshw -json | jq '.product') || PRODUCT=$(sudo lshw -json | jq '.[
 
 # cd into absolute path of robosub repo
 AUV_PATH=$(dirname $(dirname $(realpath $0)))
-echo $AUV_PATH
 cd $AUV_PATH
 
 if [[ $PRODUCT == *"Xavier"* ]]; then
