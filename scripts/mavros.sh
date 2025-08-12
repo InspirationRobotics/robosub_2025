@@ -12,14 +12,30 @@ fi
 if [[ $PRODUCT == *"Nano"* ]]; then
   echo "Detected $PRODUCT setting to Nano init"
   DISTRO="melodic"
-  # TODO: debug this
-  screen -dmS killscript -c "sleep 5 ; /usr/bin/python3 /home/inspiration/auv/auv.utils.gShutdown"
 fi
 
 OUTPUT=$(/usr/bin/python3 /home/inspiration/auv/auv/utils/deviceHelper.py)
 
 echo "Found pixhawk on "${OUTPUT}
 screen -dmS roscore bash -c "source /opt/ros/$DISTRO/setup.bash ; roscore"
+
+# mavros crashes, need to fix
 screen -dmS mavros bash -c "source /opt/ros/$DISTRO/setup.bash ; sleep 5 ; roslaunch --wait mavros px4.launch fcu_url:=$OUTPUT"
-screen -dmS cams bash -c "sleep 10 ; /usr/bin/python3 /home/inspiration/auv/auv/device/camsVersatile.py"
+
+AUV_PATH=$(dirname $(dirname $(realpath $0)))
+echo $AUV_PATH
+cd $AUV_PATH
+
+screen -dmS cams bash -c "sleep 10 ; /usr/bin/python3 -m auv.device.camsVersatile"
+screen -dmS imu bash -c "/usr/bin/python3 -m auv.device.imu.vn100_serial"
+screen -dmS dvl bash -c "/usr/bin/python3 -m auv.device.dvl.dvl"
+screen -dmS ekfNode bash -c "/usr/bin/python3 -m auv.localization.ekfNode"
+screen -dmS modem bash -c "/usr/bin/python3 -m auv.device.modems.ds_modems_node"
+
+if [[ $PRODUCT == *"Xavier"* ]]; then
+screen -dmS fog bash -c "/usr/bin/python3 -m auv.device.fog.simple_fog"
+screen -dmS maestro_server bash -c "/usr/bin/python3 -m auv.device.maestro.maestro_server"
+fi
+
 echo "Done"
+
