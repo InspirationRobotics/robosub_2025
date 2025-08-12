@@ -25,6 +25,9 @@ echo "Found pixhawk on "${PORT}
 screen -dmS roscore bash -c "source /opt/ros/$DISTRO/setup.bash ; roscore"
 screen -dmS mavros bash -c "source /opt/ros/$DISTRO/setup.bash ; sleep 5 ; roslaunch --wait mavros px4.launch fcu_url:=$PORT"
 
+# Wait for mavros to start
+sleep 15
+
 # Requires SSHPASS var to be set in ~/.bashrc
 screen -dmS cams bash -c "sleep 10 ; sshpass -e /usr/bin/python3 -m auv.device.camsVersatile"
 screen -dmS imu bash -c "/usr/bin/python3 -m auv.device.imu.vn100_serial"
