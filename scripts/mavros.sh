@@ -23,11 +23,10 @@ OUTPUT=$(/usr/bin/python3 -m auv.utils.deviceHelper)
 
 echo "Found pixhawk on "${OUTPUT}
 screen -dmS roscore bash -c "source /opt/ros/$DISTRO/setup.bash ; roscore"
-
-# mavros crashes, need to fix
 screen -dmS mavros bash -c "source /opt/ros/$DISTRO/setup.bash ; sleep 5 ; roslaunch --wait mavros px4.launch fcu_url:=$OUTPUT"
 
-screen -dmS cams bash -c "sleep 10 ; /usr/bin/python3 -m auv.device.camsVersatile"
+# Requires SSHPASS var to be set in ~/.bashrc
+screen -dmS cams bash -c "sleep 10 ; sshpass -e /usr/bin/python3 -m auv.device.camsVersatile"
 screen -dmS imu bash -c "/usr/bin/python3 -m auv.device.imu.vn100_serial"
 screen -dmS dvl bash -c "/usr/bin/python3 -m auv.device.dvl.dvl"
 screen -dmS ekfNode bash -c "/usr/bin/python3 -m auv.localization.ekfNode"
