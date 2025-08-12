@@ -62,7 +62,7 @@ except Exception as e:
 #    rospy.logerr(e)
 #    eventflags[2] = True
 
-"""POLES MISSION"""
+# """POLES MISSION"""
 # try: 
 #    # Run the poles mission
 #    rospy.loginfo("Start of poles mission...")
