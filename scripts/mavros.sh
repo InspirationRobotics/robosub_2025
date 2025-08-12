@@ -25,8 +25,9 @@ echo "Found pixhawk on "${PORT}
 screen -dmS roscore bash -c "source /opt/ros/$DISTRO/setup.bash ; roscore"
 screen -dmS mavros bash -c "source /opt/ros/$DISTRO/setup.bash ; sleep 5 ; roslaunch --wait mavros px4.launch fcu_url:=$PORT"
 
-# Wait for mavros to start
+# Wait for mavros to start then set modprobe for cams
 sleep 15
+sudo modprobe -r v4l2loopback
 
 # Requires SSHPASS var to be set in ~/.bashrc
 screen -dmS cams bash -c "sleep 10 ; sshpass -e /usr/bin/python3 -m auv.device.camsVersatile"
