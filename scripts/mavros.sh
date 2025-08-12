@@ -19,7 +19,7 @@ if [[ $PRODUCT == *"Nano"* ]]; then
 fi
 
 OUTPUT=$(/usr/bin/python3 -m auv.utils.deviceHelper)
-PORT=`python3 -c "print('$OUTPUT'.split()[-1])"`
+PORT=`python3 -c "print('''$OUTPUT'''.split()[-1])"`
 
 echo "Found pixhawk on "${PORT}
 screen -dmS roscore bash -c "source /opt/ros/$DISTRO/setup.bash ; roscore"
