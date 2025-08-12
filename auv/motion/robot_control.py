@@ -430,7 +430,7 @@ class RobotControl:
 
             error = heading_error(self.orientation['yaw'], target)
 
-            output = min(self.PIDs["yaw"](-error / 180),0.6) # make sure the output is greater than 0.5 for the thrusters to even move
+            output = min(self.PIDs["yaw"](-error / 180),1.0) # make sure the output is greater than 0.5 for the thrusters to even move
 
             if abs(error) <= 3:
                 print("[INFO] Heading reached")

@@ -30,7 +30,7 @@ try:
    # set event flag for coin toss mission to True
    eventflags[0] = True
    
-   gate_forward_distance = 4.572 # m
+   gate_forward_distance = 7.5 # m
    rospy.loginfo(f"Start moving forward {gate_forward_distance} m")
    rc.go_forward_distance(gate_forward_distance)
    rospy.loginfo(f"Moved {gate_forward_distance} m")
