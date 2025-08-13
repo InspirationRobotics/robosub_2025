@@ -24,39 +24,36 @@ split_into_n() {
 
 # Create and arrange first window
 split_into_n "${SESSION_NAME}:win1" 9
+
 # Now run commands in each of the 9 panes
-tmux send-keys -t "win1".${pane_id} "roscore" C-m
+tmux send-keys -t "win1".0 "roscore" C-m
 sleep 10
-tmux send-keys -t "win1".${pane_id} "roslaunch mavros px4.launch" C-m
+
+tmux send-keys -t "win1".1 "roslaunch mavros px4.launch" C-m
 sleep 10
-tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.maestro.maestro_server" C-m
-tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.modems.ds_modems_node" C-m
-tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.imu.vn100_serial" C-m
-tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.dvl.dvl" C-m
-tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.fog.simple_fog" C-m
-tmux send-keys -t "win1".${pane_id} "python3 -m auv.localization.ekfNode" C-m
+
+tmux send-keys -t "win1".2 "python3 -m auv.device.maestro.maestro_server" C-m
+tmux send-keys -t "win1".3 "python3 -m auv.device.modems.ds_modems_node" C-m
+tmux send-keys -t "win1".4 "python3 -m auv.device.imu.vn100_serial" C-m
+tmux send-keys -t "win1".5 "python3 -m auv.device.dvl.dvl" C-m
+tmux send-keys -t "win1".6 "python3 -m auv.device.fog.simple_fog" C-m
+tmux send-keys -t "win1".7 "python3 -m auv.localization.ekfNode" C-m
+
 # Create second and third windows
 tmux new-window -t $SESSION_NAME -n "win2" 
 split_into_n "${SESSION_NAME}:win2" 4
-for pane_id in {0..6}; do
-    case $pane_id in
-        0) tmux send-keys -t "win2".${pane_id} "sshpass -e python3 -m auv.device.camsVersatile" C-m ;;
-        1) tmux send-keys -t "win2".${pane_id} "cd ../rtsp/" C-m ;;
-        2) tmux send-keys -t "win2".${pane_id} "cd ../companion/script/" C-m ;; 
-        3) tmux send-keys -t "win2".${pane_id} "" C-m ;;
-    esac
-done
+tmux send-keys -t "win2".0 "sshpass -e python3 -m auv.device.camsVersatile" C-m ;;
+tmux send-keys -t "win2".1 "cd ../rtsp/" C-m ;;
+tmux send-keys -t "win2".2 "cd ../companion/script/" C-m ;; 
+tmux send-keys -t "win2".3 "" C-m ;;
+
 tmux new-window -t $SESSION_NAME -n "win3"
 split_into_n "${SESSION_NAME}:win3" 5
-for pane_id in {0..6}; do
-    case $pane_id in
-        0) tmux send-keys -t "win3".${pane_id} "rostopic echo /mavros/state" C-m ;;
-        1) tmux send-keys -t "win3".${pane_id} "rostopic echo /auv/state/pose" C-m ;;
-        2) tmux send-keys -t "win3".${pane_id} "python3 -m auv.utils.fly STABILIZE" C-m ;; 
-        3) tmux send-keys -t "win3".${pane_id} "disarm" C-m ;;
-        4) tmux send-keys -t "win3".${pane_id} "echo 'Run your mission here'" C-m ;;
-    esac
-done
+tmux send-keys -t "win3".0 "rostopic echo /mavros/state" C-m ;;
+tmux send-keys -t "win3".1 "rostopic echo /auv/state/pose" C-m ;;
+tmux send-keys -t "win3".2 "python3 -m auv.utils.fly STABILIZE" C-m ;; 
+tmux send-keys -t "win3".3 "disarm" C-m ;;
+tmux send-keys -t "win3".4 "echo 'Run your mission here'" C-m ;;
 
 
 # Attach to session
