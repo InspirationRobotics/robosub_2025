@@ -25,25 +25,22 @@ split_into_n() {
 # Create and arrange first window
 split_into_n "${SESSION_NAME}:win1" 9
 # Now run commands in each of the 9 panes
-for pane_id in {0..8}; do
-    case $pane_id in
-        0) tmux send-keys -t "win1".${pane_id} "roscore" C-m ;;
-        1) tmux send-keys -t "win1".${pane_id} "roslaunch mavros px4.launch" C-m ;;
-        2) tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.maestro.maestro_server" C-m ;; 
-        3) tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.modems.ds_modems_node" C-m ;;
-        4) tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.imu.vn100_serial" C-m ;;
-        5) tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.dvl.dvl" C-m ;;
-        6) tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.fog.simple_fog" C-m ;;
-        7) tmux send-keys -t "win1".${pane_id} "python3 -m auv.localization.ekfNode" C-m ;;
-        8) tmux send-keys -t "win1".${pane_id} "echo 'Pane 8: placeholder'" C-m ;;
-    esac
-done
+tmux send-keys -t "win1".${pane_id} "roscore" C-m
+sleep 10
+tmux send-keys -t "win1".${pane_id} "roslaunch mavros px4.launch" C-m
+sleep 10
+tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.maestro.maestro_server" C-m
+tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.modems.ds_modems_node" C-m
+tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.imu.vn100_serial" C-m
+tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.dvl.dvl" C-m
+tmux send-keys -t "win1".${pane_id} "python3 -m auv.device.fog.simple_fog" C-m
+tmux send-keys -t "win1".${pane_id} "python3 -m auv.localization.ekfNode" C-m
 # Create second and third windows
 tmux new-window -t $SESSION_NAME -n "win2" 
 split_into_n "${SESSION_NAME}:win2" 4
 for pane_id in {0..6}; do
     case $pane_id in
-        0) tmux send-keys -t "win2".${pane_id} "python3 -m auv.device.camsVersatile" C-m ;;
+        0) tmux send-keys -t "win2".${pane_id} "sshpass -e python3 -m auv.device.camsVersatile" C-m ;;
         1) tmux send-keys -t "win2".${pane_id} "cd ../rtsp/" C-m ;;
         2) tmux send-keys -t "win2".${pane_id} "cd ../companion/script/" C-m ;; 
         3) tmux send-keys -t "win2".${pane_id} "" C-m ;;
