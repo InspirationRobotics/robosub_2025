@@ -42,18 +42,18 @@ tmux send-keys -t "win1".7 "python3 -m auv.localization.ekfNode" C-m
 # Create second and third windows
 tmux new-window -t $SESSION_NAME -n "win2" 
 split_into_n "${SESSION_NAME}:win2" 4
-tmux send-keys -t "win2".0 "sshpass -e python3 -m auv.device.camsVersatile" C-m ;;
-tmux send-keys -t "win2".1 "cd ../rtsp/" C-m ;;
-tmux send-keys -t "win2".2 "cd ../companion/script/" C-m ;; 
-tmux send-keys -t "win2".3 "" C-m ;;
+tmux send-keys -t "win2".0 "sshpass -e python3 -m auv.device.camsVersatile" C-m
+tmux send-keys -t "win2".1 "cd ../rtsp/" C-m
+tmux send-keys -t "win2".2 "cd ../companion/script/" C-m
+tmux send-keys -t "win2".3 "" C-m
 
 tmux new-window -t $SESSION_NAME -n "win3"
 split_into_n "${SESSION_NAME}:win3" 5
-tmux send-keys -t "win3".0 "rostopic echo /mavros/state" C-m ;;
-tmux send-keys -t "win3".1 "rostopic echo /auv/state/pose" C-m ;;
-tmux send-keys -t "win3".2 "python3 -m auv.utils.fly STABILIZE" C-m ;; 
-tmux send-keys -t "win3".3 "disarm" C-m ;;
-tmux send-keys -t "win3".4 "echo 'Run your mission here'" C-m ;;
+tmux send-keys -t "win3".0 "rostopic echo /mavros/state" C-m
+tmux send-keys -t "win3".1 "rostopic echo /auv/state/pose" C-m
+tmux send-keys -t "win3".2 "python3 -m auv.utils.fly STABILIZE" C-m
+tmux send-keys -t "win3".3 "disarm" C-m
+tmux send-keys -t "win3".4 "echo 'Run your mission here'" C-m
 
 
 # Attach to session
