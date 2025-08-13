@@ -436,7 +436,7 @@ class RobotControl:
             if abs(raw_output) < 1:
                 if raw_output < 0:
                     output = -1
-                elif raw_output > 0:
+                elif raw_output >= 0:
                     output = 1
             else:
                 output = raw_output
