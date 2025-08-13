@@ -426,15 +426,26 @@ class RobotControl:
         print(f"[INFO] Setting heading to {target}")
         self.prev_error = None
         start_time = time.time()
-        while not rospy.is_shutdown() and time.time() - start_time < 30: # 30s timeout for this loop
+        start_heading = self.get_heading()
+        while not rospy.is_shutdown():
 
             error = heading_error(self.orientation['yaw'], target)
 
-            output = min(self.PIDs["yaw"](-error / 180),1.0) # make sure the output is greater than 0.5 for the thrusters to even move
+            output = max(self.PIDs["yaw"](-error / 180),1.0) # make sure the output is greater than 1 for the thrusters to even move
 
             if abs(error) <= 3:
                 print("[INFO] Heading reached")
                 break
+
+            # New timeout mechanism: Timeout if moved less than 3 degrees in 3 seconds
+            self.curr_time = time.time()
+            if self.curr_time - self.start_time >= 3:
+                if abs(self.get_heading() - self.start_heading) < 3:
+                    print(f"[WARN] RobotControl.go_to_heading timed out")
+                    break
+                else:
+                    start_time = time.time()
+                    start_heading = self.get_heading()
 
             self.movement(yaw=output)
             time.sleep(0.1)
