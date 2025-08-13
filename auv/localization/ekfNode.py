@@ -92,7 +92,7 @@ class EKFNode:
         self.fog_sub = rospy.Subscriber("/auv/devices/fog", Float64, self.fog_callback)
         self.baro_sub = rospy.Subscriber("/mavlink/from", Mavlink, self.barometer_callback)
 
-        self.recalibrate_service = rospy.Service('/auv/service/calibrate/EKF', Trigger, self.serviceCallback)
+        self.recalibrate_service = rospy.Service('/auv/services/calibrate/EKF', Trigger, self.serviceCallback)
 
 
         self.calibrate_depth()

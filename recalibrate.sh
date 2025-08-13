@@ -1,5 +1,5 @@
 #!/bin/bash
 
-rosservice call /auv/service/calibrate/EKF "{}"
+rosservice call /auv/services/calibrate/EKF "{}"
 sleep 2
-rosservice call /auv/service/calibrate/vectornav "{}"
+rosservice call /auv/services/calibrate/vectornav "{}"
