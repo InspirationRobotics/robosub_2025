@@ -83,7 +83,7 @@ class VN100:
         samples = []
         start_time = time.time()
         self.calibrated = False
-        
+        self.heading_offset = 0.0 # reset offset to 0
         while not rospy.is_shutdown() and time.time() - start_time < 3:
             try:
                 with self.lock:
