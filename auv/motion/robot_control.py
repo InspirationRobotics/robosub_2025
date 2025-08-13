@@ -487,7 +487,7 @@ class RobotControl:
             with self.lock:
                 self.dvl_sum += self.dvl_velocity['y'] * dt
             
-            rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
+            # rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
             time.sleep(dt)
 
         # stop motors after reaching distance
@@ -520,7 +520,7 @@ class RobotControl:
             with self.lock:
                 self.dvl_sum += self.dvl_velocity['x'] * dt
             
-            rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
+            # rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
             time.sleep(dt)
             
         # stop motors after reaching distance
