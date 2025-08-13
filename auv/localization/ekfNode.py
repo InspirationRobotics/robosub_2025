@@ -13,20 +13,7 @@ from transforms3d.euler import euler2mat
 
 class EKF6State:
     def __init__(self, dt):
-        # State vector: [x, y, z, vx, vy, vz]
-        self.x = np.zeros((6, 1))
-
-        # State covariance
-        self.P = np.eye(6) * 0.1
-
-        # Process noise
-        self.Q = np.diag([0.01]*3 + [0.3]*3)
-
-        # Measurement noise (DVL)
-        self.R_dvl = np.eye(3) * 0.05
-
-        # Measurement noise (barometer)
-        self.R_baro = np.array([[0.05]])
+        self.reset()
 
         self.dt = dt
 
