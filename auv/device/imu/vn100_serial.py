@@ -46,6 +46,7 @@ class VN100:
     
     def calibrateCallback(self, request: Trigger):
         self.calibrate_heading()
+        rospy.loginfo("Calibrating Vectornav IMU")
 
         return TriggerResponse(
             success=True,
