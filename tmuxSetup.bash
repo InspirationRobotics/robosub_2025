@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd $(dirname $(realname $0))
 SESSION_NAME="multi_window"
 
 # Start new tmux session with first window
@@ -48,12 +49,13 @@ tmux send-keys -t "win2".2 "cd ../companion/scripts/" C-m
 tmux send-keys -t "win2".3 "" C-m
 
 tmux new-window -t $SESSION_NAME -n "win3"
-split_into_n "${SESSION_NAME}:win3" 5
+split_into_n "${SESSION_NAME}:win3" 6
 tmux send-keys -t "win3".0 "rostopic echo /mavros/state" C-m
 tmux send-keys -t "win3".1 "rostopic echo /auv/state/pose" C-m
 tmux send-keys -t "win3".2 "python3 -m auv.utils.fly STABILIZE" C-m
 tmux send-keys -t "win3".3 "disarm" C-m
 tmux send-keys -t "win3".4 "echo 'Run your mission here'" C-m
+tmux send-keys -t "win3".5 "./recalibrate.sh"
 
 
 # Attach to session
