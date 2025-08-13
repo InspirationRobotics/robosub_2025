@@ -1,3 +1,8 @@
+#!/bin/bash
+
+SESSION_NAME="multi_window"
+
+# Start new tmux session with first window
 tmux new-session -d -s $SESSION_NAME -n "win1"
 
 # Function to split window into 9 panes and run commands
