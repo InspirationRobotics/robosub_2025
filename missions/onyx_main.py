@@ -8,10 +8,17 @@ from reaching the Octagon mission).
 
 import rospy
 import time
+import json
 
 from auv.mission import poles_mission, bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, torpedo_approach_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
+
+def navigate_with_heading(name):
+    Waypoint = waypoints[name]
+    rc.waypointNav(Waypoint["position"])
+    rc.go_to_heading(Waypoint["heading"])
+    rospy.loginfo(f"Reached {name} waypoint")
 
 """INITIALIZE"""
 rospy.init_node("Onyx", anonymous = True)
@@ -20,11 +27,17 @@ rc.set_flight_mode("STABILIZE")
 rc.set_control_mode("depth_hold")
 config = deviceHelper.variables
 
+# Load the JSON file
+with open("waypoints.json", "r") as file:
+    waypoints = json.load(file)
+
 # Dive down to desire depth
-rc.go_to_depth(1.0)
+rc.go_to_depth(0.8)
 
 rospy.loginfo("Finish initialization")
 
+
+navigate_with_heading("Gate")
 """GATE MISSION"""
 try:
     # COIN FLIP
@@ -36,6 +49,7 @@ except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
     rospy.logerr(e)
 
+navigate_with_heading("Slalom")
 """POLES MISSION"""
 try: 
     # Run the poles mission
@@ -48,6 +62,8 @@ except Exception as e:
     rospy.logerr("ERROR OCCUR IN POLES MISSION")
     rospy.logerr(e)
 
+
+navigate_with_heading("Bin")
 """BIN MISSION"""
 try:
     binApproach = bin_approach_mission.BinsApproachMission(rc=rc, **config)
@@ -67,6 +83,7 @@ except Exception as e:
     rospy.logerr("ERROR DOING BIN MISSION")
     rospy.logerr(e)
 
+navigate_with_heading("Torpedo")
 """TORPEDO MISSION"""
 try:
     torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
@@ -83,6 +100,7 @@ except Exception as e:
     rospy.logerr(e)
 
 
+navigate_with_heading("Octagon")
 """OCTAGON MISSION"""
 try:
    octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
@@ -93,7 +111,6 @@ try:
 except Exception as e:
    rospy.logerr("ERROR DOING OCTAGON MISSION")
    rospy.logerr(e)
-
 
 
 """MODEMS + ROLL"""

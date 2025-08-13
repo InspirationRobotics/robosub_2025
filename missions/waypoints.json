@@ -1,0 +1,22 @@
+{
+    "Gate": {
+        "position": [0, 0],
+        "heading": 0.0
+    },
+    "Slalom": {
+        "position": [0, 0],
+        "heading": 0.0
+    },
+    "Bin": {
+        "position": [0, 0],
+        "heading": 0.0
+    },
+    "Octagon": {
+        "position": [0, 0],
+        "heading": 0.0
+    },
+    "Torpedo": {
+        "position": [0, 0],
+        "heading": 0.0
+    }
+}
