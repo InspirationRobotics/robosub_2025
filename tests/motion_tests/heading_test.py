@@ -7,17 +7,35 @@ from auv.utils import arm, disarm
 rospy.init_node("HeadingTest", anonymous=True)
 rc = robot_control.RobotControl()
 
+rc.set_control_mode("depth_hold")
+rc.set_flight_mode("STABILIZE")
 
-# rc.get_callback_compass()
+# Diving down
+rc.go_to_depth(0.8)
 
-#arm.arm()
-
-time.sleep(5)
+# Arm
+arm.arm()
 
 heading = rc.get_heading()
 print(f"[DEBUG]: Heading is {heading}")
-rc.set_heading(heading + 90, heading_sensor="vectornav_imu")
+
+rc.go_to_heading(heading + 90)
+print(f"[DEBUG]: Heading is {heading}")
+
+rc.go_to_heading(heading + 90)
+print(f"[DEBUG]: Heading is {heading}")
+
+rc.go_to_heading(heading + 180)
+print(f"[DEBUG]: Heading is {heading}")
+
+rc.go_to_heading(heading - 90)
+print(f"[DEBUG]: Heading is {heading}")
+
+rc.go_to_heading(heading + 90)
+print(f"[DEBUG]: Heading is {heading}")
+
+
 
 time.sleep(2.0)
 
-#disarm.disarm()
+disarm.disarm()

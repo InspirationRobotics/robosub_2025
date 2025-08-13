@@ -1,9 +1,5 @@
 """
-Running the gate mission (dead reckoning), style, buoy, and octagon missions.
-Finals run for 2024 season. 
-NOTE: This code did not give the intended result because the set_heading function only works when the differences between 
-actual and desired heading are outside a certain range -- if these are too close together, the loop will stall (which prevented Onyx
-from reaching the Octagon mission).
+Perform gate, poles, bins, torpedoes, octagon, coms 
 """
 
 import rospy
