@@ -31,7 +31,7 @@ class VN100:
         self.gyroZ = 0.0
         self.heading_offset = 0
         self.vectornav_pub = rospy.Publisher('/auv/devices/vectornav', Imu, queue_size=10)
-        self.calibration_service = rospy.Service('/auv/services/calibration/imu', Trigger, self.calibrateCallback)
+        self.calibration_service = rospy.Service('/auv/services/calibrate/vectornav', Trigger, self.calibrateCallback)
 
         self.calibrated = False
         self.running = True  # Added for Ctrl+C protection

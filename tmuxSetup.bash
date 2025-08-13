@@ -42,9 +42,9 @@ tmux send-keys -t "win1".7 "python3 -m auv.localization.ekfNode" C-m
 # Create second and third windows
 tmux new-window -t $SESSION_NAME -n "win2" 
 split_into_n "${SESSION_NAME}:win2" 4
-tmux send-keys -t "win2".0 "sshpass -e python3 -m auv.device.camsVersatile" C-m
+tmux send-keys -t "win2".0 "sshpass -e sudo modprobe -r v4l2loopback; sshpass -e python3 -m auv.device.camsVersatile" C-m
 tmux send-keys -t "win2".1 "cd ../rtsp/" C-m
-tmux send-keys -t "win2".2 "cd ../companion/script/" C-m
+tmux send-keys -t "win2".2 "cd ../companion/scripts/" C-m
 tmux send-keys -t "win2".3 "" C-m
 
 tmux new-window -t $SESSION_NAME -n "win3"
