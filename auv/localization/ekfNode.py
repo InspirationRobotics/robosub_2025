@@ -4,6 +4,7 @@ import rospy
 import time
 from statistics import mean
 from geometry_msgs.msg import TwistStamped, PoseStamped
+from std_srvs.srv import Trigger, TriggerRequest, TriggerResponse
 from std_msgs.msg import Float64
 from auv.utils import deviceHelper
 from sensor_msgs.msg import Imu
@@ -63,6 +64,24 @@ class EKF6State:
         self.x += K @ y
         self.P = (np.eye(6) - K @ H) @ self.P
 
+    def reset(self):
+        """Reset the filter state, covariance, and noises."""
+        rospy.loginfo("EKF State being reset....")
+        # State vector: [x, y, z, vx, vy, vz]
+        self.x = np.zeros((6, 1))
+
+        # State covariance
+        self.P = np.eye(6) * 0.1
+
+        # Process noise
+        self.Q = np.diag([0.01]*3 + [0.3]*3)
+
+        # Measurement noise (DVL)
+        self.R_dvl = np.eye(3) * 0.05
+
+        # Measurement noise (barometer)
+        self.R_baro = np.array([[0.05]])
+
 class EKFNode:
     def __init__(self):
         rospy.init_node("ekf_6d_node")
@@ -85,6 +104,9 @@ class EKFNode:
         self.dvl_sub = rospy.Subscriber("/auv/devices/dvl/velocity", TwistStamped, self.dvl_callback)
         self.fog_sub = rospy.Subscriber("/auv/devices/fog", Float64, self.fog_callback)
         self.baro_sub = rospy.Subscriber("/mavlink/from", Mavlink, self.barometer_callback)
+
+        self.recalibrate_service = rospy.Service('/auv/service/calibrate/EKF', Trigger, self.serviceCallback)
+
 
         self.calibrate_depth()
         rospy.Timer(rospy.Duration(self.dt), self.ekf_step)
@@ -119,6 +141,15 @@ class EKFNode:
             [msg.twist.linear.z]
         ])
 
+    def serviceCallback(self, request):
+        rospy.loginfo("Recalibrating EKF...")
+
+        self.reset()
+
+        return TriggerResponse(
+            success=True,
+            message="EKF reset!"
+        )
     def barometer_callback(self, msg):
         try:
             if msg.msgid == 143:
@@ -179,6 +210,11 @@ class EKFNode:
         self.calibrated = True
         rospy.loginfo(f"depth calibration Finished. Surface is: {self.depth_calib}")
 
+    def reset(self):
+        self.calibrate_depth(sample_time=3)
+        self.ekf.reset()
+
+    
 if __name__ == "__main__":
     node = EKFNode()
     rospy.sleep(2)
