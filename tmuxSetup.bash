@@ -39,8 +39,8 @@ for pane_id in {0..8}; do
     esac
 done
 # Create second and third windows
-tmux new-window -t $SESSION_NAME -n "win2" 4
-split_into_n "${SESSION_NAME}:win2"
+tmux new-window -t $SESSION_NAME -n "win2" 
+split_into_n "${SESSION_NAME}:win2" 4
 for pane_id in {0..6}; do
     case $pane_id in
         0) tmux send-keys -t "win2".${pane_id} "python3 -m auv.device.camsVersatile" C-m ;;
@@ -49,8 +49,8 @@ for pane_id in {0..6}; do
         3) tmux send-keys -t "win2".${pane_id} "" C-m ;;
     esac
 done
-tmux new-window -t $SESSION_NAME -n "win3" 5
-split_into_n "${SESSION_NAME}:win3"
+tmux new-window -t $SESSION_NAME -n "win3"
+split_into_n "${SESSION_NAME}:win3" 5
 for pane_id in {0..6}; do
     case $pane_id in
         0) tmux send-keys -t "win3".${pane_id} "rostopic echo /mavros/state" C-m ;;
