@@ -5,6 +5,7 @@ import cv2
 import time
 import numpy as np
 import os
+from auv.motion.utils import get_norm
 
 class CV:
     camera = "/auv/camera/videoOAKdRawForward"
@@ -48,9 +49,16 @@ class CV:
         red_poles = []
         for cnt in contours:
             x, y, w, h = cv2.boundingRect(cnt)
-
+            
+            # UNUSED rotated bounding box
             # See https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html
             rotated_box = cv2.boxPoints(cv2.minAreaRect(cnt))
+            rotated_box = np.int0(rotated_box)
+
+            sorted_box_coords = sorted(rotated_box, key=lambda y_coord: y_coord[1])
+            rotated_width =  get_norm(sorted_box_coords[1][0] - sorted_box_coords[0][0],
+                                      sorted_box_coords[1][1] - sorted_box_coords[0][1])
+            # w = rotated_width
             
 
             # Cutoff for width for detection to count
