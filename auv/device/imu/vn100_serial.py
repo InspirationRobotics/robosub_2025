@@ -7,6 +7,7 @@ from serial import Serial
 
 from auv.utils import deviceHelper
 from sensor_msgs.msg import Imu
+from std_srvs.srv import Trigger, TriggerResponse
 
 rospy.loginfo("Finished importing")
 
@@ -30,6 +31,7 @@ class VN100:
         self.gyroZ = 0.0
         self.heading_offset = 0
         self.vectornav_pub = rospy.Publisher('/auv/devices/vectornav', Imu, queue_size=10)
+        self.calibration_service = rospy.Service('/auv/services/calibration/imu', Trigger, self.calibrateCallback)
 
         self.calibrated = False
         self.running = True  # Added for Ctrl+C protection
@@ -41,6 +43,14 @@ class VN100:
         time.sleep(2)
 
         self.calibrate_heading()
+    
+    def calibrateCallback(self, request: Trigger):
+        self.calibrate_heading()
+
+        return TriggerResponse(
+            success=True,
+            message="IMU successfully calibrated"
+        )
 
     def read(self):
         """Parses roll, pitch, and yaw from the serial line"""
