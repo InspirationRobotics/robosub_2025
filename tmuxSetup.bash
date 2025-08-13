@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd $(dirname $(realname $0))
+cd $(dirname $(realpath $0))
 SESSION_NAME="multi_window"
 
 # Start new tmux session with first window
