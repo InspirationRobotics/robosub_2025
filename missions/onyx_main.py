@@ -9,34 +9,44 @@ from reaching the Octagon mission).
 import rospy
 import time
 
-from auv.mission import bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, torpedo_approach_mission
+from auv.mission import poles_mission, bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, torpedo_approach_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
 """INITIALIZE"""
 rospy.init_node("Onyx", anonymous = True)
 rc = robot_control.RobotControl()
+rc.set_flight_mode("STABILIZE")
 rc.set_control_mode("depth_hold")
 config = deviceHelper.variables
 
 # Dive down to desire depth
-rc.set_absolute_z(0.4)
-while abs(rc.position['z'] - 0.4)>0.1:
-    time.sleep(1)
+rc.go_to_depth(1.0)
 
 rospy.loginfo("Finish initialization")
 
 """GATE MISSION"""
-#try:
-    # TODO utilize heading control to move through the gate and go to the next waypoint
-    #rc.movement(forward=2)
-   # time.sleep(3)
-   # rc.movement()
+try:
+    # COIN FLIP
+    rc.go_to_heading(0)
+    rc.go_forward_distance(8.0)
+    rc.go_lateral_distance(-5.0)
+    rospy.loginfo("GATE MISSION FINISHED")
+except Exception as e:
+    rospy.logerr("ERROR DOING GATE MISSION")
+    rospy.logerr(e)
 
-   # rospy.loginfo("GATE MISSION FINISHED")
-#except Exception as e:
-    #rospy.logerr("ERROR DOING GATE MISSION")
-    #rospy.logerr(e)
+"""POLES MISSION"""
+try: 
+    # Run the poles mission
+    rospy.loginfo("Start of poles mission...")
+    poles = poles_mission.PoleSlalomMission(rc=rc,**config)
+    poles.run()
+    poles.cleanup()
+    print("[INFO] POLES MISSION COMPLETE")
+except Exception as e:
+    rospy.logerr("ERROR OCCUR IN POLES MISSION")
+    rospy.logerr(e)
 
 """BIN MISSION"""
 try:

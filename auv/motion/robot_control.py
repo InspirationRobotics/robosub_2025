@@ -439,8 +439,8 @@ class RobotControl:
 
             # New timeout mechanism: Timeout if moved less than 3 degrees in 3 seconds
             self.curr_time = time.time()
-            if self.curr_time - self.start_time >= 3:
-                if abs(self.get_heading() - self.start_heading) < 3:
+            if self.curr_time - start_time >= 3:
+                if abs(self.get_heading() - start_heading) < 3:
                     print(f"[WARN] RobotControl.go_to_heading timed out")
                     break
                 else:
