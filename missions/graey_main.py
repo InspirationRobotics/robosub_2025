@@ -5,7 +5,7 @@ To create a sequential order of missions for Graey to follow.
 import rospy
 import time
 from auv.utils import deviceHelper
-from auv.mission import poles_mission, intersub_com_mission, poles_mission_preset
+from auv.mission import poles_mission, intersub_com_mission, poles_mission_preset, gate_intersub_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
@@ -20,6 +20,16 @@ return_heading = 180
 config = deviceHelper.variables
 eventflags = [False,False,False,False,False]
 
+
+"""GATE INTERSUB MISSION"""
+try:
+    gateIntersub = gate_intersub_mission.GateIntersubMission(robotControl=rc)
+    gate_intersub_mission.run()  # <-- Comms only
+    rospy.loginfo("FINISHED GATE INTERSUB MISSION")
+except Exception as e:
+    rospy.logerr("ERROR DURING GATE INTERSUB MISSION")
+    rospy.logerr(e)
+    
 """COINT TOSS + GATE MISSION"""
 try:
    rc.go_to_heading(gate_heading)

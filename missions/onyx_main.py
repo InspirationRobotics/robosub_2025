@@ -6,7 +6,7 @@ import rospy
 import time
 import json
 
-from auv.mission import poles_mission, bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, torpedo_approach_mission
+from auv.mission import poles_mission, bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, torpedo_approach_mission, gate_intersub_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
@@ -41,6 +41,15 @@ try:
     rc.go_forward_distance(6)
     rc.go_lateral_distance(-3)
     rospy.loginfo("GATE MISSION FINISHED")
+except Exception as e:
+    rospy.logerr("ERROR DOING GATE MISSION")
+    rospy.logerr(e)
+
+"""GATE INTERSUB MISSION"""
+try:
+    gateIntersub = gate_intersub_mission.GateIntersubMission(robotControl=rc)
+    gate_intersub_mission.run()
+    rospy.loginfo("GATE INTERSUB MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
     rospy.logerr(e)
