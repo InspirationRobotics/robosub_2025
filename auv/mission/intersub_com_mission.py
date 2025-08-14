@@ -32,6 +32,8 @@ class intersubComMission:
                 self.rc.go_to_heading(270)
                 self.rc.go_to_heading(360)
             if msg.data == "ROLL":
+                self.rc.go_lateral_distance(target=-1.5)
+                self.rc.go_forward_distance(target=-7)
                 rospy.loginfo("Roll maneuver requested")
                 self.roll_requested = True  # <-- Store request, but don't execute yet
             self.end = True
@@ -47,6 +49,8 @@ class intersubComMission:
             self.rc.movement(roll=5)
             time.sleep(4)
             self.rc.movement()
+            time.sleep(2)
+            self.rc.set_flight_mode("STABILIZE")
             self.rc.set_control_mode("depth_hold")
             rospy.loginfo("Roll maneuver complete")
         else:

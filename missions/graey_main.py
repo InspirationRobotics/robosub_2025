@@ -13,7 +13,7 @@ from auv.utils import arm, disarm, deviceHelper
 rospy.init_node("Graey", anonymous = True)
 rc = robot_control.RobotControl()
 rc.set_control_mode('depth_hold')
-rc.go_to_depth(0.5)
+rc.go_to_depth(1.2)
 rospy.loginfo("Robot armed and set to depth 0.5 m")
 gate_heading = 0 # CALIBRATE EACH TIME 
 return_heading = 180
@@ -40,7 +40,7 @@ try:
    # set event flag for coin toss mission to True
    eventflags[0] = True
    
-   gate_forward_distance = 7.5 # m
+   gate_forward_distance = 10 # m
    rospy.loginfo(f"Start moving forward {gate_forward_distance} m")
    rc.go_forward_distance(gate_forward_distance)
    rospy.loginfo(f"Moved {gate_forward_distance} m")
@@ -86,14 +86,14 @@ except Exception as e:
 #    rospy.logerr(e)
 #    eventflags[2] = True
 
-"""TURNING 180 DEGREES"""
-try:
-   rc.activate_heading_control(activate=False)
-   rc.go_to_heading(return_heading)
-   rospy.loginfo("Robot heading set to return heading")
-except Exception as e:
-   rospy.logerr("ERROR OCCUR IN TURNING 180 DEGREES")
-   rospy.logerr(e)
+# """TURNING 180 DEGREES"""
+# try:
+#    rc.activate_heading_control(activate=False)
+#    rc.go_to_heading(return_heading)
+#    rospy.loginfo("Robot heading set to return heading")
+# except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN TURNING 180 DEGREES")
+#    rospy.logerr(e)
    
 """MODEMS"""
 try:
@@ -106,15 +106,15 @@ except Exception as e:
     rospy.logerr(e)
     eventflags[3] = True  
 
-"""FORWARD AFTER COMMUNICATION"""
-try:
-   forward_after_comms_distance = 2.7432  # 9 ft
-   rospy.loginfo(f"Start moving forward {forward_after_comms_distance} m")
-   rc.go_forward_distance(forward_after_comms_distance)
-   rospy.loginfo(f"Moved {forward_after_comms_distance} m")
-except Exception as e:
-   rospy.logerr("ERROR OCCUR IN FORWARD AFTER COMMUNICATION")
-   rospy.logerr(e)
+# """FORWARD AFTER COMMUNICATION"""
+# try:
+#    forward_after_comms_distance = 2.7432  # 9 ft
+#    rospy.loginfo(f"Start moving forward {forward_after_comms_distance} m")
+#    rc.go_forward_distance(forward_after_comms_distance)
+#    rospy.loginfo(f"Moved {forward_after_comms_distance} m")
+# except Exception as e:
+#    rospy.logerr("ERROR OCCUR IN FORWARD AFTER COMMUNICATION")
+#    rospy.logerr(e)
 
 """ROLL MANEUVER"""
 try:
@@ -125,9 +125,9 @@ except Exception as e:
     
 """FORWARD AFTER ROLL"""
 try:
-   forward_after_roll_distance = 1.524 # 5 ft
+   forward_after_roll_distance = 3 # 5 ft
    rospy.loginfo(f"Start moving forward {forward_after_roll_distance} m")
-   rc.go_forward_distance(forward_after_roll_distance)
+   rc.go_forward_distance(-forward_after_roll_distance)
    rospy.loginfo(f"Moved {forward_after_roll_distance} m")
 
 except Exception as e:
