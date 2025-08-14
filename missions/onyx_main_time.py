@@ -6,7 +6,7 @@ import rospy
 import time
 import json
 
-from auv.mission import bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, poles_mission_right, torpedo_approach_mission, gate_intersub_mission
+from auv.mission import bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, poles_mission_right, torpedo_approach_mission, gate_intersub_mission, poles_mission_left
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
@@ -51,7 +51,7 @@ try:
     # Run the poles mission
     rc.activate_heading_control(True)
     rospy.loginfo("Start of poles mission...")
-    poles = poles_mission_right.PoleSlalomMission(rc=rc,**config)
+    poles = poles_mission_left.PoleSlalomMission(rc=rc,**config)
     poles.run()
     poles.cleanup()
     print("[INFO] POLES MISSION COMPLETE")
