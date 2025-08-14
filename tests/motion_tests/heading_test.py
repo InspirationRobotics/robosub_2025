@@ -22,25 +22,26 @@ print(f"[DEBUG]: Heading is {heading}")
 rc.go_to_heading(heading + 90)
 heading = rc.get_heading()
 print(f"[DEBUG]: Heading is {heading}")
+time.sleep(5.0)
 
 rc.go_to_heading(heading + 90)
 heading = rc.get_heading()
 print(f"[DEBUG]: Heading is {heading}")
+time.sleep(5.0)
 
 rc.go_to_heading(heading + 180)
 heading = rc.get_heading()
 print(f"[DEBUG]: Heading is {heading}")
+time.sleep(5.0)
 
 rc.go_to_heading(heading - 90)
 heading = rc.get_heading()
 print(f"[DEBUG]: Heading is {heading}")
+time.sleep(5.0)
 
 rc.go_to_heading(heading + 90)
 heading = rc.get_heading()
 print(f"[DEBUG]: Heading is {heading}")
-
-
-
-time.sleep(2.0)
+time.sleep(5.0)
 
 disarm.disarm()
