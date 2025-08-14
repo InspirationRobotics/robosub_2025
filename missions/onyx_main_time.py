@@ -24,9 +24,6 @@ rospy.loginfo("Finish initialization & depth is 1.2 m")
 
 """GATE MISSION"""
 try:
-    # COIN FLIP
-    rc.go_to_heading(0)
-    rc.activate_heading_control(True)
     rc.movement(forward=2)
     time.sleep(3.25*5.56)
     rc.movement(lateral=-2)
