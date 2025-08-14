@@ -102,9 +102,9 @@ try:
     rc.move_servo("/auv/devices/dropper")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/dropper")
-#    binDrop = bins_drop_mission.BinsDropMission(rc=rc, **config)
-#    binDrop.run()
-#    binDrop.cleanup()
+    binDrop = bin_drop_mission.BinsDropMission(rc=rc, **config)
+    binDrop.run()
+    binDrop.cleanup()
     rospy.loginfo("BIN drop MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING BIN MISSION")
