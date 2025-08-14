@@ -5,7 +5,7 @@ To create a sequential order of missions for Graey to follow.
 import rospy
 import time
 from auv.utils import deviceHelper
-from auv.mission import poles_mission, intersub_com_mission, poles_mission_preset, gate_intersub_mission
+from auv.mission import intersub_com_mission, poles_mission_preset, gate_intersub_mission, poles_mission_right
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
@@ -76,7 +76,7 @@ eventflags = [False,False,False,False,False]
 try: 
    # Run the poles mission
    rospy.loginfo("Start of poles mission...")
-   poles = poles_mission.PoleSlalomMission(rc=rc,**config)
+   poles = poles_mission_right.PoleSlalomMission(rc=rc,**config)
    poles.run()
    poles.cleanup()
    print("[INFO] POLES MISSION COMPLETE")

@@ -42,6 +42,8 @@ try:
    
    gate_forward_distance = 5 # m
    rospy.loginfo(f"Start moving forward {gate_forward_distance} m")
+   rc.movement(forward=2)
+   time.sleep(3.5*gate_forward_distance)
    rc.go_forward_distance(gate_forward_distance)
    rospy.loginfo(f"Moved {gate_forward_distance} m")
 
