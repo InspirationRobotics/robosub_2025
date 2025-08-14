@@ -57,7 +57,7 @@ class intersubComMission:
         current_sub = self.sub
         self.rc.set_control_mode("depth_hold")
         self.rc.activate_heading_control(True)
-        time.sleep(3)
+        time.sleep(1)
 
         if current_sub == "graey":
             time_counter = 0
