@@ -40,15 +40,13 @@ if __name__ == "__main__":
     maestro = MiniMaestro(port=deviceHelper.dataFromConfig("polulu"))
 
     # Move servos to new positions
-    maestro.set_pwm(1, 1200)  # Move servo on channel 0
+    maestro.set_pwm(1, 1765)  # Move servo on channel 0
     time.sleep(2)
 
     print("[INFO] triggered")
-    maestro.set_pwm(1, 1700)  # Move servo on channel 0   
+    maestro.set_pwm(1, 750)  # Move servo on channel 0   
     time.sleep(2)
-    
     maestro.set_pwm(1, 1500)  # Move servo on channel 0
 
     # Close connection when done
-
     maestro.close()

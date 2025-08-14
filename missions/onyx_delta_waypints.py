@@ -31,12 +31,23 @@ with open("./missions/waypoints.json", "r") as file:
 rc.go_to_depth(0.8)
 
 rospy.loginfo("Finish initialization")
+rc.go_to_heading(0)
+rc.activate_heading_control(True)
+rc.set_absolute_yaw(0)
+rc.go_forward_distance(10.08)
+rc.activate_heading_control(False)
+navigate_with_heading("T2")
+rc.move_servo("/auv/devices/torpedo")
+rc.move_servo("/auv/devices/torpedo")
+rc.move_servo("/auv/devices/torpedo")
 
-navigate_with_heading("Gate")
-navigate_with_heading("Slalom")
-navigate_with_heading("Bin")
-navigate_with_heading("Torpedo")
-navigate_with_heading("Octagon")
+navigate_with_heading("B1")
+navigate_with_heading("B2")
+rc.move_servo("/auv/devices/dropper")
+rc.move_servo("/auv/devices/dropper")
+rc.move_servo("/auv/devices/dropper")
+
+navigate_with_heading("O1")
 
 print("[INFO] Mission run terminate")
 disarm.disarm()

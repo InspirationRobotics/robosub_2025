@@ -336,6 +336,7 @@ class RobotControl:
         channels[3] = yaw  if yaw else 0
         channels[4] = forward if forward else 0
         channels[5] = lateral if lateral else 0
+        rospy.loginfo(channels)
         with self.lock:
             self.direct_input = channels
 

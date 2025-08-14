@@ -68,7 +68,7 @@ class PoleSlalomMission:
             end = cv_data.get("end", False)
             reached = cv_data.get("reached",False)
 
-
+            # rospy.loginfo(cv_data)
             if end: # time out
                 rospy.loginfo("Pole slalom mission time out.")
                 self.rc.movement()
@@ -107,6 +107,7 @@ class PoleSlalomMission:
 
             time.sleep(0.01)
 
+        # END OF WHILE LOOP
         self.rc.movement(forward=3)
         time.sleep(2.5)
         rospy.loginfo("Pole Slalom mission run complete")

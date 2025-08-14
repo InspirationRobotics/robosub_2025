@@ -1,22 +1,30 @@
 {
-    "Gate": {
+    "G1": {
         "position": [0, 5.4],
         "heading": 0.0
     },
-    "Slalom": {
+    "S1": {
         "position": [-2.5, 5.4],
         "heading": 0.0
     },
-    "Bin": {
-        "position": [-2.5, 13.5],
-        "heading": 5
+    "B1": {
+        "position": [5.49, 7.34],
+        "heading": 135
     },
-    "Octagon": {
-        "position": [1.7, 19],
-        "heading": 320
+    "B2": {
+        "position": [6.86, 5.97],
+        "heading": 135
     },
-    "Torpedo": {
-        "position": [2.7,13.5],
-        "heading": 30
+    "O1": {
+        "position": [4.11, 3.23],
+        "heading": 45
+    },
+    "T1": {
+        "position": [0,10.08],
+        "heading": 215
+    },
+    "T2": {
+        "position": [-1.8,7.95],
+        "heading": 215
     }
 }

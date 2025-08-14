@@ -27,8 +27,8 @@ config = deviceHelper.variables
 with open("./missions/waypoints.json", "r") as file:
     waypoints = json.load(file)
 
-# Dive down to desire depth
-rc.go_to_depth(0.8)
+# # Dive down to desire depth
+# rc.go_to_depth(0.8)
 
 rospy.loginfo("Finish initialization")
 
@@ -45,17 +45,17 @@ rospy.loginfo("Finish initialization")
 #     rospy.logerr("ERROR DOING GATE MISSION")
 #     rospy.logerr(e)
 
-"""POLES MISSION"""
-try: 
-    # Run the poles mission
-    rospy.loginfo("Start of poles mission...")
-    poles = poles_mission.PoleSlalomMission(rc=rc,**config)
-    poles.run()
-    poles.cleanup()
-    print("[INFO] POLES MISSION COMPLETE")
-except Exception as e:
-    rospy.logerr("ERROR OCCUR IN POLES MISSION")
-    rospy.logerr(e)
+# """POLES MISSION"""
+# try: 
+#     # Run the poles mission
+#     rospy.loginfo("Start of poles mission...")
+#     poles = poles_mission.PoleSlalomMission(rc=rc,**config)
+#     poles.run()
+#     poles.cleanup()
+#     print("[INFO] POLES MISSION COMPLETE")
+# except Exception as e:
+#     rospy.logerr("ERROR OCCUR IN POLES MISSION")
+#     rospy.logerr(e)
 
 
 # """BIN MISSION"""
@@ -78,26 +78,26 @@ except Exception as e:
 #     rospy.logerr("ERROR DOING BIN MISSION")
 #     rospy.logerr(e)
 
-# """TORPEDO MISSION"""
-# try:
-#     rc.activate_heading_control(False)
-#     rc.go_to_heading(100)
-#     rc.go_forward_distance(4.0)
-#     rc.go_to_heading(45)
-#     torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
-#     torpedoApproach.run()
-#     torpedoApproach.cleanup()
-#     rc.move_servo("/auv/devices/torpedo")
-#     time.sleep(0.3)
-#     rc.move_servo("/auv/devices/torpedo")
-#     time.sleep(0.3)
-#     rc.move_servo("/auv/devices/torpedo")
-#     rospy.loginfo("TORPEDO MISSION FINISHED")
-#     rc.go_forward_distance(-1.5)
-#     rc.go_to_heading(330)
-# except Exception as e:
-#     rospy.logerr("ERROR DOING TORPEDO MISSION")
-#     rospy.logerr(e)
+"""TORPEDO MISSION"""
+try:
+    rc.activate_heading_control(False)
+    # rc.go_to_heading(100)
+    # rc.go_forward_distance(4.0)
+    # rc.go_to_heading(45)
+    torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
+    torpedoApproach.run()
+    torpedoApproach.cleanup()
+    rc.move_servo("/auv/devices/torpedo")
+    time.sleep(0.3)
+    rc.move_servo("/auv/devices/torpedo")
+    time.sleep(0.3)
+    rc.move_servo("/auv/devices/torpedo")
+    rospy.loginfo("TORPEDO MISSION FINISHED")
+    rc.go_forward_distance(-1.5)
+    rc.go_to_heading(330)
+except Exception as e:
+    rospy.logerr("ERROR DOING TORPEDO MISSION")
+    rospy.logerr(e)
 
 # """OCTAGON MISSION"""
 # try:

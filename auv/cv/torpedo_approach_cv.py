@@ -102,7 +102,7 @@ class CV:
         Returns:
             dictionary, visualized frame: {motion commands/flags for servos and other indication flags}, visualized frame
         """
-
+        print("Reached run function")
         forward = 0
         lateral = 0
         yaw = 0
