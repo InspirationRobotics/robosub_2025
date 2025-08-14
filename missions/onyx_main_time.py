@@ -83,7 +83,6 @@ except Exception as e:
 bin_heading = 210
 rc.activate_heading_control(False)
 rc.go_to_heading(bin_heading)
-rc.go_to_heading(bin_heading)
 rc.activate_heading_control(True)
 rc.set_absolute_yaw(bin_heading)
 
@@ -132,16 +131,15 @@ rc.set_absolute_yaw(face_torpedo_heading)
 """TORPEDO MISSION"""
 try:
     rc.activate_heading_control(False)
-    torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
-    torpedoApproach.run()
-    torpedoApproach.cleanup()
+    # torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
+    # torpedoApproach.run()
+    # torpedoApproach.cleanup()
     rc.move_servo("/auv/devices/torpedo")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/torpedo")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/torpedo")
     rospy.loginfo("TORPEDO MISSION FINISHED")
-    rc.go_forward_distance(-1.5)
 except Exception as e:
     rospy.logerr("ERROR DOING TORPEDO MISSION")
     rospy.logerr(e)
