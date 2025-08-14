@@ -40,15 +40,10 @@ try:
    # set event flag for coin toss mission to True
    eventflags[0] = True
    
-   gate_forward_distance = 5 # m
+   gate_forward_distance = 8.5 # m
    rospy.loginfo(f"Start moving forward {gate_forward_distance} m")
    rc.go_forward_distance(gate_forward_distance)
    rospy.loginfo(f"Moved {gate_forward_distance} m")
-
-   gate_rightward_distance = 3
-   rospy.loginfo(f"Start moving right {gate_rightward_distance} m")
-   rc.go_lateral_distance(gate_rightward_distance)
-   rospy.loginfo(f"Moved {gate_rightward_distance} m")
    
    print("[INFO] GATE MISSION COMPLETE")
    # set event flag for gate mission to True
@@ -114,7 +109,7 @@ except Exception as e:
 
 """LATERAL TO THE LEFT FOR 3.75 M"""
 try:
-   gate_leftward_distance = -3.75 # m
+   gate_leftward_distance = -0.5 # m
    rospy.loginfo(f"Start moving forward {gate_leftward_distance} m")
    rc.go_forward_distance(gate_leftward_distance)
    rospy.loginfo(f"Moved {gate_leftward_distance} m")
@@ -124,7 +119,7 @@ except Exception as e:
     
 """GOING BACK FOR 2 M"""
 try:
-   gate_backward_distance = -2 # m
+   gate_backward_distance = -5 # m
    rospy.loginfo(f"Start moving forward {gate_backward_distance} m")
    rc.go_forward_distance(gate_backward_distance)
    rospy.loginfo(f"Moved {gate_backward_distance} m")
@@ -141,9 +136,9 @@ except Exception as e:
     
 """FORWARD AFTER ROLL"""
 try:
-   backward_after_roll_distance = 3 # 5 ft
+   backward_after_roll_distance = -2 # 5 ft
    rospy.loginfo(f"Start moving backward {backward_after_roll_distance} m")
-   rc.go_forward_distance(-backward_after_roll_distance)
+   rc.go_forward_distance(backward_after_roll_distance)
    rospy.loginfo(f"Moved {backward_after_roll_distance} m")
 
 except Exception as e:
