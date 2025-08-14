@@ -45,38 +45,38 @@ rospy.loginfo("Finish initialization")
 #     rospy.logerr("ERROR DOING GATE MISSION")
 #     rospy.logerr(e)
 
-# """POLES MISSION"""
-# try: 
-#     # Run the poles mission
-#     rospy.loginfo("Start of poles mission...")
-#     poles = poles_mission.PoleSlalomMission(rc=rc,**config)
-#     poles.run()
-#     poles.cleanup()
-#     print("[INFO] POLES MISSION COMPLETE")
-# except Exception as e:
-#     rospy.logerr("ERROR OCCUR IN POLES MISSION")
-#     rospy.logerr(e)
-
-
-"""BIN MISSION"""
-try:
-    rc.activate_heading_control(False)
-    binApproach = bin_approach_mission.BinsApproachMission(rc=rc, **config)
-    binApproach.run()
-    binApproach.cleanup()
-    rospy.loginfo("BIN APPROACH MISSION FINISHED")
-    rc.move_servo("/auv/devices/dropper")
-    time.sleep(0.3)
-    rc.move_servo("/auv/devices/dropper")
-    time.sleep(0.3)
-    rc.move_servo("/auv/devices/dropper")
-    binDrop = bin_drop_mission.BinsDropMission(rc=rc, **config)
-    binDrop.run()
-    binDrop.cleanup()
-    rospy.loginfo("BIN drop MISSION FINISHED")
+"""POLES MISSION"""
+try: 
+    # Run the poles mission
+    rospy.loginfo("Start of poles mission...")
+    poles = poles_mission.PoleSlalomMission(rc=rc,**config)
+    poles.run()
+    poles.cleanup()
+    print("[INFO] POLES MISSION COMPLETE")
 except Exception as e:
-    rospy.logerr("ERROR DOING BIN MISSION")
+    rospy.logerr("ERROR OCCUR IN POLES MISSION")
     rospy.logerr(e)
+
+
+# """BIN MISSION"""
+# try:
+#     rc.activate_heading_control(False)
+#     binApproach = bin_approach_mission.BinsApproachMission(rc=rc, **config)
+#     binApproach.run()
+#     binApproach.cleanup()
+#     rospy.loginfo("BIN APPROACH MISSION FINISHED")
+#     rc.move_servo("/auv/devices/dropper")
+#     time.sleep(0.3)
+#     rc.move_servo("/auv/devices/dropper")
+#     time.sleep(0.3)
+#     rc.move_servo("/auv/devices/dropper")
+#     binDrop = bin_drop_mission.BinsDropMission(rc=rc, **config)
+#     binDrop.run()
+#     binDrop.cleanup()
+#     rospy.loginfo("BIN drop MISSION FINISHED")
+# except Exception as e:
+#     rospy.logerr("ERROR DOING BIN MISSION")
+#     rospy.logerr(e)
 
 # """TORPEDO MISSION"""
 # try:
