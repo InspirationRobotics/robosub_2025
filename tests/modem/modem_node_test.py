@@ -10,7 +10,7 @@ time.sleep(2)
 rospy.loginfo("Initialized robot control")
 
 # Send message
-rc.send_modem(addr="010",movement="ROLL")
+rc.send_modem(addr="020",movement="Graey_Start")
 rospy.loginfo(f"Sent message ")
 time.sleep(1)
 

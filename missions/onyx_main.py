@@ -47,6 +47,7 @@ except Exception as e:
 
 """GATE INTERSUB MISSION"""
 try:
+    rospy.loginfo("Gate Intersub ")
     gateIntersub = gate_intersub_mission.GateIntersubMission(robotControl=rc)
     gateIntersub.run()
     rospy.loginfo("GATE INTERSUB MISSION FINISHED")
