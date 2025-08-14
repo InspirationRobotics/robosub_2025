@@ -297,7 +297,7 @@ class RobotControl:
 
 
                 # minimum of 0.5 pwm for yaw
-                min_pwm = 0.5
+                min_pwm = 0.4
                 if abs(yaw_pwm) < min_pwm:
                     if yaw_pwm < 0:
                         yaw_pwm = -min_pwm
