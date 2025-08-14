@@ -11,7 +11,7 @@ rc.set_control_mode("depth_hold")
 rc.set_flight_mode("STABILIZE")
 
 # Diving down
-rc.go_to_depth(0.8)
+rc.go_to_depth(0.2)
 
 # Arm
 arm.arm()
@@ -44,4 +44,5 @@ heading = rc.get_heading()
 print(f"[DEBUG]: Heading is {heading}")
 time.sleep(5.0)
 
+rc.exit()
 disarm.disarm()
