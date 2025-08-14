@@ -178,6 +178,7 @@ class EKFNode:
         """
         rospy.loginfo("Starting Depth Calibration...")
         samples = []
+        self.depth_calib = 0 # Set offset to 0
 
         # Wait for depth data
         while self.depth is None:
