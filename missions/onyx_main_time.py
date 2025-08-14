@@ -60,10 +60,11 @@ except Exception as e:
     rospy.logerr(e)
 
 """SET HEADING TO OCTAGON"""
-octagon_heading = 20
+bin_heading = 20
 rc.activate_heading_control(False)
-rc.go_to_heading(octagon_heading)
+rc.go_to_heading(bin_heading)
 rc.activate_heading_control(True)
+rc.set_absolute_yaw(bin_heading)
 
 """MOVE TOWARD THE OCTAGON"""
 rc.movement(forward=2.0)
@@ -82,10 +83,11 @@ except Exception as e:
    rospy.logerr(e)
 
 """SET HEADING TO BIN"""
-octagon_heading = 210
+bin_heading = 210
 rc.activate_heading_control(False)
-rc.go_to_heading(octagon_heading)
+rc.go_to_heading(bin_heading)
 rc.activate_heading_control(True)
+rc.set_absolute_yaw(bin_heading)
 
 """MOVE TOWARD THE BIN"""
 rc.movement(forward=2.0)
@@ -116,16 +118,18 @@ torpedo_waypoint_heading = 110
 rc.activate_heading_control(False)
 rc.go_to_heading(torpedo_waypoint_heading)
 rc.activate_heading_control(True)
+rc.set_absolute_yaw(torpedo_waypoint_heading)
 
 """MOVE TOWARD THE TORPEDO"""
 rc.movement(forward=2.0)
 time.sleep(8.75)
 
 """FACE TORPEDO"""
-return_home_heading = 60
+face_torpedo_heading = 60
 rc.activate_heading_control(False)
-rc.go_to_heading(return_home_heading)
+rc.go_to_heading(face_torpedo_heading)
 rc.activate_heading_control(True)
+rc.set_absolute_yaw(face_torpedo_heading)
 
 """TORPEDO MISSION"""
 try:
