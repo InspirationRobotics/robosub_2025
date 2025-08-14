@@ -336,7 +336,6 @@ class RobotControl:
         channels[3] = yaw  if yaw else 0
         channels[4] = forward if forward else 0
         channels[5] = lateral if lateral else 0
-        rospy.loginfo(channels)
         with self.lock:
             self.direct_input = channels
 
@@ -385,7 +384,7 @@ class RobotControl:
 
         # Publish PWMs to /auv/devices/thrusters
         if self.debug:
-            # rospy.loginfo(f"pwms : {channels[0:6]} | input: {[pitch,roll,vertical,yaw,forward,lateral]}")
+            rospy.loginfo(f"pwms : {channels[0:6]} | input: {[pitch,roll,vertical,yaw,forward,lateral]}")
             pass
         else:
             self.pub_thrusters.publish(pwm)
