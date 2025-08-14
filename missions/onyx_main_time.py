@@ -122,9 +122,9 @@ rc.movement(forward=2.0)
 time.sleep(8.75)
 
 """FACE TORPEDO"""
-face_torpedo_heading = 60
+return_home_heading = 60
 rc.activate_heading_control(False)
-rc.go_to_heading(face_torpedo_heading)
+rc.go_to_heading(return_home_heading)
 rc.activate_heading_control(True)
 
 """TORPEDO MISSION"""
@@ -154,9 +154,15 @@ except Exception as e:
     rospy.logerr("ERROR DURING MODEM MISSION")
     rospy.logerr(e)
 
-rospy.loginfo("Returning home")
-rc.waypointNav(0,5)
-rc.waypointNav(0,0)
+"""RETURN HOME"""
+return_home_heading = 180
+rc.activate_heading_control(False)
+rc.go_to_heading(return_home_heading)
+rc.activate_heading_control(True)
+
+"""MOVE BACK TO GATE"""
+rc.movement(forward=2.0)
+time.sleep(35)
 
 print("[INFO] Mission run terminate")
 disarm.disarm()
