@@ -434,11 +434,11 @@ class RobotControl:
 
             # make sure the output is greater than 1 for the thrusters to even move
             raw_output = self.PIDs["yaw"](-error / 180)
-            if abs(raw_output) < 1:
+            if abs(raw_output) < 0.6:
                 if raw_output < 0:
-                    output = -1
+                    output = -0.6
                 elif raw_output >= 0:
-                    output = 1
+                    output = 0.6
             else:
                 output = raw_output
 
