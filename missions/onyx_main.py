@@ -39,7 +39,7 @@ try:
     rc.go_to_heading(0)
     rc.activate_heading_control(True)
     rc.go_forward_distance(6)
-    rc.go_lateral_distance(3)
+    rc.go_lateral_distance(2.7)
     rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
@@ -56,11 +56,10 @@ except Exception as e:
     rospy.logerr(e)
 
 """SLALOM MISSION"""
-navigate_with_heading("S1")
+# navigate_with_heading("S1")
 try: 
     # Run the poles mission
     rc.activate_heading_control(True)
-    rc.go_to_depth(1.2)
     rospy.loginfo("Start of poles mission...")
     poles = poles_mission.PoleSlalomMission(rc=rc,**config)
     poles.run()
@@ -119,15 +118,10 @@ try:
     rc.move_servo("/auv/devices/torpedo")
     rospy.loginfo("TORPEDO MISSION FINISHED")
     rc.go_forward_distance(-1.5)
-    rc.go_to_heading(330)
 except Exception as e:
     rospy.logerr("ERROR DOING TORPEDO MISSION")
     rospy.logerr(e)
 
-
-
-rospy.loginfo("Returning home")
-rc.waypointNav(0,0)
 
 """MODEMS + ROLL"""
 try:
@@ -138,6 +132,9 @@ except Exception as e:
     rospy.logerr("ERROR DURING MODEM MISSION")
     rospy.logerr(e)
 
+rospy.loginfo("Returning home")
+rc.waypointNav(0,5)
+rc.waypointNav(0,0)
 
 print("[INFO] Mission run terminate")
 disarm.disarm()
