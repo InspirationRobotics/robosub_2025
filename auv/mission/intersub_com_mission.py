@@ -32,8 +32,6 @@ class intersubComMission:
                 self.rc.go_to_heading(270)
                 self.rc.go_to_heading(360)
             if msg.data == "ROLL":
-                self.rc.go_lateral_distance(target=-1.5)
-                self.rc.go_forward_distance(target=-7)
                 rospy.loginfo("Roll maneuver requested")
                 self.roll_requested = True  # <-- Store request, but don't execute yet
             self.end = True
@@ -64,7 +62,7 @@ class intersubComMission:
         if current_sub == "graey":
             time_counter = 0
             while not self.end:
-                if time_counter >= 60:
+                if time_counter >= 300:
                     rospy.loginfo("Time out, no message received, faking ROLL request")
                     fake_msg = String()
                     fake_msg.data = "ROLL"
