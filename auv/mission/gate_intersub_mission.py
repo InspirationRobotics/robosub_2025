@@ -27,7 +27,7 @@ class GateIntersubMission:
             rospy.loginfo(f"Received message: {msg.data}")
             if msg.data == "Onyx_Gate_Finished":
                 rospy.loginfo("Graey start going through the gate")
-                for i in range(10):
+                for i in range(3):
                     self.rc.send_modem(addr="020", movement="Graey_Start")
                     time.sleep(1)
                 rospy.loginfo("Finishing Gate Intersub mission")
