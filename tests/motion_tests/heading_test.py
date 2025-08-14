@@ -16,33 +16,29 @@ rc.go_to_depth(0.2)
 # Arm
 arm.arm()
 
-heading = rc.get_heading()
-print(f"[DEBUG]: Heading is {heading}")
+def go_to_and_hold(degrees):
+    rospy.loginfo(f"Going to {degrees}")
+    rc.go_to_heading(degrees)
+    rc.set_absolute_yaw(degrees)
+    rc.activate_heading_control(True)
+    time.sleep(5)
+    rc.activate_heading_control(False)
+    rospy.loginfo(f"Actual heading: {rc.get_heading()} | desired: {degrees}")
 
-rc.go_to_heading(heading + 90)
-heading = rc.get_heading()
-print(f"[DEBUG]: Heading is {heading}")
-time.sleep(5.0)
 
-rc.go_to_heading(heading + 90)
-heading = rc.get_heading()
-print(f"[DEBUG]: Heading is {heading}")
-time.sleep(5.0)
 
-rc.go_to_heading(heading + 180)
-heading = rc.get_heading()
-print(f"[DEBUG]: Heading is {heading}")
-time.sleep(5.0)
+go_to_and_hold(-30)
+go_to_and_hold(30)
+go_to_and_hold(0)
+go_to_and_hold(90)
+go_to_and_hold(180)
+go_to_and_hold(270)
+go_to_and_hold(0)
 
-rc.go_to_heading(heading - 90)
-heading = rc.get_heading()
-print(f"[DEBUG]: Heading is {heading}")
-time.sleep(5.0)
+time.sleep(5)
 
-rc.go_to_heading(heading + 90)
-heading = rc.get_heading()
-print(f"[DEBUG]: Heading is {heading}")
-time.sleep(5.0)
+
+
 
 rc.exit()
 disarm.disarm()

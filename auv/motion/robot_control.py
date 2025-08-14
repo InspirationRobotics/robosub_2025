@@ -295,6 +295,15 @@ class RobotControl:
                     surge_pwm   = self.direct_input[4]
                     lateral_pwm = self.direct_input[5]
 
+
+                # minimum of 0.5 pwm for yaw
+                min_pwm = 0.5
+                if abs(yaw_pwm) < min_pwm:
+                    if yaw_pwm < 0:
+                        yaw_pwm = -min_pwm
+                    elif yaw_pwm >= 0:
+                        yaw_pwm = min_pwm
+
                 self.__movement(
                     lateral=lateral_pwm,
                     forward=surge_pwm,
@@ -431,19 +440,12 @@ class RobotControl:
 
             error = heading_error(self.orientation['yaw'], target)
 
-            # make sure the output is greater than 1 for the thrusters to even move
-            raw_output = self.PIDs["yaw"](-error / 180)
-            if abs(raw_output) < 0.6:
-                if raw_output < 0:
-                    output = -0.6
-                elif raw_output >= 0:
-                    output = 0.6
-            else:
-                output = raw_output
+            # make sure the output is greater than 0.5 for the thrusters to even move
+            output = self.PIDs["yaw"](-error / 180)
 
-
-            if abs(error) <= 3:
+            if abs(error) <= 1.0:
                 print("[INFO] Heading reached")
+                self.movement()
                 break
 
             # New timeout mechanism: Timeout if moved less than 3 degrees in 3 seconds
@@ -647,6 +649,7 @@ class RobotControl:
                 self.go_to_heading(target_heading)
                 self.set_absolute_yaw(target_heading)
                 self.activate_heading_control(True)
+                time.sleep(3)
                 rospy.loginfo(f"Heading reached, going forward {D} m")
                 self.go_forward_distance(D)
                 self.activate_heading_control(False)
