@@ -60,15 +60,14 @@ except Exception as e:
     rospy.logerr(e)
 
 """SET HEADING TO OCTAGON"""
-octagon_heading = 30
+octagon_heading = 20
 rc.activate_heading_control(False)
 rc.go_to_heading(octagon_heading)
 rc.activate_heading_control(True)
 
 """MOVE TOWARD THE OCTAGON"""
-octagon_forward_distance = 3 # TODO: Update with latest waypoint info
 rc.movement(forward=2.0)
-time.sleep(3.5*octagon_forward_distance)
+time.sleep(19.25)
 
 """OCTAGON MISSION"""
 try:
@@ -90,7 +89,7 @@ rc.activate_heading_control(True)
 
 """MOVE TOWARD THE BIN"""
 rc.movement(forward=2.0)
-time.sleep(17.5)
+time.sleep(8.75)
 
 """BIN MISSION"""
 try:
@@ -111,10 +110,18 @@ try:
 except Exception as e:
     rospy.logerr("ERROR DOING BIN MISSION")
     rospy.logerr(e)
+    
+"""SET HEADING TO TORPEDO"""
+octagon_heading = 110
+rc.activate_heading_control(False)
+rc.go_to_heading(octagon_heading)
+rc.activate_heading_control(True)
 
+"""MOVE TOWARD THE TORPEDO"""
+rc.movement(forward=2.0)
+time.sleep(8.75)
 
 """TORPEDO MISSION"""
-navigate_with_heading("T1")
 try:
     rc.activate_heading_control(False)
     torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
