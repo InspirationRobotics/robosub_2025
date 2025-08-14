@@ -25,9 +25,9 @@ rospy.loginfo("Finish initialization & depth is 1.2 m")
 """GATE MISSION"""
 try:
     rc.movement(forward=2)
-    time.sleep(3.25*5.56)
+    time.sleep(3.25*5.56) # 18 seconds
     rc.movement(lateral=-2)
-    time.sleep(3.25*0.86)
+    time.sleep(3.25*0.86) # 2.8 seconds
     rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
@@ -57,15 +57,15 @@ except Exception as e:
     rospy.logerr(e)
 
 """SET HEADING TO OCTAGON"""
-bin_heading = 20
+octagon_heading = 40
 rc.activate_heading_control(False)
-rc.go_to_heading(bin_heading)
+rc.go_to_heading(octagon_heading)
 rc.activate_heading_control(True)
-rc.set_absolute_yaw(bin_heading)
+rc.set_absolute_yaw(octagon_heading)
 
 """MOVE TOWARD THE OCTAGON"""
 rc.movement(forward=2.0)
-time.sleep(19.25)
+time.sleep(6)
 
 """OCTAGON MISSION"""
 try:
@@ -89,7 +89,7 @@ rc.set_absolute_yaw(bin_heading)
 
 """MOVE TOWARD THE BIN"""
 rc.movement(forward=2.0)
-time.sleep(3.25*1.22)
+time.sleep(3.25*1.22) # 3.965 seconds
 
 """BIN MISSION"""
 try:
@@ -111,28 +111,6 @@ except Exception as e:
     rospy.logerr("ERROR DOING BIN MISSION")
     rospy.logerr(e)
 
-"""SET HEADING TO OCTAGON"""
-octagon_heading = 210
-rc.activate_heading_control(False)
-rc.go_to_heading(octagon_heading)
-rc.activate_heading_control(True)
-
-"""MOVE TOWARD THE OCTAGON"""
-rc.movement(forward=2.0)
-time.sleep(8.75)
-
-"""OCTAGON MISSION"""
-try:
-   rc.activate_heading_control(False)
-   octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
-   time.sleep(2)
-   octagon.run()
-   octagon.cleanup()
-   rospy.loginfo("OCTAGON MISSION FINISHED")
-except Exception as e:
-   rospy.logerr("ERROR DOING OCTAGON MISSION")
-   rospy.logerr(e)
-    
 """SET HEADING TO TORPEDO"""
 torpedo_waypoint_heading = 110
 rc.activate_heading_control(False)
@@ -142,7 +120,7 @@ rc.set_absolute_yaw(torpedo_waypoint_heading)
 
 """MOVE TOWARD THE TORPEDO"""
 rc.movement(forward=2.0)
-time.sleep(8.75)
+time.sleep(14.35)
 
 """FACE TORPEDO"""
 face_torpedo_heading = 60
@@ -177,16 +155,6 @@ try:
 except Exception as e:
     rospy.logerr("ERROR DURING MODEM MISSION")
     rospy.logerr(e)
-
-"""RETURN HOME"""
-return_home_heading = 180
-rc.activate_heading_control(False)
-rc.go_to_heading(return_home_heading)
-rc.activate_heading_control(True)
-
-"""MOVE BACK TO GATE"""
-rc.movement(forward=2.0)
-time.sleep(35)
 
 print("[INFO] Mission run terminate")
 disarm.disarm()
