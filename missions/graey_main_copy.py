@@ -13,8 +13,9 @@ from auv.utils import arm, disarm, deviceHelper
 rospy.init_node("Graey", anonymous = True)
 rc = robot_control.RobotControl()
 rc.set_control_mode('depth_hold')
-rc.go_to_depth(0.5)
-rospy.loginfo("Robot armed and set to depth 0.5 m")
+rc.set_flight_mode("STABILIZE")
+rc.go_to_depth(0.8)
+rospy.loginfo("Robot armed and set to depth 0.8 m")
 gate_heading = 0 # CALIBRATE EACH TIME 
 return_heading = 180
 config = deviceHelper.variables
@@ -40,7 +41,7 @@ try:
    # set event flag for coin toss mission to True
    eventflags[0] = True
    
-   gate_forward_distance = 2 # m
+   gate_forward_distance = 3 # m
    rospy.loginfo(f"Start moving forward {gate_forward_distance} m")
    rc.go_forward_distance(gate_forward_distance)
    rospy.loginfo(f"Moved {gate_forward_distance} m")
@@ -69,6 +70,9 @@ except Exception as e:
     rospy.logerr("ERROR DURING MODEM MISSION")
     rospy.logerr(e)
     eventflags[3] = True  
+
+"""RETURN HOME"""
+rc.go_forward_distance(-1)
 
 """ROLL MANEUVER"""
 try:

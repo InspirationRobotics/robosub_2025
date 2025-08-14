@@ -10,9 +10,10 @@ time.sleep(2)
 rospy.loginfo("Initialized robot control")
 
 # Send message
-rc.send_modem(addr="020",movement="Graey_Start")
-rospy.loginfo(f"Sent message ")
-time.sleep(1)
+for i in range(60):
+    rc.send_modem(addr="010",movement="Graey_Start")
+    rospy.loginfo(f"Sent message ")
+    time.sleep(1)
 
 #time.sleep(2)
 
