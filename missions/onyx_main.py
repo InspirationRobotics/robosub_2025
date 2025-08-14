@@ -48,7 +48,7 @@ except Exception as e:
 """GATE INTERSUB MISSION"""
 try:
     gateIntersub = gate_intersub_mission.GateIntersubMission(robotControl=rc)
-    gate_intersub_mission.run()
+    gateIntersub.run()
     rospy.loginfo("GATE INTERSUB MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")

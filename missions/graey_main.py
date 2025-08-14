@@ -24,12 +24,12 @@ eventflags = [False,False,False,False,False]
 """GATE INTERSUB MISSION"""
 try:
     gateIntersub = gate_intersub_mission.GateIntersubMission(robotControl=rc)
-    gate_intersub_mission.run()  # <-- Comms only
+    gateIntersub.run()  # <-- Comms only
     rospy.loginfo("FINISHED GATE INTERSUB MISSION")
 except Exception as e:
     rospy.logerr("ERROR DURING GATE INTERSUB MISSION")
     rospy.logerr(e)
-    
+
 """COINT TOSS + GATE MISSION"""
 try:
    rc.go_to_heading(gate_heading)
