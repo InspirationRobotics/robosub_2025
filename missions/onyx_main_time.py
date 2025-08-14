@@ -24,9 +24,6 @@ rospy.loginfo("Finish initialization & depth is 1.2 m")
 
 """GATE MISSION"""
 try:
-    # COIN FLIP
-    rc.go_to_heading(0)
-    rc.activate_heading_control(True)
     rc.movement(forward=2)
     time.sleep(3.25*5.56)
     rc.movement(lateral=-2)
@@ -59,11 +56,36 @@ except Exception as e:
     rospy.logerr("ERROR OCCUR IN POLES MISSION")
     rospy.logerr(e)
 
-"""SET HEADING TO BIN"""
-bin_heading = 0
+"""SET HEADING TO OCTAGON"""
+bin_heading = 20
 rc.activate_heading_control(False)
 rc.go_to_heading(bin_heading)
 rc.activate_heading_control(True)
+rc.set_absolute_yaw(bin_heading)
+
+"""MOVE TOWARD THE OCTAGON"""
+rc.movement(forward=2.0)
+time.sleep(19.25)
+
+"""OCTAGON MISSION"""
+try:
+   rc.activate_heading_control(False)
+   octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
+   time.sleep(2)
+   octagon.run()
+   octagon.cleanup()
+   rospy.loginfo("OCTAGON MISSION FINISHED")
+except Exception as e:
+   rospy.logerr("ERROR DOING OCTAGON MISSION")
+   rospy.logerr(e)
+
+"""SET HEADING TO BIN"""
+bin_heading = 210
+rc.activate_heading_control(False)
+rc.go_to_heading(bin_heading)
+rc.go_to_heading(bin_heading)
+rc.activate_heading_control(True)
+rc.set_absolute_yaw(bin_heading)
 
 """MOVE TOWARD THE BIN"""
 rc.movement(forward=2.0)
@@ -116,16 +138,18 @@ torpedo_waypoint_heading = 110
 rc.activate_heading_control(False)
 rc.go_to_heading(torpedo_waypoint_heading)
 rc.activate_heading_control(True)
+rc.set_absolute_yaw(torpedo_waypoint_heading)
 
 """MOVE TOWARD THE TORPEDO"""
 rc.movement(forward=2.0)
 time.sleep(8.75)
 
 """FACE TORPEDO"""
-return_home_heading = 60
+face_torpedo_heading = 60
 rc.activate_heading_control(False)
-rc.go_to_heading(return_home_heading)
+rc.go_to_heading(face_torpedo_heading)
 rc.activate_heading_control(True)
+rc.set_absolute_yaw(face_torpedo_heading)
 
 """TORPEDO MISSION"""
 try:
