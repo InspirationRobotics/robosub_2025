@@ -44,7 +44,7 @@ class BinsDropMission:
 
     def run(self):
         print("[INFO] Bin drop mission running")
-
+        self.rc.activate_heading_control(False)
         drop = False
         while not rospy.is_shutdown():
             time.sleep(0.01)

@@ -28,8 +28,8 @@ class BinsApproachMission:
         for file_name in self.cv_files:
             self.cv_handler.start_cv(file_name, self.callback)
 
-        if target is not None:
-            self.cv_handler.set_target("bin_approach_cv", target)
+        # if target is not None:
+        #     self.cv_handler.set_target("bin_approach_cv", target)
 
         print("[INFO] Bin Approach Mission Init")
 

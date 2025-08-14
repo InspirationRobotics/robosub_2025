@@ -40,6 +40,7 @@ class torpedoApproachMission:
 
         # Work around for not able to subscribe to the topic
         self.return_sub = rospy.Subscriber("/auv/cv_handler/torpedo_approach_cv", String ,self.callback)
+        
         if target is not None:
             rospy.loginfo("Setting target...")
             self.cv_handler.set_target("torpedo_approach_cv", target)

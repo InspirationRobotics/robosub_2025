@@ -34,7 +34,7 @@ class CV:
 
         print(f"[INFO] Bin CV initialized.")
 
-    def run(self, frame, target, detections):
+    def run(self, frame, detections, target = "sawfish"):
         forward = 0
         lateral = 0
         vertical = 0
