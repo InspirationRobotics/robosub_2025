@@ -15,7 +15,7 @@ for i in range(60):
     rospy.loginfo(f"Sent message ")
     time.sleep(1)
 
-#time.sleep(2)
+
 
 rospy.loginfo("Test ended")
 

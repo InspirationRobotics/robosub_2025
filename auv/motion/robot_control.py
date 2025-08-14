@@ -70,7 +70,7 @@ class RobotControl:
 
         # Store informaiton
         self.sub            = deviceHelper.variables.get("sub")
-        self.mode           = "pid"
+        self.mode           = "depth_hold"
         self.heading_control = False
         self.position       = {'x':0,'y':0,'z':0}
         self.orientation    = {'yaw':0,'pitch':0,'roll':0}   # in degrees, see self.pose_callback
