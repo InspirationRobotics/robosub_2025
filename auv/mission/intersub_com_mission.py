@@ -56,14 +56,13 @@ class intersubComMission:
         """Only handles communication, not the roll maneuver"""
         current_sub = self.sub
         self.rc.set_control_mode("depth_hold")
-        self.rc.set_absolute_z(0.5)
         self.rc.activate_heading_control(True)
         time.sleep(3)
 
         if current_sub == "graey":
             time_counter = 0
             while not self.end:
-                if time_counter >= 5:
+                if time_counter >= 60:
                     rospy.loginfo("Time out, no message received, faking ROLL request")
                     fake_msg = String()
                     fake_msg.data = "ROLL"
@@ -88,7 +87,6 @@ if __name__=="__main__":
     rospy.init_node("intersub_coms_mission", anonymous=True)
     rc = RobotControl()
     rc.set_control_mode("depth_hold")
-    rc.set_absolute_z(0.5)
     time.sleep(10)
     mission = intersubComMission(robotControl=rc)
     mission.run()
