@@ -40,8 +40,6 @@ class intersubComMission:
         """Executes the roll maneuver if requested"""
         if self.roll_requested:
             rospy.loginfo("Doing roll maneuver")
-            self.rc.set_absolute_z(0.7)
-            time.sleep(10)
             self.rc.set_flight_mode("ACRO")
             self.rc.set_control_mode("direct")
             self.rc.movement(roll=5)
