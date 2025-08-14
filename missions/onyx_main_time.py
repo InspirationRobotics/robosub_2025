@@ -112,14 +112,20 @@ except Exception as e:
     rospy.logerr(e)
     
 """SET HEADING TO TORPEDO"""
-octagon_heading = 110
+torpedo_waypoint_heading = 110
 rc.activate_heading_control(False)
-rc.go_to_heading(octagon_heading)
+rc.go_to_heading(torpedo_waypoint_heading)
 rc.activate_heading_control(True)
 
 """MOVE TOWARD THE TORPEDO"""
 rc.movement(forward=2.0)
 time.sleep(8.75)
+
+"""FACE TORPEDO"""
+face_torpedo_heading = 60
+rc.activate_heading_control(False)
+rc.go_to_heading(face_torpedo_heading)
+rc.activate_heading_control(True)
 
 """TORPEDO MISSION"""
 try:
