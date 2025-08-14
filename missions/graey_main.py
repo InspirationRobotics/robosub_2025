@@ -95,6 +95,26 @@ except Exception as e:
 #    rospy.logerr("ERROR OCCUR IN TURNING 180 DEGREES")
 #    rospy.logerr(e)
    
+"""LATERAL TO THE LEFT FOR 0.75 M"""
+try:
+   gate_backward_distance = -0.75 # m
+   rospy.loginfo(f"Start moving forward {gate_backward_distance} m")
+   rc.go_forward_distance(gate_backward_distance)
+   rospy.loginfo(f"Moved {gate_backward_distance} m")
+except Exception as e:
+    rospy.logerr("ERROR DURING LATERAL MOTION")
+    rospy.logerr(e)
+    
+"""GOING BACK FOR 7 M"""
+try:
+   gate_backward_distance = -7 # m
+   rospy.loginfo(f"Start moving forward {gate_backward_distance} m")
+   rc.go_forward_distance(gate_backward_distance)
+   rospy.loginfo(f"Moved {gate_backward_distance} m")
+except Exception as e:
+    rospy.logerr("ERROR DURING LATERAL MOTION")
+    rospy.logerr(e)
+
 """MODEMS"""
 try:
     intersubMission = intersub_com_mission.intersubComMission(robotControl=rc)
