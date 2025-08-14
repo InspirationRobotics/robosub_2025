@@ -28,7 +28,7 @@ with open("./missions/waypoints.json", "r") as file:
     waypoints = json.load(file)
 
 # Dive down to desire depth
-rc.go_to_depth(0.8)
+rc.go_to_depth(1.2)
 
 rospy.loginfo("Finish initialization")
 
@@ -39,7 +39,7 @@ try:
     rc.go_to_heading(0)
     rc.activate_heading_control(True)
     rc.go_forward_distance(6)
-    rc.go_lateral_distance(-3)
+    rc.go_lateral_distance(3)
     rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
@@ -55,9 +55,12 @@ except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
     rospy.logerr(e)
 
-"""POLES MISSION"""
+"""SLALOM MISSION"""
+navigate_with_heading("S1")
 try: 
     # Run the poles mission
+    rc.activate_heading_control(True)
+    rc.go_to_depth(1.2)
     rospy.loginfo("Start of poles mission...")
     poles = poles_mission.PoleSlalomMission(rc=rc,**config)
     poles.run()
@@ -67,8 +70,21 @@ except Exception as e:
     rospy.logerr("ERROR OCCUR IN POLES MISSION")
     rospy.logerr(e)
 
+"""OCTAGON MISSION"""
+navigate_with_heading("O1")
+try:
+   rc.activate_heading_control(False)
+   octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
+   time.sleep(2)
+   octagon.run()
+   octagon.cleanup()
+   rospy.loginfo("OCTAGON MISSION FINISHED")
+except Exception as e:
+   rospy.logerr("ERROR DOING OCTAGON MISSION")
+   rospy.logerr(e)
 
 """BIN MISSION"""
+navigate_with_heading("B1")
 try:
     rc.activate_heading_control(False)
     binApproach = bin_approach_mission.BinsApproachMission(rc=rc, **config)
@@ -88,12 +104,11 @@ except Exception as e:
     rospy.logerr("ERROR DOING BIN MISSION")
     rospy.logerr(e)
 
+
 """TORPEDO MISSION"""
+navigate_with_heading("T1")
 try:
     rc.activate_heading_control(False)
-    rc.go_to_heading(100)
-    rc.go_forward_distance(4.0)
-    rc.go_to_heading(45)
     torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
     torpedoApproach.run()
     torpedoApproach.cleanup()
@@ -109,16 +124,6 @@ except Exception as e:
     rospy.logerr("ERROR DOING TORPEDO MISSION")
     rospy.logerr(e)
 
-"""OCTAGON MISSION"""
-try:
-   octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
-   time.sleep(2)
-   octagon.run()
-   octagon.cleanup()
-   rospy.loginfo("OCTAGON MISSION FINISHED")
-except Exception as e:
-   rospy.logerr("ERROR DOING OCTAGON MISSION")
-   rospy.logerr(e)
 
 
 rospy.loginfo("Returning home")
