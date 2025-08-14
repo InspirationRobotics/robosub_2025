@@ -73,9 +73,9 @@ class intersubComMission:
         elif current_sub == "onyx":
             destination_addr = "010"
             rospy.loginfo("Sending message to Graey")
-            for i in range(5):
+            for i in range(60):
                 self.send_modem_message(dest_addr=destination_addr, move="ROLL")
-                time.sleep(3)
+                time.sleep(1)
 
 
 if __name__=="__main__":
