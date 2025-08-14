@@ -16,7 +16,6 @@ from auv.motion import robot_control # For running the motors on the sub
 from auv.utils import arm, disarm
 
 class torpedoApproachMission:
-    cv_files = ["torpedo_approach_cv"] # CV file to run
 
     def __init__(self, rc= None,target=None, **config):
         """
@@ -26,6 +25,8 @@ class torpedoApproachMission:
             config: Mission-specific parameters to run the mission.
         """
         self.config = config
+        self.cv_files = ["torpedo_approach_cv"] # CV file to run
+
         self.data = {}  # Dictionary to store the data from the CV handler
         self.next_data = {}  # Dictionary to store the newest data from the CV handler; this data will be merged with self.data.
         self.received = False
@@ -37,7 +38,12 @@ class torpedoApproachMission:
         for file_name in self.cv_files:
             self.cv_handler.start_cv(file_name, self.callback)
 
-        self.cv_handler.set_target("torpedo_approach_cv", target)
+        # Work around for not able to subscribe to the topic
+        self.return_sub = rospy.Subscriber("/auv/cv_handler/torpedo_approach_cv", String ,self.callback)
+        if target is not None:
+            rospy.loginfo("Setting target...")
+            self.cv_handler.set_target("torpedo_approach_cv", target)
+
         rospy.loginfo("torpedo Approach Mission Init")
 
     def callback(self, msg):
@@ -61,6 +67,7 @@ class torpedoApproachMission:
         while not rospy.is_shutdown():
             time.sleep(0.05)
             if not self.received:
+                rospy.logwarn("Did not receive frame")
                 continue
 
             # Merge self.next_data, which contains the updated CV handler output, with self.data, which contains the previous CV handler output.
@@ -123,10 +130,10 @@ if __name__ == "__main__":
     robotControl = robot_control.RobotControl()
     config = deviceHelper.variables
     robotControl.set_absolute_z(0.8)
-    while abs(robotControl.position['z'] - 0.8)>0.1:
-        time.sleep(1)
-    rospy.loginfo("Reached depth 0.8")
-
+    # while abs(robotControl.position['z'] - 0.8)>0.1:
+    #     time.sleep(1)
+    # rospy.loginfo("Reached depth 0.8")
+    rospy.loginfo("Running mission")
     mission = torpedoApproachMission(rc=robotControl, **config)
     mission.run()
     mission.cleanup()

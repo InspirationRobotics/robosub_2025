@@ -10,6 +10,8 @@ class CV:
     camera = "/auv/camera/videoOAKdRawForward"
 
     def __init__(self, **config):
+        self.camera = "/auv/camera/videoOAKdRawForward"
+        self.model = "poles"
         self.shape = (640, 480)
         self.x_midpoint = 320
         self.tolerance = 40  # How centered the object should be in px
@@ -21,10 +23,7 @@ class CV:
         self.prev_detect_timestamp = None
         print("[INFO] Pole Center & Approach CV initialized")
 
-    def detect_red_pole(self, frame):
-        """
-        Detect red pole using HSV, return status, bbox and mask frame
-        """
+    def detect_red_pole(self, frame, yolo_detection):
         crop_bottom = 80
         height = frame.shape[0]
         frame = frame[0:height - crop_bottom, :]
@@ -54,16 +53,51 @@ class CV:
                 if aspect_ratio > 1.5:
                     red_poles.append((x, y, w, h, area))
 
+        # Defaults (in case only YOLO detects)
+        x = y = w = h = area = 0
+
+        sum_center = None
+        num_detected = 0
         if red_poles:
             red_poles.sort(key=lambda x: x[4], reverse=True)
             x, y, w, h, area = red_poles[0]
+            center = x + w / 2
+            num_detected += 1
+            sum_center = center if sum_center is None else sum_center + center
+
+        if yolo_detection:
+            # Use YOLO bbox if available
+            center = (yolo_detection.xmin + yolo_detection.xmax) / 2
+            # Update bbox vars only if red_poles was empty
+            if not red_poles:
+                x = int(yolo_detection.xmin)
+                y = int(yolo_detection.ymin)
+                w = int(yolo_detection.xmax - yolo_detection.xmin)
+                h = int(yolo_detection.ymax - yolo_detection.ymin)
+                area = w * h
+            num_detected += 1
+            sum_center = center if sum_center is None else sum_center + center
+
+        if sum_center is not None and num_detected > 0:
             return {
-                "status": True, "xmin": x, "xmax": x + w, "ymin": y, "ymax": y + h, "area": area
+                "status": True,
+                "center": sum_center / num_detected,
+                "xmin": x,
+                "xmax": x + w,
+                "ymin": y,
+                "ymax": y + h,
+                "area": area
+            }, red_mask_clean
+        else:
+            return {
+                "status": False,
+                "xmin": None,
+                "xmax": None,
+                "ymin": None,
+                "ymax": None,
+                "area": 0
             }, red_mask_clean
 
-        return {
-            "status": False, "xmin": None, "xmax": None, "ymin": None, "ymax": None, "area": 0
-        }, red_mask_clean
 
     def centering(self, detection):
         forward = 1.5
@@ -76,7 +110,7 @@ class CV:
             forward = 1.5
 
             # calculate offset between screen center and target center
-            pole_x_center = (detection["xmin"] + detection["xmax"]) / 2
+            pole_x_center = detection["center"]
             offset = pole_x_center - self.x_midpoint
 
             # movement calculation
@@ -111,9 +145,27 @@ class CV:
         return forward, lateral, yaw, vertical
 
     def run(self, raw_frame, target, detections):
-        # Detect red pole
-        detection, red_mask_clean = self.detect_red_pole(raw_frame)
+        if detections is None:
+            detections = []
+
+        # filter out poles detection
+        poles_detection = []
         
+        for det in detections:
+            if "slalom" in det.label:
+                print(f"[DEBUG] detected {det.label} with confidence {det.confidence}")
+                poles_detection.append(det)
+
+        poles_detection.sort(key=lambda x: x.confidence, reverse=True)
+        if len(poles_detection) > 0:
+            best_pole = poles_detection[0] # take the one with most confidence
+        else:
+            best_pole = None
+
+        # Detect red pole
+        detection, red_mask_clean = self.detect_red_pole(raw_frame, best_pole)
+        
+
         # Calculate movement
         forward, lateral, yaw, vertical = self.centering(detection)
 

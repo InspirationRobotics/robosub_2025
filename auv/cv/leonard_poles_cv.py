@@ -5,6 +5,7 @@ import cv2
 import time
 import numpy as np
 import os
+from auv.motion.utils import get_norm
 
 class CV:
     camera = "/auv/camera/videoOAKdRawForward"
@@ -47,22 +48,34 @@ class CV:
         contours, _ = cv2.findContours(red_mask_clean, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         red_poles = []
         for cnt in contours:
-            area = cv2.contourArea(cnt)
-            if area > 800:
-                x, y, w, h = cv2.boundingRect(cnt)
+            x, y, w, h = cv2.boundingRect(cnt)
+            
+            # UNUSED rotated bounding box
+            # See https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html
+            rotated_box = cv2.boxPoints(cv2.minAreaRect(cnt))
+            rotated_box = np.int0(rotated_box)
+
+            sorted_box_coords = sorted(rotated_box, key=lambda y_coord: y_coord[1])
+            rotated_width =  get_norm(sorted_box_coords[1][0] - sorted_box_coords[0][0],
+                                      sorted_box_coords[1][1] - sorted_box_coords[0][1])
+            # w = rotated_width
+            
+
+            # Cutoff for width for detection to count
+            if w > 20:
                 aspect_ratio = h / float(w) if w > 0 else 0
-                if aspect_ratio > 1.5:
-                    red_poles.append((x, y, w, h, area))
+                if aspect_ratio > 10:
+                    red_poles.append((x, y, w, h))
 
         if red_poles:
             red_poles.sort(key=lambda x: x[4], reverse=True)
-            x, y, w, h, area = red_poles[0]
+            x, y, w, h = red_poles[0]
             return {
-                "status": True, "xmin": x, "xmax": x + w, "ymin": y, "ymax": y + h, "area": area
+                "status": True, "xmin": x, "xmax": x + w, "ymin": y, "ymax": y + h
             }, red_mask_clean
 
         return {
-            "status": False, "xmin": None, "xmax": None, "ymin": None, "ymax": None, "area": 0
+            "status": False, "xmin": None, "xmax": None, "ymin": None, "ymax": None
         }, red_mask_clean
 
     def centering(self, detection):
@@ -89,10 +102,10 @@ class CV:
                 lateral = 0
                 forward = 2
 
-                area = detection["area"]
-                print(f"[INFO] Approaching: area={area:.0f} → moving forward")
+                width = detection["xmax"] - detection["xmin"]
+                print(f"[INFO] Approaching: width={width:.0f} → moving forward")
                 # Distance estimation to stop moving forward
-                if area >= 4000: 
+                if width >= 40: 
                     self.reached = True
                     forward = 0
                     lateral = 0
@@ -118,9 +131,11 @@ class CV:
         forward, lateral, yaw, vertical = self.centering(detection)
 
         # Check for timeout
-        if time.time() - self.start_time > 45: # predicted mission timeis 30s
+        if time.time() - self.start_time > 45: # predicted mission time is 30s
             self.end = True
-            print("[INFO] Pole Slalom mission timed out.")
+            print("[INFO] Pole Slalom mission timed out - 45 seconds elapsed")
+        
+        # Timeout if lost detection for 
         # #########################################
         # Visualization
         frame = raw_frame.copy()
@@ -133,7 +148,7 @@ class CV:
             cv2.line(frame, (pole_x_center, 0), (pole_x_center, self.shape[1]), (255, 255, 0), 2)
             cv2.line(frame, (int(self.x_midpoint), 0), (int(self.x_midpoint), self.shape[1]), (0, 255, 0), 1)
 
-            cv2.putText(frame, f"Area: {detection['area']}", (10, 90),
+            cv2.putText(frame, f"Width: {detection['xmax'] - detection['xmin']}", (10, 90),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
         cv2.putText(frame, f"State: {self.state}", (10, 30),

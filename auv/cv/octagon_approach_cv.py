@@ -142,7 +142,7 @@ class CV:
                 if self.search_stage_one is None:
                     print("[DEBUG] Searching in stage 1")
                     self.search_stage_one = time.time()
-                if time.time()-self.search_stage_one > 5:
+                if time.time()-self.search_stage_one > 10:
                     print(f"[DEBUG] Searching in stage one, counter is {self.search_counter}")
                     self.search_counter += 1
                     self.search_stage_one = time.time()

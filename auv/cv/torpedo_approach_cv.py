@@ -127,6 +127,7 @@ class CV:
         self.curr_offset = None
         if len(detected_list)==0:
             self.curr_offset = None
+            print(f"[INFO] No detection!")
         elif len(detected_list)==1:
             self.prev_time = time.time()
             detection = detected_list[0]
