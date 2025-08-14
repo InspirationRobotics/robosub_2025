@@ -14,7 +14,7 @@ rospy.init_node("Graey", anonymous = True)
 rc = robot_control.RobotControl()
 rc.set_control_mode('depth_hold')
 rc.go_to_depth(1.2)
-rospy.loginfo("Robot armed and set to depth 0.5 m")
+rospy.loginfo("Robot armed and set to depth 1.2 m")
 gate_heading = 0 # CALIBRATE EACH TIME 
 return_heading = 180
 config = deviceHelper.variables
