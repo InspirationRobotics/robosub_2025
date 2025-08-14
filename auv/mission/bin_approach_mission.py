@@ -90,6 +90,7 @@ class BinsApproachMission:
                     else:
                         self.rc.go_to_heading(self.init_heading + self.search_angle)
                     self.search_counter += 1
+                    time.sleep(2) # wait for the sub to stabilize
                 else:
                     # Enter second stage of doing 360 searching
                     self.rc.go_to_heading(self.init_heading + 45 * (self.search_counter-5))
