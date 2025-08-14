@@ -42,12 +42,10 @@ class CV:
         bin_detection = None
         sawfish_detection = None
         shark_detection = None
-        bin_detected = False
         target_animal = target
         # Step 1, filter out the detection
         for dect in detections:
             if "bin" in dect.label:
-                bin_detected = True
                 print(f"[INFO] {dect.label} detected")
                 if dect.label=="bin":
                     bin_detection = dect

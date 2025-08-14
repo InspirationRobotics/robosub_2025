@@ -476,6 +476,7 @@ class RobotControl:
         self.dvl_sum = 0
         dt = 0.05 # 20 Hz
         start_time = time.time()
+        rospy.loginfo(f"Go forward {target}")
         while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
             delta = target - self.dvl_sum
             if delta>0:
@@ -510,6 +511,7 @@ class RobotControl:
         self.dvl_sum = 0
         dt = 0.05 # 20 Hz
         start_time = time.time()
+        rospy.loginfo(f"Go lateral {target}")
         while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
             delta = target - self.dvl_sum
             if delta>0:
