@@ -43,7 +43,6 @@ class GateIntersubMission:
     def run(self):
         current_sub = self.sub
         self.rc.set_control_mode("depth_hold")
-        self.rc.set_absolute_z(0.5)
         self.rc.activate_heading_control(True)
         time.sleep(3)
 
