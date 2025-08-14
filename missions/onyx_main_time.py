@@ -28,9 +28,9 @@ try:
     rc.go_to_heading(0)
     rc.activate_heading_control(True)
     rc.movement(forward=2)
-    time.sleep(3.5*5.56)
+    time.sleep(3.25*5.56)
     rc.movement(lateral=-2)
-    time.sleep(3.5*0.86)
+    time.sleep(3.25*0.86)
     rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
@@ -59,45 +59,23 @@ except Exception as e:
     rospy.logerr("ERROR OCCUR IN POLES MISSION")
     rospy.logerr(e)
 
-"""SET HEADING TO OCTAGON"""
-octagon_heading = 20
-rc.activate_heading_control(False)
-rc.go_to_heading(octagon_heading)
-rc.activate_heading_control(True)
-
-"""MOVE TOWARD THE OCTAGON"""
-rc.movement(forward=2.0)
-time.sleep(19.25)
-
-"""OCTAGON MISSION"""
-try:
-   rc.activate_heading_control(False)
-   octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
-   time.sleep(2)
-   octagon.run()
-   octagon.cleanup()
-   rospy.loginfo("OCTAGON MISSION FINISHED")
-except Exception as e:
-   rospy.logerr("ERROR DOING OCTAGON MISSION")
-   rospy.logerr(e)
-
 """SET HEADING TO BIN"""
-octagon_heading = 210
+bin_heading = 0
 rc.activate_heading_control(False)
-rc.go_to_heading(octagon_heading)
+rc.go_to_heading(bin_heading)
 rc.activate_heading_control(True)
 
 """MOVE TOWARD THE BIN"""
 rc.movement(forward=2.0)
-time.sleep(8.75)
+time.sleep(3.25*1.22)
 
 """BIN MISSION"""
 try:
     rc.activate_heading_control(False)
-    binApproach = bin_approach_mission.BinsApproachMission(rc=rc, **config)
-    binApproach.run()
-    binApproach.cleanup()
-    rospy.loginfo("BIN APPROACH MISSION FINISHED")
+    # binApproach = bin_approach_mission.BinsApproachMission(rc=rc, **config)
+    # binApproach.run()
+    # binApproach.cleanup()
+    # rospy.loginfo("BIN APPROACH MISSION FINISHED")
     rc.move_servo("/auv/devices/dropper")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/dropper")
@@ -110,6 +88,28 @@ try:
 except Exception as e:
     rospy.logerr("ERROR DOING BIN MISSION")
     rospy.logerr(e)
+
+"""SET HEADING TO OCTAGON"""
+octagon_heading = 210
+rc.activate_heading_control(False)
+rc.go_to_heading(octagon_heading)
+rc.activate_heading_control(True)
+
+"""MOVE TOWARD THE OCTAGON"""
+rc.movement(forward=2.0)
+time.sleep(8.75)
+
+"""OCTAGON MISSION"""
+try:
+   rc.activate_heading_control(False)
+   octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
+   time.sleep(2)
+   octagon.run()
+   octagon.cleanup()
+   rospy.loginfo("OCTAGON MISSION FINISHED")
+except Exception as e:
+   rospy.logerr("ERROR DOING OCTAGON MISSION")
+   rospy.logerr(e)
     
 """SET HEADING TO TORPEDO"""
 torpedo_waypoint_heading = 110
