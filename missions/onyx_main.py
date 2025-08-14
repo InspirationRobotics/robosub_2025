@@ -39,7 +39,7 @@ try:
     rc.go_to_heading(0)
     rc.activate_heading_control(True)
     rc.go_forward_distance(6)
-    rc.go_lateral_distance(2.7)
+    rc.go_lateral_distance(0.8)
     rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
