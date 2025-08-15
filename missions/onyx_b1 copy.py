@@ -6,6 +6,9 @@ import rospy
 import time
 import json
 
+time.sleep(30) # wait for tether disconnection
+
+
 from auv.mission import poles_mission, poles_with_com_mission, bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, torpedo_approach_mission, gate_intersub_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
