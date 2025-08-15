@@ -60,7 +60,8 @@ class GateIntersubMission:
         elif current_sub == "onyx":
             destination_addr = "010"
             rospy.loginfo("Sending message to Graey")
-            while not self.end:
+            onyx_start = time.time()
+            while not self.end and time.time()-onyx_start<12:
                 # Continously send message if not received ACK
                 self.rc.send_modem(addr=destination_addr, movement="Onyx_Gate_Finished")
                 time.sleep(1) 
