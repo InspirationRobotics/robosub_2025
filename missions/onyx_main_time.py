@@ -25,9 +25,11 @@ rospy.loginfo("Finish initialization & depth is 1.2 m")
 """GATE MISSION"""
 try:
     rc.movement(forward=2)
-    time.sleep(3.25*5.56) # 18 seconds
+    time.sleep(13) 
+    rc.movement()
     rc.movement(lateral=-2)
-    time.sleep(3.25*0.86) # 2.8 seconds
+    time.sleep(2.8)
+    rc.movement()
     rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
@@ -66,9 +68,11 @@ rc.set_absolute_yaw(octagon_heading)
 """MOVE TOWARD THE OCTAGON"""
 rc.movement(forward=2.0)
 time.sleep(6)
+rc.movement()
 
 """OCTAGON MISSION"""
 try:
+   rc.go_to_depth(0.5)
    rc.activate_heading_control(False)
    octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
    time.sleep(2)
@@ -89,6 +93,7 @@ rc.set_absolute_yaw(bin_heading)
 """MOVE TOWARD THE BIN"""
 rc.movement(forward=2.0)
 time.sleep(3.25*1.22) # 3.965 seconds
+rc.movement()
 
 """BIN MISSION"""
 try:
@@ -102,9 +107,6 @@ try:
     rc.move_servo("/auv/devices/dropper")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/dropper")
-#    binDrop = bins_drop_mission.BinsDropMission(rc=rc, **config)
-#    binDrop.run()
-#    binDrop.cleanup()
     rospy.loginfo("BIN drop MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING BIN MISSION")
@@ -120,6 +122,7 @@ rc.set_absolute_yaw(torpedo_waypoint_heading)
 """MOVE TOWARD THE TORPEDO"""
 rc.movement(forward=2.0)
 time.sleep(14.35)
+rc.movement()
 
 """FACE TORPEDO"""
 face_torpedo_heading = 60
