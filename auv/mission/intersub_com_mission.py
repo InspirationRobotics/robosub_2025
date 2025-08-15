@@ -38,19 +38,16 @@ class intersubComMission:
 
     def do_roll(self):
         """Executes the roll maneuver if requested"""
-        if self.roll_requested:
-            rospy.loginfo("Doing roll maneuver")
-            self.rc.set_flight_mode("ACRO")
-            self.rc.set_control_mode("direct")
-            self.rc.movement(roll=5)
-            time.sleep(4)
-            self.rc.movement()
-            time.sleep(2)
-            self.rc.set_flight_mode("STABILIZE")
-            self.rc.set_control_mode("depth_hold")
-            rospy.loginfo("Roll maneuver complete")
-        else:
-            rospy.logwarn("Roll was not requested, skipping roll maneuver")
+        rospy.loginfo("Doing roll maneuver")
+        self.rc.set_flight_mode("ACRO")
+        self.rc.set_control_mode("direct")
+        self.rc.movement(roll=5)
+        time.sleep(4)
+        self.rc.movement()
+        time.sleep(2)
+        self.rc.set_flight_mode("STABILIZE")
+        self.rc.set_control_mode("depth_hold")
+        rospy.loginfo("Roll maneuver complete")
 
     def run(self):
         """Only handles communication, not the roll maneuver"""
