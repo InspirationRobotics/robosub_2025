@@ -49,7 +49,7 @@ class GateIntersubMission:
         if current_sub == "graey":
             time_counter = 0
             while not self.end:
-                if time_counter >= 60: # 30 second timeout
+                if time_counter >= 60 * 2: # 30 second timeout
                     rospy.loginfo("Time out, no message received, Graey going through the gate")
                     fake_msg = String()
                     fake_msg.data = "Onyx_Gate_Finished"

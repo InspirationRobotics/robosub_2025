@@ -62,7 +62,7 @@ class intersubComMission:
         if current_sub == "graey":
             time_counter = 0
             while not self.end:
-                if time_counter >= 300:
+                if time_counter >= 60 * 3:
                     rospy.loginfo("Time out, no message received, faking ROLL request")
                     fake_msg = String()
                     fake_msg.data = "ROLL"
