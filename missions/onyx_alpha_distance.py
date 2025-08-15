@@ -43,7 +43,7 @@ try:
     rc.activate_heading_control(True)
     rc.set_absolute_yaw(0)
     rc.go_forward_distance(6)
-    rc.go_lateral_distance(0.8)
+    rc.go_lateral_distance(3.5)
     rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
@@ -65,9 +65,7 @@ try:
     # Run the poles mission
     rc.activate_heading_control(True)
     rospy.loginfo("Start of poles mission...")
-    poles = poles_mission.PoleSlalomMission(rc=rc,**config)
-    poles.run()
-    poles.cleanup()
+    rc.go_forward_distance(5)
     print("[INFO] POLES MISSION COMPLETE")
 except Exception as e:
     rospy.logerr("ERROR OCCUR IN POLES MISSION")
@@ -103,9 +101,9 @@ except Exception as e:
 rc.go_to_depth(0.8)
 try:
    rc.activate_heading_control(False)
-   rc.go_to_heading(-25)
+   rc.go_to_heading(-30)
    rc.activate_heading_control(True)
-   rc.set_absolute_yaw(-25)
+   rc.set_absolute_yaw(-30)
    time.sleep(3)  # wait for it to stabilize
    rc.activate_heading_control(False)
    octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
@@ -120,6 +118,8 @@ except Exception as e:
 """TORPEDO MISSION"""
 navigate_with_heading("T1")
 rc.go_to_depth(1.2)
+rc.activate_heading_control(False)
+rc.go_to_heading(330)
 try:
     rc.activate_heading_control(False)
     torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)

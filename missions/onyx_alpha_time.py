@@ -43,7 +43,7 @@ try:
     rc.activate_heading_control(True)
     rc.set_absolute_yaw(0)
     rc.go_by_time(f=2,t=3.25*6)
-    rc.go_by_time(l=-2,t=-0.8)
+    rc.go_by_time(l=2,t=3.25 * 1.39)
     rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
@@ -51,7 +51,7 @@ except Exception as e:
 
 """GATE INTERSUB MISSION"""
 try:
-    rospy.loginfo("Gate Intersub ")
+    rospy.loginfo("Gate Intersub")
     gateIntersub = gate_intersub_mission.GateIntersubMission(robotControl=rc)
     gateIntersub.run()
     rospy.loginfo("GATE INTERSUB MISSION FINISHED")

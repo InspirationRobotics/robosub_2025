@@ -482,9 +482,16 @@ class RobotControl:
         while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
             delta = target - self.dvl_sum
             if delta>0:
-                self.movement(forward=2)
+                if abs(delta) < 2:
+                    self.movement(forward=5*(delta/2))
+                else:
+                    self.movement(forward=5)
+                
             else:
-                self.movement(forward=-1.5)
+                if abs(delta) < 2:
+                    self.movement(forward=5*(delta/2))
+                else:
+                    self.movement(forward=-5)
             
             # update distane traveled in body frame:
             with self.lock:
@@ -517,9 +524,15 @@ class RobotControl:
         while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
             delta = target - self.dvl_sum
             if delta>0:
-                self.movement(lateral=2)
+                if abs(delta) < 2:
+                    self.movement(lateral=5*(delta/2))
+                else:
+                    self.movement(lateral=5)
             else:
-                self.movement(lateral=-1.5)
+                if abs(delta) < 2:
+                    self.movement(lateral=5*(delta/2))
+                else:
+                    self.movement(lateral=-5)
             # update distane traveled in body frame:
             with self.lock:
                 self.dvl_sum += self.dvl_velocity['x'] * dt
@@ -532,9 +545,9 @@ class RobotControl:
 
         # Push back funciton
         if target>0:
-            self.movement(lateral=-1.5)
+            self.movement(lateral=-2)
         else:
-            self.movement(lateral= 1.5)
+            self.movement(lateral= 2)
         time.sleep(0.6)
         self.movement()
         
