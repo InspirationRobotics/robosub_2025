@@ -5,7 +5,7 @@ To create a sequential order of missions for Graey to follow.
 import rospy
 import time
 from auv.utils import deviceHelper
-from auv.mission import intersub_com_mission, poles_mission_preset, gate_intersub_mission, poles_mission_right
+from auv.mission import intersub_com_mission_short, poles_mission_preset, gate_intersub_mission, poles_mission_right
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
@@ -40,7 +40,7 @@ try:
    # set event flag for coin toss mission to True
    eventflags[0] = True
    
-   gate_forward_distance = 8.5 # m
+   gate_forward_distance = 7.5 # m
    rospy.loginfo(f"Start moving forward {gate_forward_distance} m")
    rc.go_forward_distance(gate_forward_distance)
    rospy.loginfo(f"Moved {gate_forward_distance} m")
@@ -98,7 +98,7 @@ except Exception as e:
 
 """MODEMS"""
 try:
-    intersubMission = intersub_com_mission.intersubComMission(robotControl=rc)
+    intersubMission = intersub_com_mission_short.intersubComMission(robotControl=rc)
     intersubMission.run()  # <-- Comms only
     rospy.loginfo("FINISHED INTERSUB COMMUNICATION")
     eventflags[3] = True
@@ -110,8 +110,8 @@ except Exception as e:
 """LATERAL TO THE LEFT FOR 3.75 M"""
 try:
    gate_leftward_distance = -0.5 # m
-   rospy.loginfo(f"Start moving forward {gate_leftward_distance} m")
-   rc.go_forward_distance(gate_leftward_distance)
+   rospy.loginfo(f"Start moving laterally {gate_leftward_distance} m")
+   rc.go_lateral_distance(gate_leftward_distance)
    rospy.loginfo(f"Moved {gate_leftward_distance} m")
 except Exception as e:
     rospy.logerr("ERROR DURING LATERAL MOTION")
