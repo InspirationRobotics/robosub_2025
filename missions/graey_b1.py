@@ -5,7 +5,8 @@ To create a sequential order of missions for Graey to follow.
 import rospy
 import time
 
-time.sleep(30) # wait for tether disconnection
+time.sleep(30)
+rospy.loginfo("Waiting for 30 seconds")
 
 from auv.utils import deviceHelper
 from auv.mission import poles_mission, intersub_com_mission, poles_mission_preset, gate_intersub_mission
@@ -22,7 +23,6 @@ rospy.loginfo("Robot armed and set to depth 1.2 m")
 gate_heading = 0 # CALIBRATE EACH TIME 
 config = deviceHelper.variables
 eventflags = [False,False,False,False,False]
-
 
 """GATE INTERSUB MISSION"""
 try:
@@ -72,7 +72,7 @@ except Exception as e:
     eventflags[3] = True  
 
 """RETURN HOME"""
-rc.go_forward_distance(-2)   # GO back
+rc.go_forward_distance(-5)   # GO back
 
 """ROLL MANEUVER"""
 try:
