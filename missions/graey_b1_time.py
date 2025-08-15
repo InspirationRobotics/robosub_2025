@@ -73,7 +73,6 @@ except Exception as e:
 
 """RETURN HOME"""
 rc.go_by_time(f=-2,t=3.25*3)
-rc.go_by_time(l=2,t=3.25) # lateral right a little bit
 
 
 """ROLL MANEUVER"""

@@ -73,7 +73,6 @@ except Exception as e:
 
 """RETURN HOME"""
 rc.go_forward_distance(-2)   # GO back
-rc.go_lateral_distance(0.91)  # lateral right a little bit
 
 """ROLL MANEUVER"""
 try:
