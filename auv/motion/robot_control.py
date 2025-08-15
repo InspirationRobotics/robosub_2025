@@ -538,7 +538,7 @@ class RobotControl:
         time.sleep(0.6)
         self.movement()
         
-    def go_by_time(self, f=None, l=None, t= None):
+    def go_by_time(self, f=None, l=None, t=0):
         """Args: f - forward l - lateral t - time to sleep"""
         self.movement(forward=f,lateral=l)
         time.sleep(t)
