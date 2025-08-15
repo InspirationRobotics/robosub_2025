@@ -81,9 +81,6 @@ rospy.loginfo("Finish initialization")
 """TORPEDO MISSION"""
 try:
     rc.activate_heading_control(False)
-    # rc.go_to_heading(100)
-    # rc.go_forward_distance(4.0)
-    # rc.go_to_heading(45)
     torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
     torpedoApproach.run()
     torpedoApproach.cleanup()

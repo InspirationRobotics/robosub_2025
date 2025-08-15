@@ -14,10 +14,6 @@ class CV:
     Octagon Approach CV class. DO NOT change the name of the class, as this will mess up all of the backend files to run the CV scripts.
     """
 
-    # Camera to get the camera stream from.
-    camera = "/auv/camera/videoOAKdRawForward"
-    model = "poles" # Change later once data is collected for the platform
-
     def __init__(self, **config):
         """
         Initialize the CV class. 
