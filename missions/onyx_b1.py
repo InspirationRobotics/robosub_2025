@@ -6,7 +6,8 @@ import rospy
 import time
 import json
 
-# time.sleep(30) # wait for tether disconnection
+rospy.loginfo("waiting for 30 s for tether disconnection")
+time.sleep(30) # wait for tether disconnection
 
 from auv.mission import poles_mission, poles_with_com_mission, bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, torpedo_approach_mission, gate_intersub_mission
 from auv.motion import robot_control
@@ -63,9 +64,10 @@ except Exception as e:
 try: 
     # Run the poles mission
     rc.activate_heading_control(False)
-    rc.go_to_heading(33.69)
+    rc.go_to_heading(28)
+    time.sleep(2)
     rc.activate_heading_control(True)
-    rc.set_absolute_yaw(33.69)
+    rc.set_absolute_yaw(28)
     rospy.loginfo("Start of poles mission...")
     poles = poles_with_com_mission.PoleSlalomMission(rc=rc,**config)
     poles.run()
