@@ -90,6 +90,7 @@ class OctagonApproachMission:
                 self.rc.movement(lateral = lateral, forward = forward, yaw = yaw)
 
         time.sleep(2)
+        self.rc.go_to_heading(-40)
         # Surfacing and resubmerging
         rospy.loginfo(f"Surfacing and resubmerging")
         for i in range(2):

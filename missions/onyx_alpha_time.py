@@ -42,8 +42,8 @@ try:
     rc.go_to_heading(0)
     rc.activate_heading_control(True)
     rc.set_absolute_yaw(0)
-    rc.go_forward_distance(6)
-    rc.go_lateral_distance(0.8)
+    rc.go_by_time(f=2,t=3.25*6)
+    rc.go_by_time(l=-2,t=-0.8)
     rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
@@ -83,8 +83,15 @@ except Exception as e:
     rospy.logerr(e)
 
 """BIN MISSION"""
-navigate_with_heading("B1")
+rc.go_by_time(f=2,t=3.25*1.2)
+rc.activate_heading_control(False)
+rc.go_to_heading(-15)
 try:
+    rc.activate_heading_control(False)
+    binApproach = bin_approach_mission.BinsApproachMission(rc=rc, **config)
+    binApproach.run()
+    binApproach.cleanup()
+    rospy.loginfo("BIN APPROACH MISSION FINISHED")
     rc.move_servo("/auv/devices/dropper")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/dropper")
@@ -114,9 +121,14 @@ except Exception as e:
    rospy.logerr("ERROR DOING OCTAGON MISSION")
    rospy.logerr(e)
 
+
+
 """TORPEDO MISSION"""
-navigate_with_heading("T1")
+rc.go_to_heading(0)
+rc.go_by_time(f=-2,t=3.25 * 8)
+rc.go_by_time(l=-2,t=3.25 * 5)
 rc.go_to_depth(1.2)
+rc.go_to_heading(-15)
 try:
     rc.activate_heading_control(False)
     torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
@@ -128,7 +140,7 @@ try:
     time.sleep(0.3)
     rc.move_servo("/auv/devices/torpedo")
     rospy.loginfo("TORPEDO MISSION FINISHED")
-    rc.go_forward_distance(-1.5)
+    rc.go_by_time(-1.5)
 except Exception as e:
     rospy.logerr("ERROR DOING TORPEDO MISSION")
     rospy.logerr(e)

@@ -85,6 +85,11 @@ except Exception as e:
 """BIN MISSION"""
 navigate_with_heading("B1")
 try:
+    rc.activate_heading_control(False)
+    binApproach = bin_approach_mission.BinsApproachMission(rc=rc, **config)
+    binApproach.run()
+    binApproach.cleanup()
+    rospy.loginfo("BIN APPROACH MISSION FINISHED")
     rc.move_servo("/auv/devices/dropper")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/dropper")

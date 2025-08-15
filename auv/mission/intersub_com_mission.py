@@ -34,7 +34,16 @@ class intersubComMission:
             if msg.data == "ROLL":
                 rospy.loginfo("Roll maneuver requested")
                 self.roll_requested = True  # <-- Store request, but don't execute yet
+                for i in range(2):
+                    self.rc.send_modem(addr="020",movement="RETURN")
+                    time.sleep(1)
             self.end = True
+        if self.sub =="onyx":
+            rospy.loginfo(f"Recieved message: {msg.data}")
+            if msg.data == "RETURN":
+                rospy.loginfo("Graey returning home")
+                self.end = True
+
 
     def do_roll(self):
         """Executes the roll maneuver if requested"""
@@ -70,7 +79,9 @@ class intersubComMission:
         elif current_sub == "onyx":
             destination_addr = "010"
             rospy.loginfo("Sending message to Graey")
-            for i in range(60):
+            for i in range(20):
+                if self.end:
+                    break
                 self.send_modem_message(dest_addr=destination_addr, move="ROLL")
                 time.sleep(1)
 
