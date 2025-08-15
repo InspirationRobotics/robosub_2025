@@ -538,6 +538,13 @@ class RobotControl:
         time.sleep(0.6)
         self.movement()
         
+    def go_by_time(self, f=None, l=None, t= None):
+        """Args: f - forward l - lateral t - time to sleep"""
+        self.movement(forward=f,lateral=l)
+        time.sleep(t)
+        self.movement()
+
+
     def move_servo(self, service: str):
         """Operate a servo via the maestro_server file
         Args:
