@@ -124,7 +124,7 @@ class CV:
         
         # Utilize bin detections with at least 55% confidence
         detected_list = []
-        detection_confidence = 0.55
+        detection_confidence = 0.65
         for det in detections:
             if "bin" in det.label:
                 print(f"[DEBUG] Detected {det.label} with confidence {det.confidence}")
@@ -172,17 +172,17 @@ class CV:
         if self.state=="approach" and (self.curr_offset is None) and self.prev_detected == True:
             lost_detection_time = time.time() - self.prev_time
             print(f"Lost detection for {lost_detection_time} s during approaching")
-            if  lost_detection_time> 6.5:
+            if  lost_detection_time> 3:
                 """Uncomment the following code if you want to have the ability to search again after lost target during approaching"""
-                # if self.switch_count <2:  # switch back to search again
-                #     print(f"[DEBUG] switch back to search state")
-                #     self.state = "search"
-                #     self.switch_count += 1
-                #     self.switch_back_time = time.time()
+                if self.switch_count <1:  # switch back to search again
+                    print(f"[DEBUG] switch back to search state")
+                    self.state = "search"
+                    self.switch_count += 1
+                    self.switch_back_time = time.time()
 
-                # else:
-                #     print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
-                #     self.end = True
+                else:
+                    print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
+                    self.end = True
                 print(f"[DEBUG] Ending with prev detected: {self.prev_detected}")
                 self.end = True
         

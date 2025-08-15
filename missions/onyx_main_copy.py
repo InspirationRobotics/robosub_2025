@@ -93,7 +93,7 @@ try:
     rc.go_forward_distance(-1.5)
 except Exception as e:
     rospy.logerr("ERROR DOING TORPEDO MISSION")
-    rospy.logerr(e)
+    rospy.logerr(e)                                
 
 # """OCTAGON MISSION"""
 # try:
