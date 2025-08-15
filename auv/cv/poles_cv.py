@@ -92,7 +92,7 @@ class CV:
                 area = detection["area"]
                 print(f"[INFO] Approaching: area={area:.0f} → moving forward")
                 # Distance estimation to stop moving forward
-                if area >= 4000: 
+                if area >= 3000: 
                     self.reached = True
                     forward = 0
                     lateral = 0
