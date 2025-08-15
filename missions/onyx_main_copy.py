@@ -27,8 +27,8 @@ config = deviceHelper.variables
 with open("./missions/waypoints.json", "r") as file:
     waypoints = json.load(file)
 
-# # Dive down to desire depth
-# rc.go_to_depth(0.8)
+# Dive down to desire depth
+rc.go_to_depth(1.5)
 
 rospy.loginfo("Finish initialization")
 
@@ -91,7 +91,6 @@ try:
     rc.move_servo("/auv/devices/torpedo")
     rospy.loginfo("TORPEDO MISSION FINISHED")
     rc.go_forward_distance(-1.5)
-    rc.go_to_heading(330)
 except Exception as e:
     rospy.logerr("ERROR DOING TORPEDO MISSION")
     rospy.logerr(e)

@@ -82,16 +82,17 @@ class torpedoApproachMission:
             self.next_data = {}
 
             # Do something with the data.
-            # cv_data = self.data.get("torpedo_approach_cv", {})
-            state = self.data.get("state", "search")
-            prev_offset = self.data.get("prev_offset", None)
-            lateral = self.data.get("lateral", 0)
-            forward = self.data.get("forward", 0)
-            yaw = self.data.get("yaw", 0)
-            vertical = self.data.get("vertical", 0)
-            end = self.data.get("end", False)
-
+            cv_data = self.data.get("torpedo_approach_cv", {})
+            state = cv_data.get("state", "search")
+            prev_offset = cv_data.get("prev_offset", None)
+            lateral = cv_data.get("lateral", 0)
+            forward = cv_data.get("forward", 0)
+            yaw = cv_data.get("yaw", 0)
+            vertical = cv_data.get("vertical", 0)
+            end = cv_data.get("end", False)
+            rospy.loginfo(cv_data)
             if end:
+                time.sleep(0.7) # let it drift
                 rospy.loginfo("Ending torpedo Approach CV")
                 self.rc.movement()
                 rospy.loginfo("Launching torpedos")

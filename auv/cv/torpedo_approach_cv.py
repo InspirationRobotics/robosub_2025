@@ -35,7 +35,7 @@ class CV:
 
         self.state = "search"
         self.end = False
-        self.estimated_distance = None # Estimated distance away from torpedo poster
+        self.torpedo_height = None
         self.prev_detected = False
         self.prev_offset = None
         self.prev_time = time.time()
@@ -78,10 +78,8 @@ class CV:
         self.prev_detected = True
         self.prev_offset = self.curr_offset
 
-        # Estimate distance away form torpdeo poster
-        height = abs(detection.ymin - detection.ymax)
-        target_height = 0.6096 # unit: met
-        self.estimated_distance = (target_height * self.focal_length) / height
+        self.torpedo_height = abs(detection.ymin - detection.ymax)       
+
 
         self.state = "approach"
         print(f"[DEBUG] self.target_x is {self.target_x}, self.target_y is {self.target_y}") # Why are we including the self.target_y here but not if there's one detection?
@@ -153,8 +151,9 @@ class CV:
         
         # Ending 2: Approach the torpedo until a certain distance, stop at that distance and launch torpedo
         if self.state=="approach":
-            if self.estimated_distance < 1.5:  # put 1.5 m distance for now, TODO check distance estimation accuracy and find the desire distance away
-                self.end = True
+            if self.torpedo_height is not None:
+                if self.torpedo_height > 480*0.9:  # put 1.5 m distance for now, TODO check distance estimation accuracy and find the desire distance away
+                    self.end = True
         
         # Continuously return motion commands, the state of the mission, and the visualized frame.
         return {"state": self.state, "prev_offset": self.prev_offset,"lateral": lateral, "forward": forward, "yaw": yaw, "vertical" : vertical, "end": self.end}, frame
