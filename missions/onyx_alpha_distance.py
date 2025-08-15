@@ -24,7 +24,7 @@ rc.set_control_mode("depth_hold")
 config = deviceHelper.variables
 
 # Load the JSON file
-with open("./missions/waypoints.json", "r") as file:
+with open("./missions/waypoints_alpha.json", "r") as file:
     waypoints = json.load(file)
 
 # Dive down to desire depth
@@ -38,6 +38,7 @@ try:
     # COIN FLIP
     rc.go_to_heading(0)
     rc.activate_heading_control(True)
+    rc.set_absolute_yaw(0)
     rc.go_forward_distance(6)
     rc.go_lateral_distance(-0.8)
     rospy.loginfo("GATE MISSION FINISHED")
