@@ -95,11 +95,28 @@ class OctagonApproachMission:
         rospy.loginfo(f"Surfacing and resubmerging")
         for i in range(2):
             if i == False:
-                self.rc.set_absolute_z(0.0)
-                time.sleep(7)
+                self.rc.go_to_depth(0.-
+                                    
+                                    =
+                                   +
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                  \
+
             elif i == True:
                 self.rc.set_absolute_z(0.7)
-                time.sleep(7)
+                time.sleep(15)
 
 
         print("[INFO] Octagon approach mission terminated")
@@ -130,7 +147,6 @@ if __name__ == "__main__":
     robotControl = robot_control.RobotControl()
 
     config = deviceHelper.variables
-
     # Create a mission object with arguments
     mission = OctagonApproachMission(rc=robotControl, **config)
 
@@ -142,3 +158,4 @@ if __name__ == "__main__":
 
     disarm.disarm()
     robotControl.exit()
++[[pp]]

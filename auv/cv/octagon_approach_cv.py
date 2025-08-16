@@ -95,11 +95,10 @@ class CV:
         if len(detections) == 0 and self.prev_detected == False:
             self.state = "search"
         
-
         detected_list = []
         detection_confidence = 0.65
         for det in detections:
-            if det.label == "octagon":
+            if "octagon" in det.label:
                 print(f"[DEBUG] Detected {det.label} with confidence {det.confidence}")
                 if det.confidence > detection_confidence:
                     detected_list.append(det)
@@ -132,7 +131,7 @@ class CV:
             print(f"[DEBUG] Multiple octagons detected. Using highest confidence detection: {detection_confidence}")
             print(f"[DEBUG] target_x is {target_x}, target_y is {target_y}")
 
-
+        print(f"current state: {self.state}")
         if self.state == "search":
             if self.search_counter<=2:
                 if self.search_stage_one is None:
@@ -147,16 +146,19 @@ class CV:
                 else:
                     yaw = -1
             else:
-                if self.search_stage_two is None:
-                    print(f"[DEBUG] Searching in stage two")
-                    self.search_stage_two = time.time()
-                
-                if self.prev_offset is None:
-                    yaw = 1
-                elif self.prev_offset > 0 :
-                    yaw= 1
-                elif self.prev_offset < 0:
-                    yaw = -1
+                if self.prev_offset is not None:
+                    if self.search_stage_two is None:
+                        print(f"[DEBUG] Searching in stage two")
+                        self.search_stage_two = time.time()
+                    
+                    if self.prev_offset is None:
+                        yaw = 1
+                    elif self.prev_offset > 0 :
+                        yaw= 1
+                    elif self.prev_offset < 0:
+                        yaw = -1
+                else:
+                    self.end = True
 
         if self.state == "approach":
             if not self.stage_two_end:
@@ -178,8 +180,8 @@ class CV:
                 self.end = True
 
         if self.state=="approach" and (offset is None) and self.prev_detected == True:
-            if time.time() - self.prev_time > 2:
-                if self.adjust_count <2:  # adjust to search again
+            if time.time() - self.prev_time > 2.5:
+                if self.adjust_count <2.5:  # adjust to search again
                     print(f"[DEBUG] adjust and search")
                     self.state = "search"
                     self.adjust_count += 1

@@ -508,7 +508,7 @@ class RobotControl:
             self.movement(forward=-2)
         else:
             self.movement(forward=2)
-        time.sleep(0.6)
+        time.sleep(1)
         self.movement()
 
     def go_lateral_distance(self, target:float):
@@ -548,7 +548,7 @@ class RobotControl:
             self.movement(lateral=-2)
         else:
             self.movement(lateral= 2)
-        time.sleep(0.6)
+        time.sleep(1)
         self.movement()
         
     def go_by_time(self, f=None, l=None, t=0):
