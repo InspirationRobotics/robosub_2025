@@ -80,7 +80,7 @@ try:
 except Exception as e:
     rospy.logerr("ERROR OCCUR DURING ROLL MANEUVER")
     rospy.logerr(e)
-    
+
 """GO BACK MORE"""
 rc.go_forward_distance(-3)
 
