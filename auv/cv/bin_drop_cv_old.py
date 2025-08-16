@@ -154,7 +154,7 @@ class CV:
                 # there doing nothing for a while. We may want to pin an else statement on that.
                 
                 # 1.5 is the bin_length/bin_width
-                if abs(current_bin_ratio-1.5)<0.16: # TODO consider decresing 0.2 because our screen ratio is 1.333
+                if abs(current_bin_ratio-1.5)<0.2: # TODO consider decresing 0.2 because our screen ratio is 1.333
                     self.state = "finetune"
                     print("[INFO] Rotated to the correct orientation, switch to centering state")
                 else:
