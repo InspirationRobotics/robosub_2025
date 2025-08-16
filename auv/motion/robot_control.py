@@ -483,14 +483,14 @@ class RobotControl:
         while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
             delta = target - self.dvl_sum
             if delta>0:
-                if abs(delta) < 2:
-                    self.movement(forward=5*(delta/2))
+                if abs(delta) < 4:
+                    self.movement(forward=3*(delta/2))
                 else:
                     self.movement(forward=5)
                 
             else:
-                if abs(delta) < 2:
-                    self.movement(forward=5*(delta/2))
+                if abs(delta) < 4:
+                    self.movement(forward=3*(delta/2))
                 else:
                     self.movement(forward=-5)
             
@@ -525,13 +525,13 @@ class RobotControl:
         while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
             delta = target - self.dvl_sum
             if delta>0:
-                if abs(delta) < 2:
-                    self.movement(lateral=5*(delta/2))
+                if abs(delta) < 4:
+                    self.movement(lateral=3*(delta/2))
                 else:
                     self.movement(lateral=5)
             else:
-                if abs(delta) < 2:
-                    self.movement(lateral=5*(delta/2))
+                if abs(delta) < 4:
+                    self.movement(lateral=3*(delta/2))
                 else:
                     self.movement(lateral=-5)
             # update distane traveled in body frame:
