@@ -5,7 +5,7 @@ To create a sequential order of missions for Graey to follow.
 import rospy
 import time
 
-rospy.loginfo("Waiting for 20 seconds")
+print("Waiting for 20 seconds")
 time.sleep(20)
 
 from auv.utils import deviceHelper
