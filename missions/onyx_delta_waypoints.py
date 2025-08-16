@@ -6,6 +6,9 @@ import rospy
 import time
 import json
 
+print("20s before onyx initialize")
+time.sleep(22)
+
 from auv.mission import poles_mission, bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, torpedo_approach_mission, gate_intersub_mission
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
@@ -29,7 +32,8 @@ with open("./missions/waypoints_delta.json", "r") as file:
 
 # Dive down to desire depth
 rc.set_absolute_yaw(0)
-rc.go_to_depth(0.8)
+rc.go_to_depth(0.6)
+rc.go_to_depth(1.2)
 
 rospy.loginfo("Finish initialization")
 
@@ -89,14 +93,13 @@ except Exception as e:
 
 """OCTAGON MISSION"""
 try:
-    rc.go_to_depth(0.8)
+    rc.go_to_depth(0.6)
     navigate_to("O1")
     rc.go_to_heading(135)
     rc.set_absolute_yaw(135)
     rc.go_to_depth(0)
     time.sleep(4)
-    rc.go_to_depth(0.4)
-    rc.go_to_depth(0.8)
+    rc.go_to_depth(0.6)
     rospy.loginfo("OCTAGON MISSION FINISHED")
 except Exception as e:
    rospy.logerr("ERROR DOING OCTAGON MISSION")
@@ -107,10 +110,10 @@ except Exception as e:
 try:
     navigate_to("T1")
     rc.go_to_depth(1.2)
-    navigate_to("T2")
     # align with the torpedo
-    rc.go_to_heading(0)
-    rc.set_absolute_yaw(0)
+    rc.go_to_heading(20)
+    rc.set_absolute_yaw(20)
+    rc.go_forward_distance(0.5)
     rc.move_servo("/auv/devices/torpedo")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/torpedo")

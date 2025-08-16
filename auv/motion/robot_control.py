@@ -483,19 +483,19 @@ class RobotControl:
         while(abs(target-self.dvl_sum)>0.2) and time.time() - start_time < 30:
             delta = target - self.dvl_sum
             if delta>0:
-                if abs(delta) < 4:
-                    self.movement(forward=max(3*(delta/4),2))
+                if abs(delta) < 5:
+                    self.movement(forward=max(5*(delta/5.0),2))
                 else:
-                    if abs(target - delta) < 4:
-                        self.movement(forward=max(4*(delta/4),2))
+                    if abs(target - delta) < 5:
+                        self.movement(forward=max(5*(delta/5.0),2))
                     else:
-                        self.movement(forward=4)
+                        self.movement(forward=5)
             else:
-                if abs(delta) < 4:
-                    self.movement(forward=3*(delta/4))
+                if abs(delta) < 5:
+                    self.movement(forward=max(5*(delta/5),-2))
                 else:
-                    if abs(target - delta) < 4:
-                        self.movement(forward=max(4*(delta/4),-2))
+                    if abs(target - delta) < 5:
+                        self.movement(forward=max(5*(delta/5),-2))
                     else:
                         self.movement(forward=-4)
             
@@ -515,7 +515,7 @@ class RobotControl:
         else:
             self.movement(forward=2)
         
-        if abs(target) > 4:
+        if abs(target) > 5:
             time.sleep(1)
         else:
             time.sleep(0.4)
@@ -534,21 +534,21 @@ class RobotControl:
         while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
             delta = target - self.dvl_sum
             if delta>0:
-                if abs(delta) < 4:
-                    self.movement(lateral=3*(delta/2))
+                if abs(delta) < 5:
+                    self.movement(lateral=max(5*(delta/2),1.5))
                 else:
-                    if abs(target - delta) < 4:
-                        self.movement(lateral=max(3*(delta/4),1.5))
+                    if abs(target - delta) < 5:
+                        self.movement(lateral=max(5*(delta/4),1.5))
                     else:
                         self.movement(lateral=3)
             else:
-                if abs(delta) < 4:
-                    self.movement(lateral=3*(delta/2))
+                if abs(delta) < 5:
+                    self.movement(lateral=max(5*(delta/2),-1.5))
                 else:
-                    if abs(target - delta) < 4:
-                        self.movement(lateral=max(3*(delta/4),-1.5))
+                    if abs(target - delta) < 5:
+                        self.movement(lateral=max(5*(delta/4),-1.5))
                     else:
-                        self.movement(lateral=-3)
+                        self.movement(lateral=-5)
             # update distane traveled in body frame:
             with self.lock:
                 self.dvl_sum += self.dvl_velocity['x'] * dt
@@ -565,7 +565,7 @@ class RobotControl:
         else:
             self.movement(lateral= 2)
         
-        if abs(target) > 4:
+        if abs(target) > 5:
             time.sleep(1)
         else:
             time.sleep(0.4)
