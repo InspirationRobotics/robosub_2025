@@ -44,7 +44,7 @@ class BinsDropMission:
 
     def run(self):
         print("[INFO] Bin drop mission running")
-        self.rc.activate_heading_control(False)
+        self.rc.activate_heading_control(True)
         drop = False
         while not rospy.is_shutdown():
             time.sleep(0.01)
@@ -65,17 +65,16 @@ class BinsDropMission:
             yaw = cv_data.get("yaw", 0)
             vertical = cv_data.get("vertical", 0)
             end = cv_data.get("end", False)
-            drop = cv_data.get("drop", False)
 
             rospy.loginfo(f"cv_data | {cv_data}")
             if end:
                 print("[INFO] Ending Bins CV")
                 self.rc.movement(lateral=0, forward=0, yaw=0, vertical=0)
-                if drop:
-                    self.rc.move_servo("/auv/device/dropper")
-                    time.sleep(0.2)
-                    self.rc.move_servo("/auv/device/dropper")
-                break
+                # if drop:
+                #     self.rc.move_servo("/auv/device/dropper")
+                #     time.sleep(0.2)
+                #     self.rc.move_servo("/auv/device/dropper")
+                # break
             else:
                 self.rc.movement(lateral=lateral, forward=forward, yaw=yaw, vertical=vertical)
 
