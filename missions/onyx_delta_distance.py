@@ -15,6 +15,10 @@ def navigate_with_heading(name):
     rc.waypointNav(Waypoint["position"][0],Waypoint["position"][1])
     rc.go_to_heading(Waypoint["heading"])
     rospy.loginfo(f"Reached {name} waypoint")
+    
+def grid_navigate(x=0,y=0):
+    rc.go_forward_distance(y)
+    rc.go_lateral_distance(x)
 
 """INITIALIZE"""
 rospy.init_node("Onyx", anonymous = True)
@@ -38,8 +42,9 @@ try:
     # COIN FLIP
     rc.go_to_heading(0)
     rc.set_absolute_yaw(0)
-    rc.go_forward_distance(6)
-    rc.go_lateral_distance(-0.8)
+    # rc.go_forward_distance(6)
+    # rc.go_lateral_distance(-0.8)
+    grid_navigate(y=6, x=-0.8)
     rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
