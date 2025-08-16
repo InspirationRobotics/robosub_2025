@@ -13,8 +13,11 @@ rc.set_flight_mode("STABILIZE")
 rc.set_control_mode("depth_hold")
 rc.activate_heading_control(False)
 config = deviceHelper.variables
+
+print("Setting depth to 0.4")
+rc.go_to_depth(0.4)
     
-"""BIN DROP MISSION"""
+"""MOVEMENT TEST"""
 
 try:
    rc.go_forward_distance(2)
