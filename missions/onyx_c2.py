@@ -10,11 +10,14 @@ from auv.mission import poles_mission, poles_with_com_mission, bin_approach_miss
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
-def navigate_with_heading(name):
+def navigate_to(name):
     Waypoint = waypoints[name]
     rc.waypointNav(Waypoint["position"][0],Waypoint["position"][1])
-    # rc.go_to_heading(Waypoint["heading"])
     rospy.loginfo(f"Reached {name} waypoint")
+
+def grid_navigate(x=0,y=0):
+    rc.go_forward_distance(y)
+    rc.go_lateral_distance(x)
 
 """INITIALIZE"""
 rospy.init_node("Onyx", anonymous = True)
@@ -29,18 +32,18 @@ with open("./missions/waypoints_c1.json", "r") as file:
 
 # Dive down to desire depth
 rc.go_to_depth(0.5)
-
+rc.go_to_depth(1.2)
 rospy.loginfo("Finish initialization")
-"""OCTAGON MISSION"""
-try:
-   octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
-   time.sleep(2)
-   octagon.run()
-   octagon.cleanup()
-   rospy.loginfo("OCTAGON MISSION FINISHED")
-except Exception as e:
-   rospy.logerr("ERROR DOING OCTAGON MISSION")
-   rospy.logerr(e)
+
+grid_navigate(y=1.85)
+grid_navigate(x=-6)
+grid_navigate(y=2.7)
+grid_navigate(y=2.7)
+grid_navigate(y=2.7)
+grid_navigate(x=2.7)
+grid_navigate(x=2.7)
+
+
 
 print("[INFO] Mission run terminate")
 disarm.disarm()
