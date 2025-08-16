@@ -15,10 +15,6 @@ def navigate_to(name):
     rc.waypointNav(Waypoint["position"][0],Waypoint["position"][1])
     rospy.loginfo(f"Reached {name} waypoint")
 
-def grid_navigate(x=0,y=0):
-    rc.go_forward_distance(y)
-    rc.go_lateral_distance(x)
-    time.sleep(1)
 
 """INITIALIZE"""
 rospy.init_node("Onyx", anonymous = True)
@@ -32,23 +28,22 @@ with open("./missions/waypoints_c1.json", "r") as file:
     waypoints = json.load(file)
 
 # Dive down to desire depth
-rc.go_to_depth(0.5)
-rc.go_to_depth(1.2)
+rc.set_absolute_yaw(0)
+rc.go_to_depth(0.4)
+rc.go_to_depth(0.8)
 rospy.loginfo("Finish initialization")
 
-grid_navigate(y=1.85)
-grid_navigate(y=2.7)
-grid_navigate(y=2.7)
-grid_navigate(y=2.7)
-grid_navigate(x=-2.7)
-grid_navigate(x=-2.7)
-grid_navigate(x=-2.7)
-grid_navigate(y=-2.7)
-grid_navigate(y=-2.7)
-grid_navigate(y=-2.7)
-grid_navigate(x=2.7)
-grid_navigate(x=2.7)
-grid_navigate(x=2.7)
+
+# waypoint navs
+rc.waypointNav(x=0,y=1.85)
+rc.waypointNav(x=-6.832,y=1.85)
+rc.waypointNav(x=-6.832,y=8.888)
+rc.waypointNav(x=0,y=8.888)
+rc.waypointNav(x=0,y=1.85)
+
+# grid nav
+rc.go_forward_distance()
+rc.go_lateral_distance()
 
 print("[INFO] Mission run terminate")
 disarm.disarm()

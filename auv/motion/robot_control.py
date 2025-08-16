@@ -480,19 +480,26 @@ class RobotControl:
         dt = 0.05 # 20 Hz
         start_time = time.time()
         rospy.loginfo(f"Go forward {target}")
-        while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
+        while(abs(target-self.dvl_sum)>0.2) and time.time() - start_time < 30:
             delta = target - self.dvl_sum
             if delta>0:
                 if abs(delta) < 4:
-                    self.movement(forward=3*(delta/2))
+                    self.movement(forward=2*(delta/4))
                 else:
-                    self.movement(forward=5)
+                    if abs(target - delta) < 4:
+                        self.movement(forward=max(5*(delta/4),1.5))
+                    else:
+                        self.movement(forward=5)
+                        
                 
             else:
                 if abs(delta) < 4:
-                    self.movement(forward=3*(delta/2))
+                    self.movement(forward=2*(delta/4))
                 else:
-                    self.movement(forward=-5)
+                    if abs(target - delta) < 4:
+                        self.movement(forward=max(5*(delta/4),1.5))
+                    else:
+                        self.movement(forward=-5)
             
             # update distane traveled in body frame:
             with self.lock:
@@ -528,12 +535,18 @@ class RobotControl:
                 if abs(delta) < 4:
                     self.movement(lateral=3*(delta/2))
                 else:
-                    self.movement(lateral=5)
+                    if abs(target - delta) < 4:
+                        self.movement(lateral=max(5*(delta/4),1.5))
+                    else:
+                        self.movement(lateral=5)
             else:
                 if abs(delta) < 4:
                     self.movement(lateral=3*(delta/2))
                 else:
-                    self.movement(lateral=-5)
+                    if abs(target - delta) < 4:
+                        self.movement(lateral=max(5*(delta/4),1.5))
+                    else:
+                        self.movement(lateral=-5)
             # update distane traveled in body frame:
             with self.lock:
                 self.dvl_sum += self.dvl_velocity['x'] * dt

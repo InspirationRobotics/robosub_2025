@@ -15,11 +15,6 @@ def navigate_to(name):
     rc.waypointNav(Waypoint["position"][0],Waypoint["position"][1])
     rospy.loginfo(f"Reached {name} waypoint")
 
-def grid_navigate(x=0,y=0):
-    rc.go_forward_distance(y)
-    rc.go_lateral_distance(x)
-    time.sleep(1)
-
 """INITIALIZE"""
 rospy.init_node("Onyx", anonymous = True)
 rc = robot_control.RobotControl()
@@ -32,17 +27,37 @@ with open("./missions/waypoints_c1.json", "r") as file:
     waypoints = json.load(file)
 
 # Dive down to desire depth
+rc.set_absolute_yaw(0)
 rc.go_to_depth(0.5)
 rc.go_to_depth(1.2)
 rospy.loginfo("Finish initialization")
 
-grid_navigate(y=1.85)
-grid_navigate(y=2.7)
-grid_navigate(y=2.7)
-grid_navigate(y=2.7)
-grid_navigate(y=-2.7)
-grid_navigate(y=-2.7)
-grid_navigate(y=-2.7)
+# grid_navigate(y=1.8)
+# grid_navigate(y=2.7)
+# grid_navigate(y=2.7)
+# grid_navigate(y=2.7)
+# grid_navigate(y=-2.7)
+# grid_navigate(y=-2.7)
+# grid_navigate(y=-2.7)
+rc.go_to_heading(0)
+rc.set_absolute_yaw(0)
+rc.go_forward_distance(3.7)
+rc.move_servo("/auv/devices/dropper")
+time.sleep(0.3)
+rc.move_servo("/auv/devices/dropper")
+time.sleep(0.3)
+rc.move_servo("/auv/devices/dropper")
+time.sleep(0.4)
+
+rc.go_forward_distance(2.7)
+time.sleep(1)
+
+
+rc.go_forward_distance(-2.7)
+time.sleep(1)
+
+rc.go_forward_distance(-2.7)
+time.sleep(1)
 
 
 print("[INFO] Mission run terminate")
