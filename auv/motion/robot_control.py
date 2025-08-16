@@ -62,7 +62,7 @@ class RobotControl:
         Args:
             debug (bool): Flag to enable or disable DVL
         """
-        self.rate = rospy.Rate(20) # 10 Hz
+        self.rate = rospy.Rate(50) # 50 Hz
         # Get the configuration of the devices plugged into the sub(thrusters, camera, etc.)
         self.config     = deviceHelper.variables
         self.debug      = debug   
@@ -297,7 +297,7 @@ class RobotControl:
 
 
                 # minimum of 0.5 pwm for yaw
-                min_pwm = 0.4
+                min_pwm = 0.6
                 if abs(yaw_pwm) < min_pwm:
                     if yaw_pwm < 0:
                         yaw_pwm = -min_pwm
@@ -431,6 +431,7 @@ class RobotControl:
         return self.orientation['yaw']
 
     def go_to_heading(self, target):
+        self.activate_heading_control(False)
         target = (target) % 360
         print(f"[INFO] Setting heading to {target}")
         self.prev_error = None
@@ -631,6 +632,7 @@ class RobotControl:
         Args:
             yaw (float): robot desired yaw angle, unit: degrees
         """
+        self.activate_heading_control(True)
         self.desired_point['yaw'] = yaw % 360
         rospy.loginfo(f"Set desire heading to {yaw%360}")
             

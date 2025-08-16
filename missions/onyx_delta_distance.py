@@ -28,7 +28,7 @@ with open("./missions/waypoints_delta.json", "r") as file:
     waypoints = json.load(file)
 
 # Dive down to desire depth
-rc.go_to_depth(1.2)
+rc.go_to_depth(0.8)
 
 rospy.loginfo("Finish initialization")
 
@@ -37,7 +37,6 @@ rospy.loginfo("Finish initialization")
 try:
     # COIN FLIP
     rc.go_to_heading(0)
-    rc.activate_heading_control(True)
     rc.set_absolute_yaw(0)
     rc.go_forward_distance(6)
     rc.go_lateral_distance(-0.8)
@@ -57,42 +56,35 @@ except Exception as e:
     rospy.logerr(e)
 
 """SLALOM MISSION"""
-# navigate_with_heading("S1")
+
 try: 
     # Run the poles mission
-    rc.activate_heading_control(True)
+    rc.set_absolute_yaw(0)
     rospy.loginfo("Start of poles mission...")
-    poles = poles_mission.PoleSlalomMission(rc=rc,**config)
-    poles.run()
-    poles.cleanup()
+    rc.go_forward_distance(4.5)
     print("[INFO] POLES MISSION COMPLETE")
 except Exception as e:
     rospy.logerr("ERROR OCCUR IN POLES MISSION")
     rospy.logerr(e)
 
-"""OCTAGON MISSION"""
-navigate_with_heading("O1")
+"""MODEMS + ROLL"""
 try:
-   rc.activate_heading_control(False)
-   octagon = octagon_approach_mission.OctagonApproachMission(target=None, rc=rc, **config)
-   time.sleep(2)
-   octagon.run()
-   octagon.cleanup()
-   rospy.loginfo("OCTAGON MISSION FINISHED")
+    intersubMission = intersub_com_mission.intersubComMission(robotControl=rc)
+    intersubMission.run()
+    rospy.loginfo("FINISHED INTERSUB COMMUNICATION")
 except Exception as e:
-   rospy.logerr("ERROR DOING OCTAGON MISSION")
-   rospy.logerr(e)
+    rospy.logerr("ERROR DURING MODEM MISSION")
+    rospy.logerr(e)
 
 """BIN MISSION"""
 navigate_with_heading("B1")
 try:
-    rc.activate_heading_control(False)
-    binApproach = bin_approach_mission.BinsApproachMission(rc=rc, **config)
-    binApproach.run()
-    binApproach.cleanup()
+    rc.set_absolute_yaw(0)
+    rc.go_forward_distance(2.3)
+    rc.go_lateral_distance(0.3)
     rospy.loginfo("BIN APPROACH MISSION FINISHED")
     rc.move_servo("/auv/devices/dropper")
-    time.sleep(0.3)
+    time.sleep(0.5) # slightly longer delay and hope for higher chance of getting into the bin
     rc.move_servo("/auv/devices/dropper")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/dropper")
@@ -104,11 +96,38 @@ except Exception as e:
     rospy.logerr("ERROR DOING BIN MISSION")
     rospy.logerr(e)
 
+"""OCTAGON MISSION"""
+try:
+    rc.go_to_depth(0.5)
+    rc.go_lateral_distance(0.8)    
+    rc.go_forward_distance(9.7)
+    # surface and resubmerge
+    rc.go_to_heading(45)
+    rc.set_absolute_yaw(45)
+    rc.go_to_depth(0)
+    time.sleep(7)
+    rc.go_to_depth(0.5)
+    
+    rospy.loginfo("OCTAGON MISSION FINISHED")
+except Exception as e:
+   rospy.logerr("ERROR DOING OCTAGON MISSION")
+   rospy.logerr(e)
+
 
 """TORPEDO MISSION"""
-navigate_with_heading("T1")
 try:
-    rc.activate_heading_control(False)
+    # set heading to 0
+    rc.go_to_heading(0)
+    rc.set_absolute_yaw(0)
+
+    # go to torpedo waypoint
+    rc.go_forward_distance(-9)
+    rc.go_lateral_distance(8)
+
+    # align with the torpedo
+    rc.go_to_heading(27)
+    
+    # Use cv to navigate to torpedo
     torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
     torpedoApproach.run()
     torpedoApproach.cleanup()
@@ -122,20 +141,6 @@ try:
 except Exception as e:
     rospy.logerr("ERROR DOING TORPEDO MISSION")
     rospy.logerr(e)
-
-
-"""MODEMS + ROLL"""
-try:
-    intersubMission = intersub_com_mission.intersubComMission(robotControl=rc)
-    intersubMission.run()
-    rospy.loginfo("FINISHED INTERSUB COMMUNICATION")
-except Exception as e:
-    rospy.logerr("ERROR DURING MODEM MISSION")
-    rospy.logerr(e)
-
-rospy.loginfo("Returning home")
-rc.waypointNav(0,5)
-rc.waypointNav(0,0)
 
 print("[INFO] Mission run terminate")
 disarm.disarm()
