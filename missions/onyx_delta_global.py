@@ -41,9 +41,8 @@ try:
     rc.go_to_heading(0)
     rc.set_absolute_yaw(0)
     
-    rc.go_forward_distance(5.89
-                           )
-    rc.go_lateral_distance(-1.2)
+    rc.grid_forward(5.8)
+    rc.grid_lateral(-1.2)
     
     rospy.loginfo("GATE MISSION FINISHED")
 except Exception as e:
@@ -68,15 +67,15 @@ try:
     rospy.loginfo("Start of poles mission...")
     
     # first row
-    rc.go_forward_distance(1.5)
-    rc.go_lateral_distance(0.75)
+    rc.grid_forward(6.8)
+    rc.grid_lateral(-0.8)
 
     # second row
-    rc.go_forward_distance(1.5)
-    rc.go_lateral_distance(0.75)
+    rc.grid_forward(1.5)
+    rc.grid_lateral(0.75)
 
     # thrid row
-    rc.go_forward_distance(1.5)
+    rc.grid_forward(1.5)
     print("[INFO] POLES MISSION COMPLETE")
 except Exception as e:
     rospy.logerr("ERROR OCCUR IN POLES MISSION")
@@ -94,8 +93,8 @@ except Exception as e:
 """BIN MISSION"""
 try:
     rc.set_absolute_yaw(0)
-    rc.go_forward_distance(0.6)
-    rc.go_lateral_distance(1.4)
+    rc.grid_forward(0.6)
+    rc.grid_lateral(1.4)
     rospy.loginfo("BIN APPROACH MISSION FINISHED")
     rc.move_servo("/auv/devices/dropper")
     time.sleep(0.5) # slightly longer delay and hope for higher chance of getting into the bin
@@ -111,8 +110,8 @@ except Exception as e:
 try:
     # navigate to octagon
     rc.go_to_depth(0.8)
-    rc.go_lateral_distance(-0.8)    
-    rc.go_forward_distance(9.7)
+    rc.grid_lateral(-1.2)    
+    rc.grid_forward(20)
 
     # surface and resubmerge
     rc.go_to_heading(135)
@@ -138,7 +137,7 @@ try:
 
     # go to torpedo waypoint
     rc.go_forward_distance(-9)
-    rc.go_lateral_distance(8)
+    rc.go_forward_distance(8)
     """
 
     rc.waypointNav(x=3.4,y=14.7)
@@ -166,4 +165,4 @@ except Exception as e:
 
 print("[INFO] Mission run terminate")
 disarm.disarm()
-rc.exit()1
+rc.exit()

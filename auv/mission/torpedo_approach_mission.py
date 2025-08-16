@@ -34,6 +34,7 @@ class torpedoApproachMission:
         self.rc = rc
         self.cv_handler = cv_handler.CVHandler(**self.config)
 
+        
         # Initialize the CV handlers; dummys are used to input a video file instead of the camera stream as data for the CV script to run on
         for file_name in self.cv_files:
             self.cv_handler.start_cv(file_name, self.callback)

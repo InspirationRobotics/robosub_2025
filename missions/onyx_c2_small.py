@@ -32,16 +32,10 @@ rc.go_to_depth(0.5)
 rc.go_to_depth(1.2)
 rospy.loginfo("Finish initialization")
 
-# grid_navigate(y=1.8)
-# grid_navigate(y=2.7)
-# grid_navigate(y=2.7)
-# grid_navigate(y=2.7)
-# grid_navigate(y=-2.7)
-# grid_navigate(y=-2.7)
-# grid_navigate(y=-2.7)
-rc.go_to_heading(0)
 rc.set_absolute_yaw(0)
-rc.go_forward_distance(3.7)
+# rc.grid_forward(4.2)
+rc.go_forward_distance(4.2)
+rc.grid_lateral(-1)
 rc.move_servo("/auv/devices/dropper")
 time.sleep(0.3)
 rc.move_servo("/auv/devices/dropper")
@@ -49,14 +43,14 @@ time.sleep(0.3)
 rc.move_servo("/auv/devices/dropper")
 time.sleep(0.4)
 
-rc.go_forward_distance(2.7)
+rc.grid_forward(4.2+2.7)
 time.sleep(1)
 
 
-rc.go_forward_distance(-2.7)
+rc.grid_forward(4.2)  
 time.sleep(1)
 
-rc.go_forward_distance(-2.7)
+rc.grid_forward(1.8)
 time.sleep(1)
 
 

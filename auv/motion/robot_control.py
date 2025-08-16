@@ -484,22 +484,20 @@ class RobotControl:
             delta = target - self.dvl_sum
             if delta>0:
                 if abs(delta) < 4:
-                    self.movement(forward=2*(delta/4))
+                    self.movement(forward=max(3*(delta/4),2))
                 else:
                     if abs(target - delta) < 4:
-                        self.movement(forward=max(5*(delta/4),1.5))
+                        self.movement(forward=max(4*(delta/4),2))
                     else:
-                        self.movement(forward=5)
-                        
-                
+                        self.movement(forward=4)
             else:
                 if abs(delta) < 4:
-                    self.movement(forward=2*(delta/4))
+                    self.movement(forward=3*(delta/4))
                 else:
                     if abs(target - delta) < 4:
-                        self.movement(forward=max(5*(delta/4),1.5))
+                        self.movement(forward=max(4*(delta/4),-2))
                     else:
-                        self.movement(forward=-5)
+                        self.movement(forward=-4)
             
             # update distane traveled in body frame:
             with self.lock:
@@ -516,7 +514,11 @@ class RobotControl:
             self.movement(forward=-2)
         else:
             self.movement(forward=2)
-        time.sleep(1)
+        
+        if abs(target) > 4:
+            time.sleep(1)
+        else:
+            time.sleep(0.4)
         self.movement()
 
     def go_lateral_distance(self, target:float):
@@ -536,17 +538,17 @@ class RobotControl:
                     self.movement(lateral=3*(delta/2))
                 else:
                     if abs(target - delta) < 4:
-                        self.movement(lateral=max(5*(delta/4),1.5))
+                        self.movement(lateral=max(3*(delta/4),1.5))
                     else:
-                        self.movement(lateral=5)
+                        self.movement(lateral=3)
             else:
                 if abs(delta) < 4:
                     self.movement(lateral=3*(delta/2))
                 else:
                     if abs(target - delta) < 4:
-                        self.movement(lateral=max(5*(delta/4),1.5))
+                        self.movement(lateral=max(3*(delta/4),-1.5))
                     else:
-                        self.movement(lateral=-5)
+                        self.movement(lateral=-3)
             # update distane traveled in body frame:
             with self.lock:
                 self.dvl_sum += self.dvl_velocity['x'] * dt
@@ -562,7 +564,11 @@ class RobotControl:
             self.movement(lateral=-2)
         else:
             self.movement(lateral= 2)
-        time.sleep(1)
+        
+        if abs(target) > 4:
+            time.sleep(1)
+        else:
+            time.sleep(0.4)
         self.movement()
         
     def go_by_time(self, f=None, l=None, t=0):
@@ -571,6 +577,23 @@ class RobotControl:
         time.sleep(t)
         self.movement()
 
+    def grid_forward(self,target:float):
+        """
+        Args: 
+            target(float): global y locaiton
+        """
+        self.set_absolute_yaw(0)
+        dy = target - self.position['y']
+        self.go_forward_distance(dy)
+
+    def grid_lateral(self, target:float):
+        """
+        Args:
+            target(float): target global x location
+        """
+        self.set_absolute_yaw(0)
+        dx = target - self.position['x']
+        self.go_lateral_distance(dx)
 
     def move_servo(self, service: str):
         """Operate a servo via the maestro_server file

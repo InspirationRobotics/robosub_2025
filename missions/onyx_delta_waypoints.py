@@ -28,6 +28,7 @@ with open("./missions/waypoints_delta.json", "r") as file:
     waypoints = json.load(file)
 
 # Dive down to desire depth
+rc.set_absolute_yaw(0)
 rc.go_to_depth(0.8)
 
 rospy.loginfo("Finish initialization")
@@ -57,6 +58,7 @@ try:
     rospy.loginfo("Start of poles mission...")
     navigate_to("S1")
     navigate_to("S2")
+    navigate_to("S3")
     print("[INFO] POLES MISSION COMPLETE")
 except Exception as e:
     rospy.logerr("ERROR OCCUR IN POLES MISSION")
@@ -80,9 +82,6 @@ try:
     rc.move_servo("/auv/devices/dropper")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/dropper")
-#    binDrop = bins_drop_mission.BinsDropMission(rc=rc, **config)
-#    binDrop.run()
-#    binDrop.cleanup()
     rospy.loginfo("BIN drop MISSION FINISHED")
 except Exception as e:
     rospy.logerr("ERROR DOING BIN MISSION")
@@ -90,10 +89,13 @@ except Exception as e:
 
 """OCTAGON MISSION"""
 try:
+    rc.go_to_depth(0.8)
     navigate_to("O1")
-    rc.go_to_heading(45)
+    rc.go_to_heading(135)
+    rc.set_absolute_yaw(135)
     rc.go_to_depth(0)
-    time.sleep(7)
+    time.sleep(4)
+    rc.go_to_depth(0.4)
     rc.go_to_depth(0.8)
     rospy.loginfo("OCTAGON MISSION FINISHED")
 except Exception as e:
@@ -104,13 +106,11 @@ except Exception as e:
 """TORPEDO MISSION"""
 try:
     navigate_to("T1")
+    rc.go_to_depth(1.2)
+    navigate_to("T2")
     # align with the torpedo
-    rc.go_to_heading(27)
-    
-    # Use cv to navigate to torpedo
-    torpedoApproach = torpedo_approach_mission.torpedoApproachMission(rc=rc, **config)
-    torpedoApproach.run()
-    torpedoApproach.cleanup()
+    rc.go_to_heading(0)
+    rc.set_absolute_yaw(0)
     rc.move_servo("/auv/devices/torpedo")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/torpedo")

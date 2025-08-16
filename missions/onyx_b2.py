@@ -15,7 +15,6 @@ def navigate_to(name):
     rc.waypointNav(Waypoint["position"][0],Waypoint["position"][1])
     rospy.loginfo(f"Reached {name} waypoint")
 
-
 """INITIALIZE"""
 rospy.init_node("Onyx", anonymous = True)
 rc = robot_control.RobotControl()
@@ -29,40 +28,14 @@ with open("./missions/waypoints_c1.json", "r") as file:
 
 # Dive down to desire depth
 rc.set_absolute_yaw(0)
-rc.go_to_depth(0.4)
-rc.go_to_depth(0.8)
+rc.go_to_depth(0.6)
+rc.go_to_depth(1.2)
 rospy.loginfo("Finish initialization")
 
-
-# # waypoint navs
-# rc.waypointNav(x=0,y=8.888)
-# rc.waypointNav(x=0,y=1.85)
-# rc.waypointNav(x=-6.832,y=8.888)
-# rc.waypointNav(x=-6.832,y=1.85)
-
-# # grid nav square
-# rc.grid_forward(1.85)
-# time.sleep(1)
-# rc.grid_forward(8.888)
-# time.sleep(1)
-# rc.grid_lateral(-6.832)
-# time.sleep(1)
-# rc.grid_forward(1.85)
-# time.sleep(1)
-# rc.grid_lateral(0)
-
-# full mission
-rc.grid_lateral(-1.030)
-rc.grid_forward(5.019)
-
-rc.grid_lateral(-4.867)
-rc.grid_forward(3.958)
-
-rc.grid_forward(7.328)
-rc.grid_lateral(-8.236)
-
-
-
+rc.set_absolute_yaw(0)
+rc.waypointNav(x=0,y=6.888)
+rc.waypointNav(x=-6.832,y=6.888)
+rc.waypointNav(0,0)
 print("[INFO] Mission run terminate")
 disarm.disarm()
 rc.exit()
