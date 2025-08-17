@@ -32,7 +32,8 @@ def modem_loop():
     while modem_loop_flat:
         if msg_to_send is not None:
             rc.send_modem(addr="020",movement=msg_to_send)
-        time.sleep(0.5)
+            rc.flash_led()
+        time.sleep(0.7)
         
 # Load the JSON file
 with open("./missions/waypoints_delta.json", "r") as file:
