@@ -17,6 +17,16 @@ rc.set_flight_mode("STABILIZE")
 rc.set_control_mode("depth_hold")
 config = deviceHelper.variables
 
+"""COIN TOSS"""
+try:
+   rc.go_to_heading(0)
+   rc.activate_heading_control(True)
+   rc.set_absolute_yaw(0)
+   rospy.loginfo("Robot heading set to gate heading")
+except Exception as e:
+    rospy.logerr("ERROR SETTING ROBOT HEADING")
+    rospy.logerr(e)
+
 print("going to depth 0.6")
 rc.set_absolute_yaw(0)
 rc.go_to_depth(0.4)
