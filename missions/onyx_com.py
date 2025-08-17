@@ -32,8 +32,8 @@ with open("./missions/waypoints_delta.json", "r") as file:
 
 # Dive down to desire depth
 rc.set_absolute_yaw(0)
-rc.go_to_depth(0.4)
 rc.go_to_depth(0.8)
+time.sleep(2)
 rospy.loginfo("Finish initialization")
 
 # move forward
@@ -53,7 +53,7 @@ except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
     rospy.logerr(e)
 
-rc.go_lateral_distance(2)
+rc.go_lateral_distance(-2)
 
 """MODEMS + ROLL"""
 try:
