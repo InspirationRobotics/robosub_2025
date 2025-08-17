@@ -35,9 +35,9 @@ def modem_loop():
             rc.flash_led()
         time.sleep(0.7)
         
-# Load the JSON file
-with open("./missions/waypoints_delta.json", "r") as file:
-    waypoints = json.load(file)
+# # Load the JSON file
+# with open("./missions/waypoints_delta.json", "r") as file:
+#     waypoints = json.load(file)
 
 # Dive down to desire depth
 rc.set_absolute_yaw(0)
@@ -64,6 +64,8 @@ try:
 except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
     rospy.logerr(e)
+    
+msg_to_send = "Graey_Start"
 
 rc.go_lateral_distance(2)
 
@@ -73,7 +75,7 @@ try:
     while time.time()-start_time<15:  # 15 s timeout
         msg = rc.get_latest_modem()
         if msg is not None and msg=="Onyx_Poles_Finished":
-            rc.send_modem(addr="020",movement="Graey_Return_ROLL")
+            msg_to_send = "Graey_Return_ROLL"
             rospy.loginfo("Graey return home and roll")
             break
         time.sleep(0.5)
@@ -81,6 +83,7 @@ except Exception as e:
     rospy.logerr("ERROR DOING GATE MISSION")
     rospy.logerr(e)
 
+msg_to_send = "Graey_Return_ROLL"
 rc.go_forward_distance(-2)
 
 print("[INFO] Mission run terminate")
