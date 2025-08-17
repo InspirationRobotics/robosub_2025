@@ -482,106 +482,135 @@ class RobotControl:
             rospy.loginfo(f"Going to depth: {target} | current depth: {self.position['z']}")
             time.sleep(1/20) # 20hz
   
-    def go_forward_distance(self, target:float):
+    def go_forward_distance(self, target: float):
         """
-        Go forward by a certain distance base on dvl
+        Go forward by a certain distance based on DVL.
         Args:
-            target (float): desire distance
+            target (float): desired distance (m)
         """
         self.dvl_sum = 0
-        dt = 1/50 # 50 Hz
+        dt = 1 / 50.0  # 50 Hz
         start_time = time.time()
-        rospy.loginfo(f"Go forward {target}")
-        while(abs(target-self.dvl_sum)>0.2) and time.time() - start_time < 30:
+        rospy.loginfo(f"Go forward {target} m")
+
+        # Smooth start parameters
+        ramp_duration = 2.0   # seconds to reach full command
+        ramp_start = time.time()
+
+        while (abs(target - self.dvl_sum) > 0.2) and (time.time() - start_time < 30):
             delta = target - self.dvl_sum
-            if delta>0:
+
+            # base forward command (before ramp)
+            if delta > 0:
                 if abs(delta) < 5:
-                    self.movement(forward=max(5*(delta/5.0),2))
+                    base_cmd = max(5 * (delta / 5.0), 2)
                 else:
                     if abs(target - delta) < 5:
-                        self.movement(forward=max(5*(delta/5.0),2))
+                        base_cmd = max(5 * (delta / 5.0), 2)
                     else:
-                        self.movement(forward=5)
+                        base_cmd = 5
             else:
                 if abs(delta) < 5:
-                    self.movement(forward=max(5*(delta/5),-2))
+                    base_cmd = max(5 * (delta / 5.0), -2)
                 else:
                     if abs(target - delta) < 5:
-                        self.movement(forward=max(5*(delta/5),-2))
+                        base_cmd = max(5 * (delta / 5.0), -2)
                     else:
-                        self.movement(forward=-5)
-            
-            # update distane traveled in body frame:
+                        base_cmd = -5
+
+            # ---- Smooth ramp-up ----
+            ramp_factor = min((time.time() - ramp_start) / ramp_duration, 1.0)
+            cmd = base_cmd * ramp_factor
+
+            # send to thrusters
+            self.movement(forward=cmd)
+
+            # update distance traveled in body frame:
             with self.lock:
                 self.dvl_sum += self.dvl_velocity['y'] * dt
-            
-            # rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
+
             time.sleep(dt)
 
         # stop motors after reaching distance
         self.movement()
 
-        # Push back funciton
-        if target>0:
+        # Push-back function
+        if target > 0:
             self.movement(forward=-2)
         else:
             self.movement(forward=2)
-        
+
         if abs(target) > 5:
             time.sleep(1)
         else:
             time.sleep(0.4)
         self.movement()
 
-    def go_lateral_distance(self, target:float):
+
+    def go_lateral_distance(self, target: float):
         """
-        Go latera by a certain distance base on dvl
+        Go lateral by a certain distance based on DVL
         Args:
-            target (float): desire distance
+            target (float): desired distance (m)
         """
         self.dvl_sum = 0
-        dt = 1/50 # 50 Hz
+        dt = 1 / 50.0  # 50 Hz
         start_time = time.time()
-        rospy.loginfo(f"Go lateral {target}")
-        while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:
+        rospy.loginfo(f"Go lateral {target} m")
+
+        # Smooth start parameters
+        ramp_duration = 2.0   # seconds to reach full command
+        ramp_start = time.time()
+
+        while (abs(target - self.dvl_sum) > 0.3) and (time.time() - start_time < 30):
             delta = target - self.dvl_sum
-            if delta>0:
+
+            # base lateral command (before ramp)
+            if delta > 0:
                 if abs(delta) < 5:
-                    self.movement(lateral=max(5*(delta/2),1.5))
+                    base_cmd = max(5 * (delta / 2), 1.5)
                 else:
                     if abs(target - delta) < 5:
-                        self.movement(lateral=max(5*(delta/4),1.5))
+                        base_cmd = max(5 * (delta / 4), 1.5)
                     else:
-                        self.movement(lateral=3)
+                        base_cmd = 5
             else:
                 if abs(delta) < 5:
-                    self.movement(lateral=max(5*(delta/2),-1.5))
+                    base_cmd = max(5 * (delta / 2), -1.5)
                 else:
                     if abs(target - delta) < 5:
-                        self.movement(lateral=max(5*(delta/4),-1.5))
+                        base_cmd = max(5 * (delta / 4), -1.5)
                     else:
-                        self.movement(lateral=-5)
-            # update distane traveled in body frame:
+                        base_cmd = -5
+
+            # ---- Smooth ramp-up ----
+            ramp_factor = min((time.time() - ramp_start) / ramp_duration, 1.0)
+            cmd = base_cmd * ramp_factor
+
+            # send to thrusters
+            self.movement(lateral=cmd)
+
+            # update distance traveled in body frame:
             with self.lock:
                 self.dvl_sum += self.dvl_velocity['x'] * dt
-            
-            # rospy.loginfo(f"target: {target} | moved distance: {self.dvl_sum}")
-            time.sleep(dt)
-            
-        # stop motors after reaching distance
-        self.movement() 
 
-        # Push back funciton
-        if target>0:
+            time.sleep(dt)
+
+        # stop motors after reaching distance
+        self.movement()
+
+        # Push-back function
+        if target > 0:
             self.movement(lateral=-2)
         else:
-            self.movement(lateral= 2)
-        
+            self.movement(lateral=2)
+
         if abs(target) > 5:
             time.sleep(1)
         else:
             time.sleep(0.4)
         self.movement()
+
         
     def go_by_time(self, f=None, l=None, t=0):
         """Args: f - forward l - lateral t - time to sleep"""
@@ -643,6 +672,19 @@ class RobotControl:
         self.pub_modem.publish(message_to_send)
         rospy.loginfo(f"Send {addr}-{movement} to modem node !")
 
+    def flash_led(self):
+        """
+        NOTE this function onlys works for graey because mechanical reason
+        """
+        rospy.wait_for_service("/auv/devices/LED/received")
+
+        try:
+            servo_client = rospy.ServiceProxy("/auv/devices/LED/received", Trigger)
+            resp1 = servo_client()
+            return resp1.message
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+    
     def set_absolute_z(self, depth):
         """
         Set the depth of the robot
