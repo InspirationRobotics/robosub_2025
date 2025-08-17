@@ -74,11 +74,13 @@ class RobotControl:
         self.heading_control = False
         self.position       = {'x':0,'y':0,'z':0}
         self.orientation    = {'yaw':0,'pitch':0,'roll':0}   # in degrees, see self.pose_callback
+        self.modem_queue    = [] # store modem messages, size 10
         self.service        = None   # ros service name to move servos
         
         # Establish thruster and depth publishers
         self.sub_pose       = rospy.Subscriber("/auv/state/pose", PoseStamped, self.pose_callback)  
         self.sub_dvl        = rospy.Subscriber("/auv/devices/dvl/velocity", TwistStamped, self.dvl_callback)
+        self.sub_modem      = rospy.Subscriber("/auv/devices/modem/received", String, self.modem_callback)
         self.pub_thrusters  = rospy.Publisher("/mavros/rc/override", mavros_msgs.msg.OverrideRCIn, queue_size=10)
         self.pub_modem      = rospy.Publisher("/auv/devices/modem/send", String, queue_size=10)
 
@@ -174,6 +176,19 @@ class RobotControl:
         self.dvl_velocity['y'] = msg.twist.linear.y
         self.dvl_velocity['z'] = msg.twist.linear.z   
     
+    def modem_callback(self, msg):
+        if len(self.modem_queue) <=10:
+            self.modem_queue.append(msg.data)
+        else:
+            self.modem_queue.pop(0)
+            self.modem_queue.append(msg.data)
+
+    def get_latest_modem(self):
+        if len(self.modem_queue) >0:
+            return self.modem_queue[-1]
+        else:
+            return None
+
     def publisherThread(self):
         """
         Publisher to publish the thruster values
@@ -497,7 +512,7 @@ class RobotControl:
                     if abs(target - delta) < 5:
                         self.movement(forward=max(5*(delta/5),-2))
                     else:
-                        self.movement(forward=-4)
+                        self.movement(forward=-5)
             
             # update distane traveled in body frame:
             with self.lock:
