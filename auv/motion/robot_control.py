@@ -472,7 +472,7 @@ class RobotControl:
                     start_time = time.time()
                     start_heading = self.get_heading()
 
-            time.sleep(1/20)
+            time.sleep(1/40) # 40 hz
 
         print(f"[INFO] Finished setting heading to {target}")
             
