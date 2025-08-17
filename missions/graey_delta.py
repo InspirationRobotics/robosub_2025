@@ -5,8 +5,8 @@ To create a sequential order of missions for Graey to follow.
 import rospy
 import time
 
-print("Waiting for 20 seconds")
-time.sleep(20)
+print("Sleeping for 30 seconds to unplug tether")
+time.sleep(30)
 
 from auv.utils import deviceHelper
 from auv.mission import poles_mission, intersub_com_mission, poles_mission_preset, gate_intersub_mission
