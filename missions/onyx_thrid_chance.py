@@ -6,8 +6,8 @@ import rospy
 import time
 import json
 
-# print("20s before onyx initialize")
-# time.sleep(22)
+print("20s before onyx initialize")
+time.sleep(22)
 
 from auv.mission import poles_mission, bin_approach_mission, bin_drop_mission, octagon_approach_mission, intersub_com_mission, torpedo_approach_mission, gate_intersub_mission
 from auv.motion import robot_control
@@ -49,7 +49,7 @@ except Exception as e:
 """GATE INTERSUB MISSION"""
 try:
     start_time = time.time()
-    while time.time()-start_time<15:  # 30 s timeout
+    while time.time()-start_time<30:  # 30 s timeout
         rc.send_modem(addr="010",movement="Onyx_Finished")
         msg = rc.get_latest_modem()
         if msg is not None and msg=="Graey_Start":
@@ -75,7 +75,7 @@ except Exception as e:
 """MODEMS + ROLL"""
 try:
     start_time = time.time()
-    while time.time()-start_time<15:  # 15 s timeout
+    while time.time()-start_time<30:  # 15 s timeout
         rc.send_modem(addr="010",movement="Onyx_Poles_Finished")
         msg = rc.get_latest_modem()
         if msg is not None and msg=="Graey_Return_ROLL":
