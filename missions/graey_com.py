@@ -54,7 +54,6 @@ rc.go_forward_distance(2)
 try:
     start_time = time.time()
     while time.time()-start_time<15:  # 30 s timeout
-        rc.send_modem(addr="020",movement="Onyx_Finished")
         msg = rc.get_latest_modem()
         if msg is not None and msg=="Onyx_Finished":
             rospy.loginfo("Graey started, Onyx proceeding")
