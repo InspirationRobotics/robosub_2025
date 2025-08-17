@@ -13,10 +13,10 @@ from auv.mission import poles_mission, bin_approach_mission, bin_drop_mission, o
 from auv.motion import robot_control
 from auv.utils import arm, disarm, deviceHelper
 
-def navigate_to(name):
-    Waypoint = waypoints[name]
-    rc.waypointNav(Waypoint["position"][0],Waypoint["position"][1])
-    rospy.loginfo(f"Reached {name} waypoint")
+# def navigate_to(name):
+#     Waypoint = waypoints[name]
+#     rc.waypointNav(Waypoint["position"][0],Waypoint["position"][1])
+#     rospy.loginfo(f"Reached {name} waypoint")
 
 """INITIALIZE"""
 rospy.init_node("Onyx", anonymous = True)
@@ -41,7 +41,7 @@ def modem_loop():
 
 # Dive down to desire depth
 rc.set_absolute_yaw(0)
-rc.go_to_depth(0.4)
+# rc.go_to_depth(0.4)
 rc.go_to_depth(0.8)
 
 modem_thread = threading.Thread(target=modem_loop)
