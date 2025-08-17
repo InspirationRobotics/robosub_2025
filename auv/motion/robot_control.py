@@ -452,12 +452,10 @@ class RobotControl:
         self.prev_error = None
         start_time = time.time()
         start_heading = self.get_heading()
+        self.set_absolute_yaw(target)
         while not rospy.is_shutdown():
 
             error = heading_error(self.orientation['yaw'], target)
-
-            # make sure the output is greater than 0.5 for the thrusters to even move
-            output = self.PIDs["yaw"](-error / 180)
 
             if abs(error) <= 1.0:
                 print("[INFO] Heading reached")
@@ -466,7 +464,7 @@ class RobotControl:
 
             # New timeout mechanism: Timeout if moved less than 3 degrees in 3 seconds
             self.curr_time = time.time()
-            if self.curr_time - start_time >= 3:
+            if self.curr_time - start_time >= 10:
                 if abs(self.get_heading() - start_heading) < 3:
                     print(f"[WARN] RobotControl.go_to_heading timed out")
                     break
@@ -474,8 +472,7 @@ class RobotControl:
                     start_time = time.time()
                     start_heading = self.get_heading()
 
-            self.movement(yaw=output)
-            time.sleep(0.1)
+            time.sleep(1/20)
 
         print(f"[INFO] Finished setting heading to {target}")
             
@@ -483,7 +480,7 @@ class RobotControl:
         self.set_absolute_z(target)
         while abs(target - self.position['z']) > 0.1:
             rospy.loginfo(f"Going to depth: {target} | current depth: {self.position['z']}")
-            time.sleep(1)
+            time.sleep(1/20) # 20hz
   
     def go_forward_distance(self, target:float):
         """
@@ -492,7 +489,7 @@ class RobotControl:
             target (float): desire distance
         """
         self.dvl_sum = 0
-        dt = 0.05 # 20 Hz
+        dt = 1/50 # 50 Hz
         start_time = time.time()
         rospy.loginfo(f"Go forward {target}")
         while(abs(target-self.dvl_sum)>0.2) and time.time() - start_time < 30:
@@ -543,7 +540,7 @@ class RobotControl:
             target (float): desire distance
         """
         self.dvl_sum = 0
-        dt = 0.05 # 20 Hz
+        dt = 1/50 # 50 Hz
         start_time = time.time()
         rospy.loginfo(f"Go lateral {target}")
         while(abs(target-self.dvl_sum)>0.3) and time.time() - start_time < 30:

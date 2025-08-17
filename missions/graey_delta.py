@@ -5,8 +5,8 @@ To create a sequential order of missions for Graey to follow.
 import rospy
 import time
 
-print("Sleeping for 30 seconds to unplug tether")
-time.sleep(30)
+# print("Sleeping for 30 seconds to unplug tether")
+# time.sleep(30)
 
 from auv.utils import deviceHelper
 from auv.mission import poles_mission, intersub_com_mission, poles_mission_preset, gate_intersub_mission
@@ -40,7 +40,7 @@ try:
    rc.set_absolute_yaw(gate_heading)
    rospy.loginfo("Robot heading set to gate heading")
    
-   gate_forward_distance = 5.57 # m
+   gate_forward_distance = 5.0 # m 5.57
    rospy.loginfo(f"Start moving forward {gate_forward_distance} m")
    rc.go_forward_distance(gate_forward_distance)
    rospy.loginfo(f"Moved {gate_forward_distance} m")
