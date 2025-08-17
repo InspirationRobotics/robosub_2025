@@ -8,6 +8,7 @@ from std_srvs.srv import Trigger, TriggerRequest, TriggerResponse
 class LED:
     """
     Turns LEDs on and off based on whether messages have been sent and/or received
+    How to use it:  rosservice call /auv/devices/LED/received "{}"
     """
     def __init__(self):
         """

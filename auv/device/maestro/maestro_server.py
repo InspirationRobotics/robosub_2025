@@ -13,6 +13,9 @@ from auv.utils import deviceHelper
 
 
 class MaestroServer:
+    """How to use in cli:  
+        rosservice call /auv/devices/dropper "{}" 
+    """
     def __init__(self, port=deviceHelper.dataFromConfig("polulu")):
         rospy.init_node('maestroServer')
         self.maestro = MiniMaestro(port=port)
