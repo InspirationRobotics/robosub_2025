@@ -49,6 +49,7 @@ modem_thread.start()
 rospy.loginfo("Finish initialization")
 
 # move forward
+msg_to_send = None
 rc.go_forward_distance(2)
 
 """GATE INTERSUB MISSION"""
@@ -69,6 +70,7 @@ msg_to_send = "Graey_Start"
 
 rc.go_lateral_distance(2)
 
+msg_to_send = None
 """MODEMS + ROLL"""
 try:
     start_time = time.time()
@@ -85,7 +87,9 @@ except Exception as e:
 
 msg_to_send = "Graey_Return_ROLL"
 rc.go_forward_distance(-2)
+msg_to_send = None
 
 print("[INFO] Mission run terminate")
 disarm.disarm()
+modem_loop_flat = False
 rc.exit()
