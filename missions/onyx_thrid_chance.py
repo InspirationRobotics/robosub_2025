@@ -27,12 +27,11 @@ rc.activate_heading_control(False)
 config = deviceHelper.variables
 
 # Load the JSON file
-with open("./missions/waypoints_delta.json", "r") as file:
+with open("./missions/waypoints_thrid_chance.json", "r") as file:
     waypoints = json.load(file)
 
 # Dive down to desire depth
 rc.set_absolute_yaw(0)
-rc.go_to_depth(0.6)
 rc.go_to_depth(1.2)
 
 rospy.loginfo("Finish initialization")
@@ -49,7 +48,7 @@ except Exception as e:
 """GATE INTERSUB MISSION"""
 try:
     start_time = time.time()
-    while time.time()-start_time<30:  # 30 s timeout
+    while time.time()-start_time<60:  # 60 s timeout
         rc.send_modem(addr="010",movement="Onyx_Finished")
         msg = rc.get_latest_modem()
         if msg is not None and msg=="Graey_Start":
@@ -65,8 +64,6 @@ except Exception as e:
 try: 
     rospy.loginfo("Start of poles mission...")
     navigate_to("S1")
-    navigate_to("S2")
-    navigate_to("S3")
     print("[INFO] POLES MISSION COMPLETE")
 except Exception as e:
     rospy.logerr("ERROR OCCUR IN POLES MISSION")
@@ -104,8 +101,8 @@ except Exception as e:
 try:
     rc.go_to_depth(0.6)
     navigate_to("O1")
-    rc.go_to_heading(135)
-    rc.set_absolute_yaw(135)
+    rc.go_to_heading(-135)
+    rc.set_absolute_yaw(-135)
     rc.go_to_depth(0)
     time.sleep(4)
     rc.go_to_depth(0.6)
@@ -120,9 +117,8 @@ try:
     navigate_to("T1")
     rc.go_to_depth(1.2)
     # align with the torpedo
-    rc.go_to_heading(20)
-    rc.set_absolute_yaw(20)
-    rc.go_forward_distance(0.5)
+    rc.go_to_heading(90)
+    rc.set_absolute_yaw(90)
     rc.move_servo("/auv/devices/torpedo")
     time.sleep(0.3)
     rc.move_servo("/auv/devices/torpedo")

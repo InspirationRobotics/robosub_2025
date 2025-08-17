@@ -74,7 +74,7 @@ msg_to_send = None
 """MODEMS + ROLL"""
 try:
     start_time = time.time()
-    while time.time()-start_time<15:  # 15 s timeout
+    while time.time()-start_time<30:  # 15 s timeout
         msg = rc.get_latest_modem()
         if msg is not None and msg=="Onyx_Poles_Finished":
             msg_to_send = "Graey_Return_ROLL"

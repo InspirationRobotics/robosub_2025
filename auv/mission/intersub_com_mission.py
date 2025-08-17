@@ -36,7 +36,7 @@ class intersubComMission:
                 self.roll_requested = True  # <-- Store request, but don't execute yet
                 for i in range(2):
                     self.rc.send_modem(addr="020",movement="RETURN")
-                    time.sleep(1)
+                    time.sleep(0.7)
             self.end = True
         if self.sub =="onyx":
             rospy.loginfo(f"Recieved message: {msg.data}")
@@ -68,7 +68,7 @@ class intersubComMission:
         if current_sub == "graey":
             time_counter = 0
             while not self.end:
-                if time_counter >= 5:
+                if time_counter >= 40:
                     rospy.loginfo("Time out, no message received, faking ROLL request")
                     fake_msg = String()
                     fake_msg.data = "ROLL"

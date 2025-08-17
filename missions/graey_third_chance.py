@@ -26,11 +26,16 @@ eventflags = [False,False,False,False,False]
 
 """GATE INTERSUB MISSION"""
 try:
-    gateIntersub = gate_intersub_mission.GateIntersubMission(robotControl=rc)
-    gateIntersub.run()  # <-- Comms only
-    rospy.loginfo("FINISHED GATE INTERSUB MISSION")
+    start_time = time.time()
+    while time.time()-start_time<30:  # 30 s timeout
+        msg = rc.get_latest_modem()
+        if msg is not None and msg=="Onyx_Finished":
+            rospy.loginfo("Graey started, Onyx proceeding")
+            msg_to_send = "Graey_Start"
+            break
+        time.sleep(0.5)
 except Exception as e:
-    rospy.logerr("ERROR DURING GATE INTERSUB MISSION")
+    rospy.logerr("ERROR DOING GATE MISSION")
     rospy.logerr(e)
 
 """COINT TOSS + GATE MISSION"""
@@ -60,16 +65,19 @@ except Exception as e:
 """KEEP GOING FORWARD"""
 rc.go_forward_distance(3)  # 3 meter away from the gate
 
-"""MODEMS"""
+"""MODEMS + ROLL"""
 try:
-    intersubMission = intersub_com_mission.intersubComMission(robotControl=rc)
-    intersubMission.run()  # <-- Comms only
-    rospy.loginfo("FINISHED INTERSUB COMMUNICATION")
-    eventflags[3] = True
+    start_time = time.time()
+    while time.time()-start_time<30:  # 15 s timeout
+        msg = rc.get_latest_modem()
+        if msg is not None and msg=="Onyx_Poles_Finished":
+            msg_to_send = "Graey_Return_ROLL"
+            rospy.loginfo("Graey return home and roll")
+            break
+        time.sleep(0.5)
 except Exception as e:
-    rospy.logerr("ERROR DURING MODEM MISSION")
-    rospy.logerr(e)
-    eventflags[3] = True  
+    rospy.logerr("ERROR DOING GATE MISSION")
+    rospy.logerr(e) 
 
 """RETURN HOME"""
 rc.go_forward_distance(-5)   # GO back
